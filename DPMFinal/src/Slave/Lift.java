@@ -12,6 +12,7 @@ public class Lift {
 		//lowerArms();
 		//clamp();
 		//raiseArms();
+		//new commit test
 		
 		try { Thread.sleep(2000); }catch (InterruptedException e) {}
 		//release();
