@@ -16,13 +16,17 @@ public class Odometer implements TimerListener {
 	private int tacho_l, tacho_r;
 	private int delta_tacho_l, delta_tacho_r;
 
-	private double RW_RADIUS = 2.1, LW_RADIUS = 2.1, WHEEL_BASE = 15.0;
+	private double RW_RADIUS = 2.0, LW_RADIUS = 2.0, WHEEL_BASE = 16.0;
 	
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
 	
 
-	
+	/**
+	 * Constructor
+	 * @param period How often the odometer should be updated
+	 * @param start True if the odometer should start immediately
+	 */
 	public Odometer(int period, boolean start) {
 		// initialise variables
 
@@ -44,6 +48,10 @@ public class Odometer implements TimerListener {
 			odometerTimer.start();
 	}
 	
+	/**
+	 * Update Odometer at every clock tick
+	 * @return void
+	 */
 	public void timedOut() {
 		
 		long updateStart, updateEnd;
@@ -69,7 +77,7 @@ public class Odometer implements TimerListener {
 		}
 	}
 	
-	// accessors
+	/*
 	public void getPosition(double [] pos) {
 		synchronized (lock) {
 			pos[0] = x;
@@ -84,10 +92,13 @@ public class Odometer implements TimerListener {
 			if (update[1]) y = pos[1];
 			if (update[2]) theta = pos[2];
 		}
-	}
+	}*/
 	
 	
-	//new tacho - old tacho = delta tacho
+	/**
+	 * Updates the tachometer count for each motor shaft
+	 * @return false
+	 */
 	public void updateTacho(){
 		last_tacho_l = tacho_l;
 		last_tacho_r = tacho_r;
@@ -99,19 +110,29 @@ public class Odometer implements TimerListener {
 		delta_tacho_r = tacho_r - last_tacho_r;
 	}
 	
-	//equation from tutorial slides
+	/**
+	 * Calculates the change in the odometer's orientation
+	 * @return double - The robot's orientation change
+	 */
 	public double calculateDeltaTheta(){
 		double deltaTheta = ((delta_tacho_r * RW_RADIUS) - (delta_tacho_l * LW_RADIUS))/WHEEL_BASE;
 		deltaTheta = deltaTheta * Math.PI/180; //needs to be in radians
 		return deltaTheta;
 	}
 	
+	/**
+	 * Calculates the change in the odometer's position
+	 * @return double - The robot's position change
+	 */
 	public double calculateDeltaDistance(){
 		double deltaDistance = ((delta_tacho_r * RW_RADIUS) + (delta_tacho_l * LW_RADIUS))/2;
 		deltaDistance = deltaDistance * Math.PI/180;	//needs to be in radians
 		return deltaDistance;
 	}
 	
+	/**
+	 * @return double - The x value of the robot
+	 */
 	public double getX() {
 		double result;
 
@@ -122,6 +143,9 @@ public class Odometer implements TimerListener {
 		return result;
 	}
 
+	/**
+	 * @return double - The y value of the robot
+	 */
 	public double getY() {
 		double result;
 
@@ -131,7 +155,10 @@ public class Odometer implements TimerListener {
 
 		return result;
 	}
-
+	
+	/**
+	 * @return double - The theta value of the robot
+	 */
 	public double getTheta() {
 		double result;
 
@@ -142,6 +169,10 @@ public class Odometer implements TimerListener {
 		return result * 180/Math.PI;
 	}
 	
+	/**
+	 * @param input The new x value of the robot
+	 * @return void
+	 */
 	public void setX(double input) {
 		
 		synchronized (lock) {
@@ -150,6 +181,10 @@ public class Odometer implements TimerListener {
 
 	}
 	
+	/**
+	 * @param input The new y value of the robot
+	 * @return void
+	 */
 	public void setY(double input) {
 		
 		synchronized (lock) {
@@ -158,6 +193,10 @@ public class Odometer implements TimerListener {
 
 	}
 	
+	/**
+	 * @param input The new theta value of the robot
+	 * @return void
+	 */
 	public void setTheta(double input) {
 		synchronized (lock) {
 			theta = input*Math.PI/180;

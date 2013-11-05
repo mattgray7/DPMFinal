@@ -13,37 +13,47 @@ import lejos.nxt.comm.Bluetooth;
 
 public class BTSendController {
 	
+	public static UltrasonicSensor topUs = new UltrasonicSensor(SensorPort.S1);
+	public static ColorSensor leftLightSensor= new ColorSensor(SensorPort.S2);
+	public static ColorSensor rightLightSensor = new ColorSensor(SensorPort.S3);
+	public static UltrasonicSensor bottomUs = new UltrasonicSensor(SensorPort.S4);
+	
 	public static final int DEFAULT_PERIOD = 25;
 	public static Odometer odo = new Odometer(DEFAULT_PERIOD, true);
-	public static OdometryCorrection oc = new OdometryCorrection(odo);
-	public static Navigation nav = new Navigation(odo);
+	public static OdometryCorrection oc = new OdometryCorrection(odo, leftLightSensor, rightLightSensor);
+	public static Navigation nav = new Navigation(odo, topUs, bottomUs);
 	public static LCDInfo lc = new LCDInfo(odo);
-	public static Localization usl = new Localization(odo);
+	public static Localization usl = new Localization(odo, topUs);
 	
 	private static BTConnection connection;
 	
-	private NXTRegulatedMotor leftMotor;
+	private NXTRegulatedMotor leftMotor;	//=to Motor.A
 	private NXTRegulatedMotor rightMotor;
 	private NXTRegulatedMotor sensorMotor;	//if we need a sensor motor
 	
-	UltrasonicSensor us = new UltrasonicSensor(SensorPort.S1);
-	ColorSensor leftSensor= new ColorSensor(SensorPort.S2);
-	ColorSensor rightSensor = new ColorSensor(SensorPort.S3);
+
 	//TouchSensor touchSensor = new TouchSensor(SensorPort.S4);
 	
 	
-	//main control flow (replaced masterFlow in UML diagram)
+	/**
+	 * Main control flow of system
+	 * @return void
+	 */
 	public static void main(String[] args){
 		int buttonChoice = Button.waitForAnyPress();
-		nav.travelTo(0.0,0.0,false);
+		nav.run();
 		
 		
 		
-		connection.close();
+		//connection.close();
 	}
 	
 	
-	//establish initial connection, returns true once connection established - NEED TO BE BOOLEAN??
+	/**
+	 * Sets up BlueTooth connection immediately
+	 * @return True once the connection has been made
+	 * @return False if connection exception detected
+	 */
 	public Boolean establishConnection(){
 		String name = "slave2";		//friendly name of other brick
 		
@@ -72,7 +82,12 @@ public class BTSendController {
 	}
 	
 	
-	//sends signal to slave brick
+	/**
+	 * Send a signal to the slave brick and wait for response
+	 * @param signal The integer number of which command the slave should execute
+	 * @throws IOException Send or receive signal failure
+	 * @return void
+	 */
 	public void sendSignal(int signal) throws IOException{
 		DataOutputStream output = connection.openDataOutputStream();
 		DataInputStream input = connection.openDataInputStream();

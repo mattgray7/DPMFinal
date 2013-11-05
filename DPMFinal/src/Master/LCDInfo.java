@@ -12,6 +12,10 @@ public class LCDInfo implements TimerListener{
 	// arrays for displaying data
 	private double [] pos;
 	
+	/**
+	 * Constructor
+	 * @param odo The shared odometer amongst classes
+	 */
 	public LCDInfo(Odometer odo) {
 		this.odo = odo;
 		this.lcdTimer = new Timer(LCD_REFRESH, this);
@@ -23,8 +27,12 @@ public class LCDInfo implements TimerListener{
 		lcdTimer.start();
 	}
 	
+	/**
+	 * Display the odometer's position every clock tick
+	 * @return void
+	 */
 	public void timedOut() { 
-		odo.getPosition(pos);
+		//odo.getPosition(pos);
 		LCD.clear();
 		LCD.drawString("X: ", 0, 0);
 		LCD.drawString("Y: ", 0, 1);

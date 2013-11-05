@@ -4,86 +4,105 @@ package Slave;
 import lejos.nxt.*;
 
 public class Lift {
-	private static NXTRegulatedMotor armMotor = Motor.A;
-	private static NXTRegulatedMotor clampMotor = Motor.B;
+	private static NXTRegulatedMotor armMotor;
+	private static NXTRegulatedMotor clampMotor;
 
-	public static void main(String[] args){
+	/*public static void main(String[] args){
 		int buttonChoice = Button.waitForAnyPress();
 		//lowerArms();
-		//clamp();
-		//raiseArms();
+		clamp();
+		raiseArms();
+		lowerArms();
+		release();
 		//new commit test
 		
 		try { Thread.sleep(2000); }catch (InterruptedException e) {}
 		//release();
 		//lowerArms();
 		
+	}*/
+	
+	
+	/**
+	 * Constructor
+	 * @param arm The arm motor of the lifting mechanism
+	 * @param clamp The clamp motor that controls the claws
+	 */
+	public Lift(NXTRegulatedMotor arm, NXTRegulatedMotor clamp){
+		armMotor = arm;
+		clampMotor = clamp;
 	}
 	
 	
-	//constructor
-	public Lift(){
+	/**
+	 * Lowers the mechanical arms by an input angle
+	 * @param angle The angle in which to rotate the arm
+	 * @return void
+	 */
+	public void lowerArms(int angle){
+		/*Sound.buzz();
 		
-	}
-	
-	
-	//lowers the mechanical arms
-	public void lowerArms(){
-		
-		armMotor.setSpeed(150);
+		armMotor.setSpeed(200);
 		armMotor.backward();
 		
+		try { Thread.sleep(500); }catch (InterruptedException e) {}
 		
-		Sound.beep();
-		try { Thread.sleep(3000); }catch (InterruptedException e) {}
-		Sound.beep();
+		armMotor.stop();
+		Sound.buzz();*/
 	}
 	
-	//raise the mechanical arms
-	public void raiseArms(){
-		Sound.buzz();
-		//armMotor.setSpeed(100);
-		//armMotor.forward();
-		//armMotor.rotate(300, false);
+	
+	/**
+	 * Raises the mechanical arms by an input angle
+	 * @param angle The angle in which to rotate the arm
+	 * @return void
+	 */
+	public void raiseArms(int angle){
+		/*
 		armMotor.rotate(300, false);
 		armMotor.stop();
 		clampMotor.lock(50);
-		Sound.beep();
-		
-		//Sound.beep();
-		//try { Thread.sleep(4000); }catch (InterruptedException e) {}
-		//Sound.beep();
+		*/
 		
 	}
 	
 	
-	//clamp the object - may not be necessary with current mechanical design
+	/**
+	 * Clamps the claws together
+	 * @return void
+	 */
 	public void clamp(){
-		clampMotor.setSpeed(100);
-		clampMotor.backward();
-		
-		try { Thread.sleep(1500); }catch (InterruptedException e) {}
-		clampMotor.stop();
+		//clampMotor.setSpeed(100);
+		//clampMotor.backward();
 	}
 	
 	
-	//release the clamps - again, not necessary with current design
-	public void release(){
-		clampMotor.setSpeed(100);
+	/**
+	 * Opens the claws
+	 * @return void
+	 */
+	public static void release(){
+		/*clampMotor.setSpeed(100);
 		clampMotor.forward();
 		
 		try { Thread.sleep(200); }catch (InterruptedException e) {}
-		clampMotor.stop();
+		clampMotor.stop();*/
 	}
 	
 	
-	//If we connect an ultrasonic sensor to the arm, will return current distance to tower
+	/**
+	 * Tentative - if using an ultrasonic sensor, method will read the height of the tower in front of it
+	 * @return int - The height of the tower
+	 */
 	public int getTowerHeight(){
 		return 0;
 	}
 	
 	
-	//will use raise and lower to position arm height, rotating the robot will knock a tower over
+	/**
+	 * Only used by garbage collector. Will knock down tower if outside of opponent's green zone
+	 * @return void
+	 */
 	public void destroyTower(){
 		
 	}

@@ -1,21 +1,34 @@
 package Slave;
 
-public class ObjectRecognition {
+import lejos.nxt.ColorSensor;
 
-	//constructor 
-	public ObjectRecognition(){
-		
+public class ObjectRecognition {
+	
+	private ColorSensor sens;
+
+	/**
+	 * Constructor
+	 * @param cs The color sensor located on the claw
+	 */
+	public ObjectRecognition(ColorSensor cs){
+		sens = cs;
 	}
 	
 	
-	//checks the distance to determine if robot needs to move closer or not, may not
-	//be necessary if master can position robot well enough
+	/**
+	 * Check the distance from the sensor to the object, may lead to signal being sent
+	 * back to master to reposition robot in front of the block
+	 * @return int - The distance from the sensor to the object
+	 */
 	public int checkDistance(){
 		return 0;
 	}
 	
 	
-	//returns true if a blue block is sensed, false otherwise
+	/**
+	 * Checks the color of the object
+	 * @return True if the object is a blue block, false otherwise
+	 */
 	public Boolean checkColor(){
 		return false;
 	}

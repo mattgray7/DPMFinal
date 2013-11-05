@@ -7,31 +7,50 @@ public class Vector {
 	private double y;
 	private double z;
 	
+	/**
+	 * Constructor
+	 * @param x X component of new vector
+	 * @param y Y component of new vector
+	 * @param z Z component of new vector
+	 */
 	public Vector(double x, double y, double z){
 		this.x = x;
 		this.y = y;
 		this.z = z;
 	}
 	
+	/**
+	 * @return double - The x component of the vector
+	 */
 	public double getX(){
 		return x;
 	}
 	
+	/**
+	 * @return double - The y component of the vector
+	 */
 	public double getY(){
 		return y;
 	}
 	
+	/**
+	 * @return double - The z component of the vector
+	 */
 	public double getZ(){
 		return z;
 	}
 	
-	/* Length of vector
+	/**
+	 * @return double - The length of the vector
 	 */
 	public double length(){
 		return Math.sqrt(x*x + y*y + z*z);
 	}
 	
-	/* Divide all components by a number
+	/**
+	 * Divides all components by a number
+	 * @param num The number to divide all components by
+	 * @return void
 	 */
 	public void divide(double num){
 		x /= num;
@@ -39,7 +58,10 @@ public class Vector {
 		z /= num;
 	}
 	
-	/* Sum of two vectors
+	/**
+	 * @param a The first vector
+	 * @param b The second vector
+	 * @return Vector - The sum of the two vectors
 	 */
 	public static Vector add(Vector a, Vector b){
 		double x = a.x + b.x;
@@ -49,7 +71,10 @@ public class Vector {
 		return new Vector(x, y, z);
 	}
 	
-	/* Difference of two vectors
+	/**
+	 * @param a The first vector
+	 * @param b The second vector
+	 * @return Vector - The difference of a and b (a-b)
 	 */
 	public static Vector substract(Vector a, Vector b){
 		double x = a.x - b.x;
@@ -59,14 +84,18 @@ public class Vector {
 		return new Vector(x, y, z);
 	}
 	
-	/* Dot product of two vectors
+	/**
+	 * @param a The first vector
+	 * @param b The second vector
+	 * @return Vector - The dot product of the two vectors
 	 */
 	public static double dot(Vector a, Vector b){
 		return a.x * b.x + a.y * b.y + a.z * b.z;
 	}
 	
-	/* Returns Vec3 whose components are the average of all the Vec3's
-	 * components.
+	/**
+	 * @param group List of vectors 
+	 * @return Vector - A vector whose components are the average of all the components in the list
 	 */
 	public static Vector average(Vector group[]) {
 		Vector ave = new Vector(0.0, 0.0, 0.0);
