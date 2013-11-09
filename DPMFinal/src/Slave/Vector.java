@@ -1,6 +1,12 @@
 package Slave;
 
 //for creating and operating vectors
+/**
+ * For representing and operating on 3D vectors
+ * 
+ * @author Nick
+ *
+ */
 public class Vector {
 	// Variables
 	private double x;
