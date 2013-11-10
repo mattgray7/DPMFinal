@@ -1,0 +1,9 @@
+# This is a .gitignore file
+# All files and folders mentioned here will not be included in
+# any commits.
+
+# Folders
+/bin/
+
+# Files
+.class
