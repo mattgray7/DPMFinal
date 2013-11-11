@@ -1,27 +1,30 @@
 import lejos.nxt.Button;
 import lejos.nxt.LCD;
 import lejos.nxt.SensorPort;
-import lejos.nxt.UltrasonicSensor;
+import lejos.nxt.ColorSensor;
 import lejos.nxt.comm.RConsole;
+import lejos.robotics.Color;
 
 
 /**
- * Time it takes for the US to do one ping().
+ * Time it takes for the CS to do one getLightValue().
  * 
- * This class finds the amount of time it takes for the ultrasonic sensor to
- * execute a single ping(). It then displays the value to the brick's screen
+ * This class finds the amount of time it takes for the color sensor to
+ * execute a single getLightValue(). It then displays the value to the brick's screen
  * or sends it to a pc via bluetooth.
  * 
  * @author Nicholas Aird
  * @version 1.0
  */
-public class USPingTime {
+public class CSLightValueTime {
 	static SensorPort usPort = SensorPort.S1;
 	static int BT_TIMEOUT = 10000;	// 10 seconds
-	static int NUMBER_OF_PINGS = 100;
+	static int NUMBER_OF_QUERIES = 1000;
+	static int FLOODLIGHT_COLOR = Color.RED;
 	
 	public static void main(String args[]){
-		UltrasonicSensor us = new UltrasonicSensor(usPort);
+		ColorSensor cs = new ColorSensor(usPort);
+		cs.setFloodlight(FLOODLIGHT_COLOR);
 		
 		setupBluetooth();
 		
@@ -32,7 +35,9 @@ public class USPingTime {
 		
 		do{
 			LCD.clear();
-			performPingTest(us);
+			LCD.drawString("Testing...", 0, 0);
+			
+			performQueryTest(cs);
 			
 			// Ask for another iteration
 			LCD.drawString("Again  |   Done", 0, 0);
@@ -47,14 +52,16 @@ public class USPingTime {
 	}
 	
 	/**
-	 * Finds the amount of time for one ping and displays it to the screen.
+	 * Finds the amount of time for one getLightValue() and displays it to the screen.
 	 */
-	public static void performPingTest(UltrasonicSensor us){
-		long timePerPing = getTimePerPing(us);
+	public static void performQueryTest(ColorSensor cs){
+		double timePerQuery = getTimePerQuery(cs);
 		
-		String pingTimeMessage = "ms/ping: " + timePerPing;
-		LCD.drawString(pingTimeMessage, 0, 2);
-		RConsole.println(pingTimeMessage);
+		String queryTimeMessageA = "ms/getLightValue():";
+		String queryTimeMessageB = "" + timePerQuery;
+		LCD.drawString(queryTimeMessageA, 0, 2);
+		LCD.drawString(queryTimeMessageB, 0, 3);
+		RConsole.println(queryTimeMessageA + " " + queryTimeMessageB);
 	}
 	
 	/**
@@ -75,21 +82,20 @@ public class USPingTime {
 	}
 	
 	/**
-	 * Find the amount of time it takes to execute the ultrasonic sensor's
-	 * ping.
+	 * Find the amount of time it takes to execute the color sensor's
+	 * getLightValue().
 	 * 
 	 * This also includes the amount of time it takes to execute java's for
 	 * loop.
 	 * 
 	 * @param numberOfLoops The number of times the loop will iterate.
-	 * @param us The ultrasonic sensor.
-	 * @return The time in ms to execute all the loops and pings
+	 * @param us The color sensor.
+	 * @return The time in ms to execute all the loops and getLightValue()'s.
 	 */
-	public static long getTotalLoopAndPingTime(int numberOfLoops, UltrasonicSensor us){
+	public static long getTotalLoopAndQueryTime(int numberOfLoops, ColorSensor cs){
 		long startTime = System.currentTimeMillis();
 		for(int i = 0; i < numberOfLoops; i++){
-			us.getDistance();
-			// us.ping();	// Is this the same?
+			cs.getLightValue();
 		}
 		long endTime = System.currentTimeMillis();
 		
@@ -97,19 +103,19 @@ public class USPingTime {
 	}
 	
 	/**
-	 * Find the amount of time it takes the ultrasonic sensor to execute
-	 * one ping().
+	 * Find the amount of time it takes the color sensor to execute
+	 * one getLightValue().
 	 * 
-	 * @return Time (in ms) it takes for the US to do one ping().
+	 * @return Time (in ms) it takes for the CS to do one getLightValue().
 	 */
-	public static long getTimePerPing(UltrasonicSensor us){
-		int numberOfPings = NUMBER_OF_PINGS;
+	public static double getTimePerQuery(ColorSensor cs){
+		int numberOfQueries = NUMBER_OF_QUERIES;
 		
-		long totalLoopTime = getTotalLoopTime(numberOfPings);
-		long totalLoopAndPingTime = getTotalLoopAndPingTime(numberOfPings, us);
+		long totalLoopTime = getTotalLoopTime(numberOfQueries);
+		long totalLoopAndQueryTime = getTotalLoopAndQueryTime(numberOfQueries, cs);
 		
-		long totalPingTime = totalLoopAndPingTime - totalLoopTime;
-		return totalPingTime / numberOfPings;
+		long totalQueryTime = totalLoopAndQueryTime - totalLoopTime;
+		return totalQueryTime / (double)numberOfQueries;
 	}
 	
 	/**

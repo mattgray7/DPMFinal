@@ -1,10 +1,11 @@
-# This is a .gitignore file.
-# All files and folders mentioned here will not be included
-# in any commit.
-# .gitignore's in subdirectories take precedence (I think).
+# This is the .gitignore file.
+# All the files mentioned here will be ignored when making a commit
 
 
 # Folders
+/bin
 
 # Files
 .class
+.nxt
+.nxj

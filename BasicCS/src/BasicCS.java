@@ -1,33 +1,42 @@
 import lejos.nxt.Button;
 import lejos.nxt.LCD;
 import lejos.nxt.SensorPort;
-import lejos.nxt.UltrasonicSensor;
+import lejos.nxt.ColorSensor;
 import lejos.nxt.comm.RConsole;
+import lejos.robotics.Color;
 
 /**
- * Displays the value of the ultrasonic sensor's getDistance() method to the
+ * Displays the value of the color sensor's getColor() method to the
  * brick's screen. It can also send the output to a pc via Bluetooth.
  * 
  * @author Nicholas Aird
  * @version 1.0
  */
-public class BasicUS {
+public class BasicCS {
 	static SensorPort usPort = SensorPort.S1;
 	static int BT_Timeout = 10000;	// 10 seconds
 	
 	public static void main(String args[]){
-		UltrasonicSensor us = new UltrasonicSensor(usPort);
+		ColorSensor cs = new ColorSensor(usPort);
+		cs.setFloodlight(true);
 		
 		setupBluetooth();
 		
 		int buttonsPressed = 0;
 		while( !((buttonsPressed & Button.ID_ESCAPE) > 0) ){
-			int distance = us.getDistance();
+			Color c = cs.getColor();
 			
 			// Print to screen
 			LCD.clear();
-			LCD.drawString("Distance: " + distance, 0, 0);
-			RConsole.println("Distance: " + distance);
+			String messageA = "RGB:";
+			String messageB = "" + c.getRed();
+			String messageC = "" + c.getGreen();
+			String messageD = "" + c.getBlue();
+			LCD.drawString(messageA, 0, 0);
+			LCD.drawString(messageB, 0, 1);
+			LCD.drawString(messageC, 0, 2);
+			LCD.drawString(messageD, 0, 3);
+			RConsole.println(messageA + " " + messageB + ", " + messageC + ", " + messageD);
 			
 			// Update currently pressed buttons
 			buttonsPressed = Button.readButtons();
