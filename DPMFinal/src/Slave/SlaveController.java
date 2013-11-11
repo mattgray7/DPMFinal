@@ -8,18 +8,18 @@ import lejos.nxt.*;
 import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 
-public class BTReceiveController {
+public class SlaveController {
 	
 	public static ColorSensor colorSens= new ColorSensor(SensorPort.S1);
-	private NXTRegulatedMotor armMotor = Motor.A;
-	private NXTRegulatedMotor clampMotor = Motor.B;
-	private Lift lift = new Lift(armMotor, clampMotor);
-	BTConnection connection;
+	private static NXTRegulatedMotor armMotor = Motor.A;
+	private static NXTRegulatedMotor clampMotor = Motor.B;
+	private static Lift lift = new Lift(armMotor, clampMotor);
+	static BTConnection connection;
 	
 	/**
 	 * Constructor
 	 */
-	public BTReceiveController(){
+	public SlaveController(){
 		
 	}
 	
@@ -27,7 +27,7 @@ public class BTReceiveController {
 	 * Waits for connection to be sent from master brick
 	 * @return void
 	 */
-	public void establishConnection(){
+	public static void main(String[] args){
 		LCD.clear();
 		LCD.drawString("Receiver wait...", 0, 0);
 		LCD.refresh();
@@ -57,7 +57,7 @@ public class BTReceiveController {
 	 * After connection is made, slave brick will wait for signal from master brick
 	 * @return void
 	 */
-	public void waitForSignal(){
+	public static void waitForSignal(){
 		LCD.drawString("WAIT", 0, 4, false);
 		DataInputStream input = connection.openDataInputStream();
 		int command = 0;
@@ -68,7 +68,8 @@ public class BTReceiveController {
 		//test command
 		if(command == 2){
 			Sound.beep();
-			try {Thread.sleep(1000); } catch (InterruptedException e) {}
+			lift.lowerArms(450);
+			Sound.beep();
 		}
 		
 		try {input.close();} catch (IOException e) {}
