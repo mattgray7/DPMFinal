@@ -1,9 +1,12 @@
 package Slave;
 
-import lejos.nxt.ColorSensor;
-import lejos.nxt.NXTRegulatedMotor;
-import lejos.nxt.SensorPort;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 import lejos.nxt.*;
+import lejos.nxt.comm.BTConnection;
+import lejos.nxt.comm.Bluetooth;
 
 public class BTReceiveController {
 	
@@ -11,6 +14,7 @@ public class BTReceiveController {
 	private NXTRegulatedMotor armMotor = Motor.A;
 	private NXTRegulatedMotor clampMotor = Motor.B;
 	private Lift lift = new Lift(armMotor, clampMotor);
+	BTConnection connection;
 	
 	/**
 	 * Constructor
@@ -24,6 +28,28 @@ public class BTReceiveController {
 	 * @return void
 	 */
 	public void establishConnection(){
+		LCD.clear();
+		LCD.drawString("Receiver wait...", 0, 0);
+		LCD.refresh();
+
+		try
+		{
+			connection = Bluetooth.waitForConnection();
+			if (connection == null)
+				throw new IOException("Connect fail");
+			DataOutputStream output = connection.openDataOutputStream();
+			
+			output.writeInt(1);
+			output.flush();
+			output.close();
+			
+			waitForSignal();
+
+		}
+		catch(Exception ioe)
+		{
+		}
+	
 		
 	}
 	
@@ -32,6 +58,22 @@ public class BTReceiveController {
 	 * @return void
 	 */
 	public void waitForSignal(){
+		LCD.drawString("WAIT", 0, 4, false);
+		DataInputStream input = connection.openDataInputStream();
+		int command = 0;
+		try {
+			command = input.readInt();
+		} catch (IOException e) {}	//blocking
+		
+		//test command
+		if(command == 2){
+			Sound.beep();
+			try {Thread.sleep(1000); } catch (InterruptedException e) {}
+		}
+		
+		try {input.close();} catch (IOException e) {}
+		connection.close();
+		
 		
 	}
 	

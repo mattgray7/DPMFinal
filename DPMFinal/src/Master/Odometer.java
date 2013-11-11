@@ -6,7 +6,7 @@ import lejos.util.Timer;
 import lejos.util.TimerListener;
 
 public class Odometer implements TimerListener {
-	public static final int DEFAULT_PERIOD = 25;
+	public static final int DEFAULT_PERIOD = 10;
 	private Timer odometerTimer;
 //	private Navigation nav;
 	// position data
@@ -16,10 +16,10 @@ public class Odometer implements TimerListener {
 	private int tacho_l, tacho_r;
 	private int delta_tacho_l, delta_tacho_r;
 
-	private double RW_RADIUS = 2.0, LW_RADIUS = 2.0, WHEEL_BASE = 16.0;
+	public double RW_RADIUS = 2.7, LW_RADIUS = 2.7, WHEEL_BASE = 17.3;//2.6,2.5, 2.55, 2.65, 2.68, 2.67, 16.0, 17.0, 17.3
 	
-	NXTRegulatedMotor leftMotor = Motor.A;
-	NXTRegulatedMotor rightMotor = Motor.B;
+	NXTRegulatedMotor leftMotor = Motor.B;
+	NXTRegulatedMotor rightMotor = Motor.C;
 	
 
 	/**
@@ -32,8 +32,8 @@ public class Odometer implements TimerListener {
 
 		//this.nav = new Navigation(this);
 		odometerTimer = new Timer(period, this);
-		x = 0.0;
-		y = 0.0;
+		x = -0.0;
+		y = -0.0;
 		theta = Math.PI/2;
 		lock = new Object();
 		
