@@ -21,7 +21,7 @@ public class Navigation extends Thread{
 	private double WHEEL_BASE;
 	private Odometer odometer;
 	public Boolean isTurning = false;
-	
+	//test
 	private BTSend bts;
 	
 	/**
