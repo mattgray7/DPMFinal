@@ -32,8 +32,8 @@ public class Odometer implements TimerListener {
 
 		//this.nav = new Navigation(this);
 		odometerTimer = new Timer(period, this);
-		x = -0.0;
-		y = -0.0;
+		x = -15.0;
+		y = 0.0;
 		theta = Math.PI/2;
 		lock = new Object();
 		

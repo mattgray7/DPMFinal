@@ -8,15 +8,13 @@ import lejos.util.Timer;
 
 public class OdometryCorrection extends Thread{
 	Odometer odometer;
-	ColorSensor leftSensor;
-	ColorSensor rightSensor;
+	ColorSensor sens;
 	Navigation nav;
-	int[] leftValues = new int[10];
-	int[] rightValues = new int[10];
+	int[] values = new int[10];
 	private static final int CORRECTION_PERIOD = 10;
 	private static final int ANGLE_THRESH = 15; //angle threshold of when to correct angle
 	private static final int POINT_THRESH = 10; //distance threshold of which point to snap to
-	private static final int DISTANCE_FROM_LSENSOR = 12; //distance from sensor to center
+	private static final int DISTANCE_FROM_LSENSOR = 11; //distance from sensor to center
 	private static final int TIME_THRESH = 400; //Threshold that line readings are accepted in
 	private static final int LIGHT_THRESH = 20; //Threshold light reading difference for reading a line
 	
@@ -26,6 +24,7 @@ public class OdometryCorrection extends Thread{
 	
 	private final double[] gridLines = {0.0, 30.0, 60.0, 90.0, 120.0, 150.0, 180.0, 210.0, 240.0, 270.0, 300.0, 330.0, 360.0, 390.0, 410.0};		//missing the last wall line?
 	private Boolean acceptRead = false;
+	private Boolean lineRead = false;
 	
 	double lastX = 0.0;
 	double lastY = 0.0;
@@ -38,17 +37,20 @@ public class OdometryCorrection extends Thread{
 	private final double WHEEL_RADIUS = 2.7;
 	private final double SENSOR_DIST = 12.5;
 	
+	long oldTime;
+	long newTime;
+	
 	/**
 	 * Constructor
 	 * @param odom The shared odometer amongst classes
 	 * @param l	The left side color sensor
 	 * @param r The right side color sensor
 	 */
-	public OdometryCorrection(Odometer odom, ColorSensor l, ColorSensor r, Navigation navi){
+	public OdometryCorrection(Odometer odom, ColorSensor cs, Navigation navi){
 		this.odometer = odom;
 		this.nav = navi;
-		leftSensor = l;
-		rightSensor = r;
+		sens = cs;
+		oldTime = System.currentTimeMillis();
 	}
 	
 	
@@ -60,8 +62,7 @@ public class OdometryCorrection extends Thread{
 	 */
 	public void run(){
 		long correctionStart, correctionEnd;
-		leftSensor.setFloodlight(Color.RED);
-		rightSensor.setFloodlight(Color.RED);
+		sens.setFloodlight(Color.RED);
 
 		
 		fillWindows();
@@ -70,10 +71,6 @@ public class OdometryCorrection extends Thread{
 		while (true) {
 			correctionStart = System.currentTimeMillis();
 			
-			/*LCD.drawString("LX:" + lastX, 0, 4, false);
-			LCD.drawString("UX:" + updX, 0, 5, false);
-			LCD.drawString("LY:" + lastY, 0, 6, false);
-			LCD.drawString("UY" + updY, 0, 7, false);*/
 
 			
 			if(((Math.abs(odometer.getTheta()) < ANGLE_THRESH) 
@@ -87,7 +84,7 @@ public class OdometryCorrection extends Thread{
 			
 			updateWindow();
 				
-			if(acceptRead){
+			/*if(acceptRead){
 				newTheta = Math.atan((SENSOR_DIST*180)/((t2-t1)*.001*(Motor.A.getSpeed() * Math.PI * WHEEL_RADIUS)));	//1000 for ms conversion
 				//newTheta = Math.atan(SENSOR_DIST/((Math.abs(t2-t1)) * 9.076));//test
 				newTheta = ((newTheta * 180)/Math.PI);
@@ -101,7 +98,7 @@ public class OdometryCorrection extends Thread{
 				acceptRead = false;
 				//calculatePositionError(); //may need to be before corrected angle depnding on what we do
 				try { Thread.sleep(500); }catch (InterruptedException e) {}		//to avoid reading the same line?
-			}
+			}*/
 			
 			
 			// this ensure the odometry correction occurs only once every period - IS THIS NECESSARY/A PROBLEM
@@ -128,7 +125,7 @@ public class OdometryCorrection extends Thread{
 	 * @return void
 	 */
 	public void calculateThetaError(){
-		if(compareAverageWithCurrent(leftValues, leftSensor)){
+		/*if(compareAverageWithCurrent(leftValues, leftSensor)){
 			t1 = System.currentTimeMillis();
 			//leftLineCount++;
 			//Sound.beep();
@@ -150,7 +147,14 @@ public class OdometryCorrection extends Thread{
 				calculatePositionError();
 
 			}
+		}*/
+		if(compareAverageWithCurrent(values, sens)){
+			calculatePositionError();
+			try {Thread.sleep(1000);} catch (InterruptedException e) {}
 		}
+		
+	
+			
 		
 		/*if(compareAverageWithCurrent(rightValues, rightSensor) || compareAverageWithCurrent(leftValues, leftSensor)){
 			calculatePositionError();
@@ -173,13 +177,28 @@ public class OdometryCorrection extends Thread{
 			if( (Math.abs(odometer.getTheta()) < ANGLE_THRESH) 
 				&& (Math.abs((odometer.getX() - DISTANCE_FROM_LSENSOR) - gridLines[i]) < POINT_THRESH)){	//distance from lensor will need to change
 					//going "right"
+					
+					//dont correct 
+					for(int k=0; k<gridLines.length; k++){
+						if (Math.abs(odometer.getY() - gridLines[i]) < 2){
+							return;
+						}
+					}
 					odometer.setX(gridLines[i] + DISTANCE_FROM_LSENSOR);
+					
+					
 					updX = gridLines[i] + DISTANCE_FROM_LSENSOR;
 					Sound.buzz();
 					
 			}else if ( (Math.abs(odometer.getTheta() - 90.0) < ANGLE_THRESH) 
 				&& (Math.abs((odometer.getY() - DISTANCE_FROM_LSENSOR) - gridLines[i]) < POINT_THRESH)){
 					//going "up"
+					
+					for(int k=0; k<gridLines.length; k++){
+						if (Math.abs(odometer.getX() - gridLines[i]) < 2){
+							return;
+						}
+					}
 					odometer.setY(gridLines[i] + DISTANCE_FROM_LSENSOR);
 					updY = gridLines[i] + DISTANCE_FROM_LSENSOR;
 					Sound.buzz();
@@ -187,6 +206,12 @@ public class OdometryCorrection extends Thread{
 			}else if ( (Math.abs(odometer.getTheta() - 180.0) < ANGLE_THRESH) 
 				&& (Math.abs((odometer.getX() + DISTANCE_FROM_LSENSOR) - gridLines[i]) < POINT_THRESH)){
 					//going "left"
+				
+					for(int k=0; k<gridLines.length; k++){
+						if (Math.abs(odometer.getY() - gridLines[i]) < 2){
+							return;
+						}
+					}
 					odometer.setX(gridLines[i] - DISTANCE_FROM_LSENSOR);
 					updX = gridLines[i] - DISTANCE_FROM_LSENSOR;
 					Sound.buzz();
@@ -194,6 +219,11 @@ public class OdometryCorrection extends Thread{
 			}else if ( (Math.abs(odometer.getTheta() - 270.0) < ANGLE_THRESH)
 				&& (Math.abs((odometer.getY() + DISTANCE_FROM_LSENSOR) - gridLines[i]) < POINT_THRESH)){
 					//going "down"
+					for(int k=0; k<gridLines.length; k++){
+						if (Math.abs(odometer.getX() - gridLines[i]) < 2){
+							return;
+						}
+					}
 					odometer.setY(gridLines[i] - DISTANCE_FROM_LSENSOR);
 					updY = gridLines[i] - DISTANCE_FROM_LSENSOR;
 					Sound.buzz();
@@ -219,7 +249,7 @@ public class OdometryCorrection extends Thread{
 		double lightValues = (double)(s1 + s2)/ 2.0;
 		
 		if (Math.abs(lightValues - avg) > LIGHT_THRESH){
-			//Sound.beep();
+			Sound.beep();
 			return true;
 		}
 		
@@ -232,18 +262,15 @@ public class OdometryCorrection extends Thread{
 	 */
 	public void fillWindows(){
 		for(int i=0; i < 10; i++){
-			leftValues[i] = leftSensor.getNormalizedLightValue();
-			rightValues[i] = rightSensor.getNormalizedLightValue();
+			values[i] = sens.getNormalizedLightValue();
 		}
 	}
 	
 	public void updateWindow(){
 		for(int i=0; i < 9; i++){
-			leftValues[i] = leftValues[i+1];
-			rightValues[i] = rightValues[i+1];
+			values[i] = values[i+1];
 		}
-		leftValues[9] = leftSensor.getNormalizedLightValue();
-		rightValues[9] = rightSensor.getNormalizedLightValue();
+		values[9] = sens.getNormalizedLightValue();
 	}
 	
 	/**

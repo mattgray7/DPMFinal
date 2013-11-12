@@ -12,7 +12,7 @@ public class Navigation extends Thread{
 	private UltrasonicSensor topUs;
 	private UltrasonicSensor bottomUs;
 	private final double POINT_THRESH = 1.0;
-	private final double ANGLE_THRESH = 0.5;
+	private final double ANGLE_THRESH = 3.0;
 	private final int FAST = 200;
 	private final int JOG = 150;
 	private final int SLOW = 100;
@@ -46,11 +46,12 @@ public class Navigation extends Thread{
 	 * @return void
 	 */
 	public void run(){
-		try {bts.sendSignal(2);} catch (IOException e1) {}
-		//scan();
-		/*travelTo(0.0, 60.0, false);
-		travelTo(60.0, 60.0, false);
-		travelTo(60.0, 0.0, false);
+		//try {bts.sendSignal(2);} catch (IOException e1) {}
+		
+		scan();
+		/*travelTo(-15.0, 75.0, false);
+		travelTo(45.0, 75.0, false);
+		travelTo(45.0, 15.0, false);
 		travelTo(0.0, 0.0, false);*/
 		//travelTo(100.0, 100.0, false);
 		try { Thread.sleep(5000); }catch (InterruptedException e) {}
@@ -91,10 +92,14 @@ public class Navigation extends Thread{
 	public void travelTo(double x, double y, boolean ignore){
 		double minAng;
 		boolean temp = true;
+		double distance = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()), 2) + Math.pow(Math.abs(y - odometer.getY()), 2));
+		double masterDist = distance;
 		while (Math.abs(x - odometer.getX()) > POINT_THRESH || Math.abs(y - odometer.getY()) > POINT_THRESH) {
 			
 			minAng = (Math.atan2(y - odometer.getY(), x - odometer.getX())) * (180.0 / Math.PI);
+			distance = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()), 2) + Math.pow(Math.abs(y - odometer.getY()), 2));
 
+			
 			if (minAng < 0)
 				minAng += 360.0;
 			
@@ -105,9 +110,14 @@ public class Navigation extends Thread{
 				temp = false;
 			}
 			
+			//after halfway through distance, recorrect angle
+			if (Math.abs((masterDist / distance) - 2) < 0.5){
+				this.turnTo(minAng, true);
+			}
+			
 			
 			//this.smoothTurnTo(minAng, x, y);
-			this.turnTo(minAng, true);
+			//this.turnTo(minAng, true);
 			/*if(Math.abs(minAng - odometer.getTheta()) > 5){
 				this.turnTo(minAng, true);
 			}*/
@@ -124,6 +134,92 @@ public class Navigation extends Thread{
 	 * @return void
 	 */
 	public void scan(){
+		double endAngle = odometer.getTheta() - 90.0;
+		turnTo(odometer.getTheta() + 90.0, true);
+		try {
+			Thread.sleep(500);
+		
+		} catch (InterruptedException e) {}
+		
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.forward();
+		rightMotor.backward();
+		
+		int dist;
+		Boolean object = false;
+		int objDist = 0;
+		//assuming 5 is the max objects the robot can distinguish in one square
+		int[][] objects = new int[4][5];
+		int objIndex = 0;
+		
+		while(odometer.getTheta() > endAngle){
+			
+			dist = getFilteredDistance();
+			
+			LCD.drawString("tacho:" + sensMotor.getTachoCount(), 0, 5, false);
+			
+			if(dist < 40){
+				if (object == false){
+					//first reading of object
+					object = true;
+					objDist = dist;
+					objects[0][objIndex] = dist;
+					objects[1][objIndex] = (int)odometer.getTheta();
+					Sound.beep();
+				}else{
+					//still reading an object
+					objDist = dist;
+				}
+			}
+			
+			if((Math.abs(objDist - dist) > 8) && (object == true)){
+					//end of object
+					objects[2][objIndex] = objDist;
+					objects[3][objIndex] = (int)odometer.getTheta();
+					objIndex++;
+					object = false;
+					Sound.beep();
+			}
+		}
+		
+		leftMotor.stop();
+		rightMotor.stop();
+		
+			//if it hasnt read the falling edge of the object, set it
+		if(object){
+			objects[2][objIndex] = objDist;
+			objects[3][objIndex] = (int)odometer.getTheta();
+			Sound.beep();
+		}
+		
+		
+		int travelDist = 0;
+		double travelAng = 0;
+		sensMotor.setSpeed(150);
+		sensMotor.backward();
+		sensMotor.rotate(-70, false);
+		sensMotor.stop();
+		
+		for(int i=0; i <= objIndex; i++){
+			
+			travelDist = ((objects[0][i] + objects[2][i])/2 - 11);	// average - the distance from claw to block
+			travelAng = ((objects[1][i] + objects[3][i])/2.0 + 8.0);	//average of two angles, 5 for tweaking
+			
+			if(travelDist > 0 ){
+				inspect(travelAng, travelDist);
+			}
+			
+			
+		}
+		
+		while(true){
+			LCD.drawString("2ndang:" + travelAng, 0, 6, false);
+			LCD.drawString("objs: " + (objIndex+1), 0, 7, false);
+		}
+		
+		
+		/*
 		//rotate to the left
 		Boolean object = false;
 		int objDist = 0;
@@ -197,7 +293,7 @@ public class Navigation extends Thread{
 		while(true){
 			LCD.drawString("2ndang:" + (odometer.getTheta() - travelAng), 0, 6, false);
 			LCD.drawString("objs: " + (objIndex+1), 0, 7, false);
-		}
+		}*/
 
 		
 	}
