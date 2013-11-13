@@ -6,20 +6,58 @@ import java.util.List;
 import lejos.nxt.Button;
 import lejos.nxt.ColorSensor;
 import lejos.nxt.LCD;
+import lejos.nxt.SensorPort;
 import lejos.robotics.Color;
 
-public class ObjectRecognition {
-	private final double COS_THETA_MARGIN = 0.001;
-	private final double LENGTH_THRESHOLD = 20.0;
+/**
+ * Class to recognize whether a block is a blue block or not
+ * 
+ * First, you should calibrate the blue block's color by calling the
+ * calibrateBlueBlock() method. If you don't, then it won't consider anything
+ * to be a blue block.
+ * 
+ * Then you can call checkColor() to verify if an object is blue or not.
+ * Objects that aren't bright enough will be rejected, so closer blue blocks
+ * have more chances or being recognized as blue block.
+ * 
+ * @author Nick
+ *
+ */
+public class ObjectRecog {
+	private final double COS_THETA_MARGIN = 0.005;
+	private final double LENGTH_THRESHOLD = 10.0;
 	
 	private ColorSensor colorSensor;
 	private Vector calibratedBlueColor;
+	
+	
+	
+	public static void main (String args[]){
+		ColorSensor cs = new ColorSensor(SensorPort.S1);
+		cs.setFloodlight(true);
+		ObjectRecog or = new ObjectRecog(cs);
+		
+		or.calibrateBlueBlock();
 
+		LCD.drawString("Press button", 0, 0);
+		LCD.drawString("to query", 0, 1);
+		
+		while(Button.waitForAnyPress() != Button.ID_ESCAPE){
+			LCD.clear();
+			
+			boolean isBlueBlock = or.checkColor();
+			
+			LCD.drawString("Press button", 0, 0);
+			LCD.drawString("to query", 0, 1);
+			LCD.drawString("Is blue: " + isBlueBlock, 0, 3);
+		}
+	}
+	
 	/**
 	 * Constructor
 	 * @param cs The color sensor located on the claw
 	 */
-	public ObjectRecognition(ColorSensor cs){
+	public ObjectRecog(ColorSensor cs){
 		colorSensor = cs;
 		calibratedBlueColor = new Vector(0.0, 0.0, 0.0);
 	}
@@ -43,10 +81,22 @@ public class ObjectRecognition {
 		Color c = colorSensor.getColor();
 		
 		Vector currentColor = new Vector(c.getRed(), c.getGreen(), c.getBlue());
-		double cosTheta = Vector.dot(calibratedBlueColor,  currentColor);
+		double cosTheta = Vector.cosTheta(currentColor, calibratedBlueColor);
 		
 		boolean isBlueBlock = (Math.abs(1.0 - cosTheta) < COS_THETA_MARGIN) &&
 				              currentColor.length() > LENGTH_THRESHOLD;
+		
+		/*
+		// Debugging information:
+		// Current color
+		LCD.drawString("+ " + (int)currentColor.getX() + ", " + (int)currentColor.getY() + ", " + (int)currentColor.getZ(), 0, 4);
+		// Calibrated color
+		LCD.drawString("+ " + (int)calibratedBlueColor.getX() + ", " + (int)calibratedBlueColor.getY() + ", " + (int)calibratedBlueColor.getZ(), 0, 5);
+		// CosTheta
+		LCD.drawString("$ " + cosTheta, 0, 6);
+		// Theta
+		LCD.drawString("% " + Math.acos(cosTheta) * 180.0 / Math.PI, 0, 7);
+		*/
 		
 		return isBlueBlock;
 	}
@@ -77,9 +127,12 @@ public class ObjectRecognition {
 			calibrationNumber++;
 		}
 		
+		LCD.clear();
+		
 		// This takes the ArrayList, transforms it to an array, and gets
 		// the average color
-		calibratedBlueColor = Vector.average((Vector[])colors.toArray());
+		Vector colorArray[] = colors.toArray(new Vector[colors.size()]);
+		calibratedBlueColor = Vector.average(colorArray);
 	}
 	
 	/**

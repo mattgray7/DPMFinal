@@ -7,7 +7,8 @@ public class Lift {
 	private static NXTRegulatedMotor armMotor;
 	private static NXTRegulatedMotor clampMotor;
 
-	/*public static void main(String[] args){
+	/*
+	public static void main(String[] args){
 		int buttonChoice = Button.waitForAnyPress();
 		//lowerArms();
 		clamp();
@@ -19,8 +20,8 @@ public class Lift {
 		try { Thread.sleep(2000); }catch (InterruptedException e) {}
 		//release();
 		//lowerArms();
-		
-	}*/
+	}
+	*/
 	
 	
 	/**
