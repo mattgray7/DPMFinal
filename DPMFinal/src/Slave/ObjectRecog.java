@@ -31,7 +31,7 @@ public class ObjectRecog {
 	private Vector calibratedBlueColor;
 	
 	
-	
+	/*
 	public static void main (String args[]){
 		ColorSensor cs = new ColorSensor(SensorPort.S1);
 		cs.setFloodlight(true);
@@ -52,6 +52,7 @@ public class ObjectRecog {
 			LCD.drawString("Is blue: " + isBlueBlock, 0, 3);
 		}
 	}
+	*/
 	
 	/**
 	 * Constructor
