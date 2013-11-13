@@ -61,15 +61,26 @@ public class SlaveController {
 		LCD.drawString("WAIT", 0, 4, false);
 		DataInputStream input = connection.openDataInputStream();
 		int command = 0;
-		try {
-			command = input.readInt();
-		} catch (IOException e) {}	//blocking
+		try {command = input.readInt();} catch (IOException e) {}	//blocking
 		
 		//test command
-		if(command == 2){
+		if(command == 1){
+			Sound.beep();
+			try {Thread.sleep(500);} catch (InterruptedException e) {}
 			Sound.beep();
 			lift.lowerArms(450);
+			lift.release();
+			replySignal(1);
 			Sound.beep();
+			waitForSignal();
+		}
+		
+		if(command == 2){
+			Sound.beep();
+			lift.clamp();
+			lift.raiseArms(300);
+			replySignal(1);
+			waitForSignal();
 		}
 		
 		try {input.close();} catch (IOException e) {}
@@ -83,7 +94,7 @@ public class SlaveController {
 	 * @param signal The signal sent from the master brick indicating which operation the slave should perform
 	 * @return void
 	 */
-	public void hasControl(int signal){
+	public static void hasControl(int signal){
 		
 	}
 	
@@ -92,7 +103,7 @@ public class SlaveController {
 	 * @param signal The confirmation or failure signal
 	 * @return void
 	 */
-	public void replySignal(int signal){
+	public static void replySignal(int signal){
 		
 	}
 }

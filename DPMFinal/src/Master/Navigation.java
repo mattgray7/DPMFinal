@@ -3,6 +3,7 @@ package Master;
 import java.io.IOException;
 
 import lejos.nxt.*;
+import lejos.nxt.ColorSensor.Color;
 
 public class Navigation extends Thread {
 
@@ -11,10 +12,12 @@ public class Navigation extends Thread {
 	private NXTRegulatedMotor rightMotor = Motor.C;
 	private UltrasonicSensor topUs;
 	private UltrasonicSensor bottomUs;
+	private ColorSensor colorSens;
 	
 	private final double POINT_THRESH = 0.5;
 	private final double ANGLE_THRESH = 5.0;
 	private final double CORNER_ANGLE_THRESH = .5;
+	private final int COLOR_THRESH = 330;
 	
 	private final int FAST = 200;
 	private final int JOG = 150;
@@ -33,7 +36,7 @@ public class Navigation extends Thread {
 	private double gx0 = 60.0;
 	private double gx1 = 90.0;
 	private double gy0 = 60.0;
-	private double gy1 = 90.0;;
+	private double gy1 = 90.0;
 	
 	private double[] xPath;
 	private double[] yPath;
@@ -49,12 +52,12 @@ public class Navigation extends Thread {
 	 * @param bot
 	 *            The bottom ultrasonic sensor
 	 */
-	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor top,
-			UltrasonicSensor bot) {
+	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor top, UltrasonicSensor bot, ColorSensor cs) {
 		topUs = top;
 		bottomUs = bot;
 		odometer = odom;
 		bts = sender;
+		colorSens = cs;
 		LW_RADIUS = odometer.getLeftRadius();
 		RW_RADIUS = odometer.getRightRadius();
 		WHEEL_BASE = odometer.getWheelBase();
@@ -69,7 +72,6 @@ public class Navigation extends Thread {
 	 * @return void
 	 */
 	public void run() {
-		// try {bts.sendSignal(2);} catch (IOException e1) {}
 
 		 scan();
 		/*travelTo(-15.0, 45.0, false);
@@ -78,6 +80,12 @@ public class Navigation extends Thread {
 		travelTo(0.0, 0.0, false);
 		turnTo(90.0, true, true);*/
 		// travelTo(100.0, 100.0, false);
+		
+		/*travelTo(0.0, 60.0, false);
+		travelTo(60.0, 60.0, false);
+		travelTo(60.0, 0.0, false);
+		travelTo(0.0, 0.0, false);*/
+		
 
 		try {
 			Thread.sleep(5000);
@@ -267,20 +275,19 @@ public class Navigation extends Thread {
 
 		int travelDist = 0;
 		double travelAng = 0;
-		sensMotor.setSpeed(150);
-		sensMotor.backward();
-		sensMotor.rotate(-70, false);
-		sensMotor.stop();
-
+		
+		
+		//try {bts.sendSignal(1);} catch (IOException e) {}	//1 for lower arms
+		
+		colorSens.setFloodlight(Color.RED);
 		for (int i = 0; i <= objIndex; i++) {
-
-			travelDist = ((objects[0][i] + objects[2][i]) / 2 - 11); 
+			travelDist = ((objects[0][i] + objects[2][i]) / 2 - 10); 
 			travelAng = ((objects[1][i] + objects[3][i]) / 2.0 + 8.0); 
-
 			if (travelDist > 0) {
 				inspect(travelAng, travelDist);
 			}
 		}
+		colorSens.setFloodlight(false);
 
 		while (true) {
 			LCD.drawString("2ndang:" + travelAng, 0, 6, false);
@@ -421,27 +428,75 @@ public class Navigation extends Thread {
 		 * gets close enough. either give control to slave while travelling
 		 * forward, then slave tells robot to stop, or we use virtual ports
 		 */
-
+		double x = odometer.getX();
+		double y = odometer.getY();
+		double distTraveled = 0;
 		turnTo(angle, true, true);
 		leftMotor.setSpeed(SLOW);
 		rightMotor.setSpeed(SLOW);
 		leftMotor.forward();
 		rightMotor.forward();
-		leftMotor.rotate(convertDistance(LW_RADIUS, distance), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, distance), false);
+		
+		while(colorSens.getNormalizedLightValue() < COLOR_THRESH){
+			//check for driving too far
+			LCD.drawString("cs:" + colorSens.getNormalizedLightValue(), 0, 5);
+		}
+		
+		distTraveled = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()),2) + Math.pow(Math.abs(y - odometer.getY()),2));
+		
 		leftMotor.stop();
 		rightMotor.stop();
-		Sound.beep();
+		
+		colorSens.setFloodlight(Color.BLUE);
+		try {Thread.sleep(100);} catch (InterruptedException e) {}
+		
+		if(colorSens.getNormalizedLightValue() > 330){
+			Sound.beep();
+			capture(distTraveled);		//takes the starting x and y as input
+		}else{
+			leftMotor.rotate(-convertDistance(LW_RADIUS, distTraveled), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, distTraveled), false);
+			leftMotor.stop();
+			rightMotor.stop();
+		}
 
-		// colour check
-
-		leftMotor.backward();
-		rightMotor.backward();
-		leftMotor.rotate(-convertDistance(LW_RADIUS, distance), true);
-		rightMotor.rotate(-convertDistance(RW_RADIUS, distance), false);
+	}
+	
+	public void capture(double distance){
+		
+		if((distance/2.0) > 10){
+			distance = distance/2.0;
+		}else{
+			distance = 10;
+		}
+		
+		leftMotor.rotate(-convertDistance(LW_RADIUS, 18), true);//back up far enough to bring claw down
+		rightMotor.rotate(-convertDistance(RW_RADIUS, 18), false);
 		leftMotor.stop();
 		rightMotor.stop();
-
+		
+		sensMotor.setSpeed(150);
+		sensMotor.forward();
+		sensMotor.rotate(80, false);
+		sensMotor.stop();
+		
+		try {
+			bts.sendSignal(1);
+		} catch (IOException e) {
+			Sound.buzz();
+		}	//1 for lower arms
+		
+		try {Thread.sleep(2000);} catch (InterruptedException e1) {}
+		
+		leftMotor.rotate(convertDistance(LW_RADIUS, distance+7), true);//travel same distance forward with claw down
+		rightMotor.rotate(convertDistance(RW_RADIUS, distance+7), false);//dist may need to be less since the claw is down
+		
+		try {bts.sendSignal(2);} catch (IOException e) {}	//2 for clamp and raise arms
+		
+		try {Thread.sleep(5000);} catch (InterruptedException e1) {}
+		
+		Sound.buzz();
+		
 	}
 
 	/**

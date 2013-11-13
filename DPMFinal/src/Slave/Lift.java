@@ -7,7 +7,7 @@ public class Lift {
 	private static NXTRegulatedMotor armMotor = Motor.A;
 	private static NXTRegulatedMotor clampMotor = Motor.B;
 
-	public static void main(String[] args){
+	/*public static void main(String[] args){
 		int buttonChoice = Button.waitForAnyPress();
 		
 		//lowerArms(450);
@@ -21,7 +21,7 @@ public class Lift {
 		} catch (InterruptedException e) {
 		}
 
-	}
+	}*/
 	
 	
 	/**
@@ -54,7 +54,9 @@ public class Lift {
 	 * @return void
 	 */
 	public static void raiseArms(int angle){
-		armMotor.setSpeed(300);
+		clampMotor.setSpeed(20);
+		clampMotor.rotate(-110, true);
+		armMotor.setSpeed(450);
 		armMotor.forward();
 		armMotor.rotate(angle, false);
 		armMotor.stop();
@@ -68,9 +70,9 @@ public class Lift {
 	 * @return void
 	 */
 	public static void clamp(){
-		clampMotor.setSpeed(100);
+		clampMotor.setSpeed(150);
 		clampMotor.backward();
-		clampMotor.rotate(-95, false);
+		clampMotor.rotate(-90, false);
 	}
 	
 	
@@ -79,6 +81,10 @@ public class Lift {
 	 * @return void
 	 */
 	public static void release(){
+		clampMotor.setSpeed(100);
+		clampMotor.forward();
+		clampMotor.rotate(95, false);
+		clampMotor.stop();
 		/*clampMotor.setSpeed(100);
 		clampMotor.forward();
 		
