@@ -20,7 +20,8 @@ public class BTSendController {
 	
 	
 	public static final int DEFAULT_PERIOD = 25;
-	public static Odometer odo = new Odometer(DEFAULT_PERIOD, true);
+	//public static Odometer odo = new Odometer(DEFAULT_PERIOD, true);
+	public static Odometer odo = new Odometer(2.67, 2.668, 17.4);
 	public static BTSend bts = new BTSend();
 	
 	public static Navigation nav = new Navigation(odo, bts, topUs, bottomUs);
@@ -50,6 +51,7 @@ public class BTSendController {
 		//bts.establishConnection();
 
 		//oc.start();
+		odo.start();
 		nav.start();
 
 		
