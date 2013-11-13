@@ -4,25 +4,9 @@ package Slave;
 import lejos.nxt.*;
 
 public class Lift {
-	private static NXTRegulatedMotor armMotor;
-	private static NXTRegulatedMotor clampMotor;
+	private static NXTRegulatedMotor armMotor = Motor.A;
+	private static NXTRegulatedMotor clampMotor = Motor.B;
 
-	/*
-	public static void main(String[] args){
-		int buttonChoice = Button.waitForAnyPress();
-		//lowerArms();
-		clamp();
-		raiseArms();
-		lowerArms();
-		release();
-		//new commit test
-		
-		try { Thread.sleep(2000); }catch (InterruptedException e) {}
-		//release();
-		//lowerArms();
-	}
-	*/
-	
 	
 	/**
 	 * Constructor
@@ -40,16 +24,11 @@ public class Lift {
 	 * @param angle The angle in which to rotate the arm
 	 * @return void
 	 */
-	public void lowerArms(int angle){
-		/*Sound.buzz();
-		
+	public static void lowerArms(int angle){
 		armMotor.setSpeed(200);
 		armMotor.backward();
-		
-		try { Thread.sleep(500); }catch (InterruptedException e) {}
-		
+		armMotor.rotate(-angle, false);
 		armMotor.stop();
-		Sound.buzz();*/
 	}
 	
 	
@@ -58,12 +37,12 @@ public class Lift {
 	 * @param angle The angle in which to rotate the arm
 	 * @return void
 	 */
-	public void raiseArms(int angle){
-		/*
-		armMotor.rotate(300, false);
+	public static void raiseArms(int angle){
+		armMotor.setSpeed(300);
+		armMotor.forward();
+		armMotor.rotate(angle, false);
 		armMotor.stop();
-		clampMotor.lock(50);
-		*/
+		
 		
 	}
 	
@@ -72,9 +51,10 @@ public class Lift {
 	 * Clamps the claws together
 	 * @return void
 	 */
-	public void clamp(){
-		//clampMotor.setSpeed(100);
-		//clampMotor.backward();
+	public static void clamp(){
+		clampMotor.setSpeed(100);
+		clampMotor.backward();
+		clampMotor.rotate(-95, false);
 	}
 	
 	
