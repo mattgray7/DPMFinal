@@ -13,7 +13,6 @@ import lejos.nxt.comm.Bluetooth;
 
 public class BTSend {
 
-	
 	private static BTConnection connection;
 	
 	/**

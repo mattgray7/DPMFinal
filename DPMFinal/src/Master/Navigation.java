@@ -54,27 +54,7 @@ public class Navigation extends Thread{
 		travelTo(45.0, 15.0, false);
 		travelTo(0.0, 0.0, false);*/
 		//travelTo(100.0, 100.0, false);
-		try { Thread.sleep(5000); }catch (InterruptedException e) {}
-		
-		//turnTo(75.0, true);
-		/*turnTo(50.0, true);
-		leftMotor.setSpeed(FAST);
-		rightMotor.setSpeed(FAST);
-		leftMotor.forward();
-		rightMotor.forward();
-		try { Thread.sleep(5000); }catch (InterruptedException e) {}
-		turnTo(13.0, true);
-		leftMotor.setSpeed(FAST);
-		rightMotor.setSpeed(FAST);
-		leftMotor.forward();
-		rightMotor.forward();
-		try { Thread.sleep(5000); }catch (InterruptedException e) {}
-		turnTo(0.0, true);
-		leftMotor.setSpeed(FAST);
-		rightMotor.setSpeed(FAST);
-		leftMotor.forward();
-		rightMotor.forward();*/
-		
+	
 		try { Thread.sleep(5000); }catch (InterruptedException e) {}
 		
 	}
@@ -208,94 +188,14 @@ public class Navigation extends Thread{
 			
 			if(travelDist > 0 ){
 				inspect(travelAng, travelDist);
-			}
-			
-			
+			}	
 		}
 		
 		while(true){
 			LCD.drawString("2ndang:" + travelAng, 0, 6, false);
 			LCD.drawString("objs: " + (objIndex+1), 0, 7, false);
 		}
-		
-		
-		/*
-		//rotate to the left
-		Boolean object = false;
-		int objDist = 0;
-		
-		//assuming 5 is the max objects the robot can distinguish in one square
-		int[][] objects = new int[4][5];
-		int objIndex = 0;
-		
-		sensMotor.setSpeed(150);
-		sensMotor.backward();
-		sensMotor.rotate(-70, false);
-		sensMotor.stop();
-		
-		sensMotor.setSpeed(20);
-		sensMotor.forward();
-		sensMotor.rotate(140, true);
-		
-		int dist;
-		
-		while(sensMotor.getTachoCount() < 70){
-			dist = getFilteredDistance();
-			
-			LCD.drawString("tacho:" + sensMotor.getTachoCount(), 0, 5, false);
-			
-			if(dist < 40){
-				if (object == false){
-					//first reading of object
-					object = true;
-					objDist = dist;
-					objects[0][objIndex] = dist;
-					objects[1][objIndex] = sensMotor.getTachoCount();
-					Sound.beep();
-				}else{
-					//still reading an object
-					objDist = dist;
-				}
-			}
-			
-			if((Math.abs(objDist - dist) > 4) && (object == true)){
-				//end of object
-				objects[2][objIndex] = objDist;
-				objects[3][objIndex] = sensMotor.getTachoCount();
-				objIndex++;
-				object = false;
-				Sound.beep();
-			}
-		}
-		
-		//if it hasnt read the falling edge of the object, set it
-		if(object){
-			objects[2][objIndex] = objDist;
-			objects[3][objIndex] = 90;
-			objIndex++;
-		}
-		
-		int travelDist = 0;
-		double travelAng = 0;
-		
-		for(int i=0; i <= objIndex; i++){
-			
-			travelDist = ((objects[0][i] + objects[2][i])/2 - 11);	// average - the distance from claw to block
-			travelAng = ((objects[1][i] + objects[3][i])/2.0);	//average of two angles, 5 for tweaking
-			
-			if(objIndex > 0){
-				inspect((odometer.getTheta() - travelAng), travelDist);
-			}
-			
-			
-		}
-		
-		while(true){
-			LCD.drawString("2ndang:" + (odometer.getTheta() - travelAng), 0, 6, false);
-			LCD.drawString("objs: " + (objIndex+1), 0, 7, false);
-		}*/
 
-		
 	}
 	
 	public void smoothTurnTo(double angle, double x, double y){
