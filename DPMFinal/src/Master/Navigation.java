@@ -10,7 +10,7 @@ public class Navigation extends Thread {
 	private NXTRegulatedMotor sensMotor = Motor.A;
 	private NXTRegulatedMotor leftMotor = Motor.B;
 	private NXTRegulatedMotor rightMotor = Motor.C;
-	private UltrasonicSensor topUs;
+
 	private UltrasonicSensor bottomUs;
 	private ColorSensor colorSens;
 	
@@ -31,6 +31,7 @@ public class Navigation extends Thread {
 	public Boolean isTurning = false;
 	public Boolean isTraveling = false;
 	public Boolean isFinished = false;
+	public Boolean hasBlock = false;
 	
 	private double theta;
 	private double gx0 = 60.0;
@@ -38,8 +39,11 @@ public class Navigation extends Thread {
 	private double gy0 = 60.0;
 	private double gy1 = 90.0;
 	
-	private double[] xPath;
-	private double[] yPath;
+	private double[] xPath = new double[20];
+	private double[] yPath = new double[20];
+	
+	private double xDestination = 0.0;
+	private double yDestination = 0.0;
 
 	// test
 	private BTSend bts;
@@ -52,8 +56,7 @@ public class Navigation extends Thread {
 	 * @param bot
 	 *            The bottom ultrasonic sensor
 	 */
-	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor top, UltrasonicSensor bot, ColorSensor cs) {
-		topUs = top;
+	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor bot, ColorSensor cs) {
 		bottomUs = bot;
 		odometer = odom;
 		bts = sender;
@@ -66,14 +69,31 @@ public class Navigation extends Thread {
 		this.theta = odometer.getTheta();
 	}
 
+
 	/**
 	 * Controls the flow of execution in the Navigation class
 	 * 
 	 * @return void
 	 */
 	public void run() {
-
-		 scan();
+		travelTo(30.0, 30.0, false);
+		turnTo(90.0, true, true);
+		generatePath();
+		scan();
+		
+		//for loop starts at 1 since first elements are current position
+		for(int i=1; i < xPath.length; i++){
+			travelTo(xPath[i], yPath[i], false);
+			scan();
+			
+			if((Math.abs(odometer.getX() - xDestination) < POINT_THRESH) 
+				&& (Math.abs(odometer.getY() - yDestination) < POINT_THRESH)){
+				Sound.beep();
+				break;
+			}
+			
+		}
+		 //scan();
 		/*travelTo(-15.0, 45.0, false);
 		travelTo(45.0, 45.0, false);
 		travelTo(45.0, -15.0, false);
@@ -89,8 +109,7 @@ public class Navigation extends Thread {
 
 		try {
 			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-		}
+		} catch (InterruptedException e) {}
 
 	}
 
@@ -115,6 +134,7 @@ public class Navigation extends Thread {
 		 boolean temp = true; 
 		 double distance = Math.sqrt(Math.pow(Math.abs(x -odometer.getX()), 2) + Math.pow(Math.abs(y - odometer.getY()), 2));
 		 double masterDist = distance; 
+		 double masterAng = 0;;
 		 while (Math.abs(x - odometer.getX()) > POINT_THRESH || Math.abs(y - odometer.getY()) > POINT_THRESH) {
 	  
 			 minAng = (Math.atan2(y - odometer.getY(), x - odometer.getX())) * (180.0/ Math.PI); 
@@ -126,7 +146,8 @@ public class Navigation extends Thread {
 			 //Only correct angle during first iteration of the call, otherwise the robot is too oscillatory. 
 			 //This is why coordinates are split into 30cmsegments, update every 30cm 
 			 if (temp){ 
-				 this.turnTo(minAng, true, true); 
+				 this.turnTo(minAng, true, true);
+				 masterAng = minAng;
 				 temp = false;
 			 }
 	  
@@ -145,6 +166,7 @@ public class Navigation extends Thread {
 			 this.setSpeeds(FAST, FAST); 
 		 } 
 		 this.setSpeeds(0,0); 
+		 turnTo(masterAng, true, true);
 	}
 	 
 	 /**
@@ -282,41 +304,32 @@ public class Navigation extends Thread {
 		colorSens.setFloodlight(Color.RED);
 		for (int i = 0; i <= objIndex; i++) {
 			travelDist = ((objects[0][i] + objects[2][i]) / 2 - 10); 
-			travelAng = ((objects[1][i] + objects[3][i]) / 2.0 + 8.0); 
+			travelAng = ((objects[1][i] + objects[3][i]) / 2.0 + 6.0); 
 			if (travelDist > 0) {
-				inspect(travelAng, travelDist);
+				if (!hasBlock){
+					inspect(travelAng, travelDist);
+				}else{
+					
+					travelTo(gx0, gy0, false);
+					turnTo(55.0, true, true);
+					try {bts.sendSignal(1);} catch (IOException e) {}	//1 for lower arms and release
+					try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+
+					Sound.beep();
+					try {Thread.sleep(500);} catch (InterruptedException e1) {}
+					Sound.beep();
+					try {Thread.sleep(500);} catch (InterruptedException e1) {}
+					Sound.beep();
+					
+				}
 			}
 		}
 		colorSens.setFloodlight(false);
 
-		while (true) {
-			LCD.drawString("2ndang:" + travelAng, 0, 6, false);
-			LCD.drawString("objs: " + (objIndex + 1), 0, 7, false);
-		}
 
 	}
 
-	public void smoothTurnTo(double angle, double x, double y) {
-		isTurning = true;
-		double error = angle - odometer.getTheta();
 
-		while (Math.abs(error) > ANGLE_THRESH) {
-			angle = (Math.atan2(y - odometer.getY(), x - odometer.getX()))
-					* (180.0 / Math.PI);
-			error = angle - odometer.getTheta();
-
-			if (error < 0) {
-				leftMotor.setSpeed(200 + (int) (error * 3.5));
-				rightMotor.setSpeed(180);
-				Sound.beep();
-			} else {
-				leftMotor.setSpeed(180);
-				rightMotor.setSpeed(200 + (int) (error * 3));
-				Sound.beep();
-			}
-		}
-		isTurning = false;
-	}
 	
 	/**
 	 * Will generate a path of points that lead from the starting position
@@ -340,10 +353,11 @@ public class Navigation extends Thread {
 	    double[] ypath = new double[20];
 	    double length = xpath.length;
 	    
-	    xpath[0] = x + 30.0;     //first point manually chosen
+	    xpath[0] = x;     //first point manually chosen
 	    ypath[0] = y;
+
 	    
-	    for(int i=0; i< xpath.length-1; i++){
+	    for(int i=0; i< xpath.length-2; i++){
 	      if(xpath[i] <= x0){
 	        if ((xDest - xpath[i]) > 30.0){
 	          xpath[i+1] = xpath[i] + 30.0;
@@ -374,8 +388,10 @@ public class Navigation extends Thread {
 	        }
 	      }
 	    }
+	    xDestination = xDest;
+	    yDestination = yDest;
 	    
-	    for(int i=0; i <= length; i++){
+	    for(int i=0; i < length; i++){
 	    	xPath[i] = xpath[i];
 	    	yPath[i] = ypath[i];
 	    }
@@ -452,6 +468,7 @@ public class Navigation extends Thread {
 		
 		if(colorSens.getNormalizedLightValue() > 330){
 			Sound.beep();
+			hasBlock = true;
 			capture(distTraveled);		//takes the starting x and y as input
 		}else{
 			leftMotor.rotate(-convertDistance(LW_RADIUS, distTraveled), true);
@@ -486,14 +503,18 @@ public class Navigation extends Thread {
 			Sound.buzz();
 		}	//1 for lower arms
 		
-		try {Thread.sleep(2000);} catch (InterruptedException e1) {}
+		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
 		
 		leftMotor.rotate(convertDistance(LW_RADIUS, distance+7), true);//travel same distance forward with claw down
 		rightMotor.rotate(convertDistance(RW_RADIUS, distance+7), false);//dist may need to be less since the claw is down
 		
-		try {bts.sendSignal(2);} catch (IOException e) {}	//2 for clamp and raise arms
+		try {bts.sendSignal(2);} catch (IOException e) {Sound.buzz();}	//2 for clamp and raise arms
+		//try {Thread.sleep(5000);} catch (InterruptedException e1) {}
 		
-		try {Thread.sleep(5000);} catch (InterruptedException e1) {}
+		Sound.beep();
+		try {Thread.sleep(750);} catch (InterruptedException e1) {}
+		Sound.beep();
+
 		
 		Sound.buzz();
 		
