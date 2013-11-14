@@ -7,22 +7,7 @@ public class Lift {
 	private static NXTRegulatedMotor armMotor = Motor.A;
 	private static NXTRegulatedMotor clampMotor = Motor.B;
 
-	/*public static void main(String[] args){
-		int buttonChoice = Button.waitForAnyPress();
-		
-		//lowerArms(450);
-		//raiseArms(455);
-		
-		clamp();
-		raiseArms(300);
-		
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-		}
 
-	}*/
-	
 	
 	/**
 	 * Constructor
@@ -33,6 +18,25 @@ public class Lift {
 		armMotor = arm;
 		clampMotor = clamp;
 	}
+	
+	/*public static void main(String[] args){
+		lowerArms(450);
+		Sound.beep();
+		try {Thread.sleep(500);} catch (InterruptedException e) {}
+		
+		release();
+		Sound.beep();
+		try {Thread.sleep(1000);} catch (InterruptedException e) {}
+		
+		clamp();
+		Sound.beep();
+		try {Thread.sleep(500);} catch (InterruptedException e) {}
+		
+		raiseArms(450);
+		Sound.beep();
+		try {Thread.sleep(500);} catch (InterruptedException e) {}
+		
+	}*/
 	
 	
 	/**
@@ -54,11 +58,9 @@ public class Lift {
 	 * @return void
 	 */
 	public static void raiseArms(int angle){
-		clampMotor.setSpeed(20);
-		clampMotor.rotate(-110, true);
-		armMotor.setSpeed(450);
+		armMotor.setSpeed(550);
 		armMotor.forward();
-		armMotor.rotate(angle, false);
+		armMotor.rotate(angle, false);//maybe true?
 		armMotor.stop();
 		
 		
@@ -70,9 +72,13 @@ public class Lift {
 	 * @return void
 	 */
 	public static void clamp(){
+		//clampMotor.flt();
 		clampMotor.setSpeed(150);
 		clampMotor.backward();
 		clampMotor.rotate(-90, false);
+		clampMotor.flt();
+		//clampMotor.setSpeed(20);
+		//clampMotor.backward();
 	}
 	
 	
@@ -85,6 +91,8 @@ public class Lift {
 		clampMotor.forward();
 		clampMotor.rotate(95, false);
 		clampMotor.stop();
+		//clampMotor.rotate(95, false);
+		//clampMotor.stop();
 		/*clampMotor.setSpeed(100);
 		clampMotor.forward();
 		
