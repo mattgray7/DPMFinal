@@ -23,13 +23,13 @@ public class BTSend {
 	 */
 	public void sendSignal(int signal) throws IOException{
 		DataOutputStream output = connection.openDataOutputStream();
-		DataInputStream input = connection.openDataInputStream();
+		//DataInputStream input = connection.openDataInputStream();
 		try
 		{
 			output.writeInt(signal);
 			output.flush();
-			int reply = input.readInt();	//blocking, will wait for reply signal (hopefully)
-			input.close();
+			//int reply = input.readInt();	//blocking, will wait for reply signal (hopefully)
+			//input.close();
 			output.close();
 			//Sound.buzz();
 			
@@ -40,7 +40,8 @@ public class BTSend {
 			Sound.beep();
 			LCD.drawString("Could not send signal", 0, 0, false);
 		}
-		output.close();
+		//input.close();
+		//output.close();
 	}
 	
 	/**
@@ -75,5 +76,7 @@ public class BTSend {
 		}
 		
 	}
+	
+
 	
 }
