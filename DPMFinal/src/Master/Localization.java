@@ -5,16 +5,21 @@ import lejos.nxt.*;
 public class Localization {
 
 	public enum LocalizationType { FALLING_EDGE, RISING_EDGE };
-	public static double ROTATION_SPEED = 30;
+	private static double ROTATION_SPEED = 30;
+	private final double cSensorDist = 10.5;
 	private NXTRegulatedMotor leftMotor = Motor.B, rightMotor = Motor.C;
 	private Odometer odo;
 	private UltrasonicSensor us;
 	private LocalizationType locType;
+	private ColorSensor cs;
+	private Navigation nav;
 	//private Navigation nav;
 	
-	public Localization(Odometer odo, UltrasonicSensor us) {
+	public Localization(Odometer odo, UltrasonicSensor us, Navigation navi, ColorSensor colsens) {
 		this.odo = odo;
 		//this.nav = nav;
+		this.cs = colsens;
+		this.nav = navi;
 		this.us = us;
 		this.locType = locType;
 		us.off();
@@ -66,11 +71,12 @@ public class Localization {
 				theta += odo.getTheta();
 			}
 
-			odo.setX(0.0);	//reset x and y positions
-			odo.setY(0.0);
+			odo.setX(-15.0);	//reset x and y positions
+			odo.setY(-15.0);
 			odo.setTheta(theta);	//update new theta
+			//nav.travelTo(0.0,0.0,false);
 			
-			//nav.turnTo(90.0,true);
+			nav.turnTo(90.0,true, true);
 			
 			
 			//nav.turnTo(90.0,true);	//only for test angle measurement
@@ -95,6 +101,7 @@ public class Localization {
 			nav.turnTo(90.0, true);*/
 
 		} else {
+			//this one runs
 			//spin until a wall is read, latch the angle
 			while(!wallInSight()){
 				spinRight();
@@ -117,18 +124,23 @@ public class Localization {
 			
 			//tutorial equations, swapped because odometer orientation is swapped
 			if (angleA > angleB) {
+				Sound.buzz();
 				theta = 240 - ((angleA + angleB)/2);
 				theta += odo.getTheta();
 			} else if (angleA < angleB) {
+				Sound.beep();
 				theta = 45.0 - ((angleA + angleB)/2);
 				theta += odo.getTheta();
 			}
 			
 			//reset x and y position, update theta
-			odo.setX(0.0);
-			odo.setY(0.0);
+			odo.setX(-10.0);
+			odo.setY(-5.0);
 			odo.setTheta(theta);
-			//nav.turnTo(90.0,true);
+			//nav.travelTo(0.0,0.0,false);
+			
+			nav.turnTo(90.0,true, true);
+			try {Thread.sleep(500);} catch (InterruptedException e) {}
 
 			
 			
@@ -156,6 +168,55 @@ public class Localization {
 			rightMotor.forward();*/
 
 		}
+	}
+	
+	public void doLightLocalization() {
+		nav.travelTo(0.0,0.0,false);
+		Sound.buzz();
+		boolean spinning;
+		double thetaX;
+		double thetaY;
+		double x;
+		double y;
+		//Angle array
+		double[] angles = new double[4];
+		//nav.travelTo(8, 8, true);
+		cs.setFloodlight(true);
+		//Spin and clock angles at which black lines are detected
+		spinLeft();
+		for (int i=0; i<4; i++) {
+			spinning = true;
+			while (spinning) {
+				LCD.clear();
+				LCD.drawInt(cs.getNormalizedLightValue(), 0, 7);
+				if (cs.getNormalizedLightValue() < 490) {
+					angles[i] = odo.getTheta();	
+					Sound.beep();
+					//Sleep thread to detect line only one time
+					try {
+						Thread.sleep(100);
+					}
+					catch (Exception e) {}
+					spinning = false;
+				}
+			}
+		}
+		
+		//Calculate angle difference when detecting each line on x and y axis
+		thetaY = Math.abs(angles[0] - angles[2]);
+		thetaX = Math.abs(angles[1] - angles[3]);
+		//Calculate coordinates
+		x = -cSensorDist * Math.cos(Math.toRadians(thetaY/2));
+		y = -cSensorDist * Math.cos(Math.toRadians(thetaX/2));
+		//Update coordinates in odometer, theta is not updated
+		odo.setX(x);
+		odo.setY(y);
+		//Travel to proper (0,0) coordinates
+		nav.travelTo(0, 0, false);
+		nav.turnTo(90.0, true, true);
+		odo.setX(x);
+		odo.setY(y);
+		
 	}
 	
 	//returns true if a wall is close enough to be considered
