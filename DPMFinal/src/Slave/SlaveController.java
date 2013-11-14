@@ -14,7 +14,9 @@ public class SlaveController {
 	private static NXTRegulatedMotor armMotor = Motor.A;
 	private static NXTRegulatedMotor clampMotor = Motor.B;
 	private static Lift lift = new Lift(armMotor, clampMotor);
-	static BTConnection connection;
+	private static BTConnection connection;
+	
+	private static int testCount = 0;
 	
 	/**
 	 * Constructor
@@ -58,31 +60,37 @@ public class SlaveController {
 	 * @return void
 	 */
 	public static void waitForSignal(){
-		LCD.drawString("WAIT", 0, 4, false);
+		LCD.drawString(" " + testCount + " signals sent", 0, 4, false);
 		DataInputStream input = connection.openDataInputStream();
 		int command = 0;
 		try {command = input.readInt();} catch (IOException e) {}	//blocking
 		
 		//test command
 		if(command == 1){
+			testCount++;
 			Sound.beep();
 			try {Thread.sleep(500);} catch (InterruptedException e) {}
 			Sound.beep();
 			lift.lowerArms(450);
 			lift.release();
-			replySignal(1);
+			//replySignal(1);
 			Sound.beep();
+			try {input.close();} catch (IOException e) {}
 			waitForSignal();
 		}
 		
 		if(command == 2){
+			testCount++;
 			Sound.beep();
 			lift.clamp();
-			lift.raiseArms(300);
-			replySignal(1);
+			lift.raiseArms(400);
+			//replySignal(1);
+			Sound.beep();
+			try {input.close();} catch (IOException e) {}
 			waitForSignal();
 		}
 		
+
 		try {input.close();} catch (IOException e) {}
 		connection.close();
 		
@@ -104,6 +112,19 @@ public class SlaveController {
 	 * @return void
 	 */
 	public static void replySignal(int signal){
-		
+		DataOutputStream output = connection.openDataOutputStream();
+
+		try
+		{
+			output.writeInt(signal);
+			output.flush();
+			output.close();
+		}
+		catch(Exception ioe)
+		{
+			Sound.beep();
+			LCD.drawString("Could not send signal", 0, 0, false);
+		}
+
 	}
 }
