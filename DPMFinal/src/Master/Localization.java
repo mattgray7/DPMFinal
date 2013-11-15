@@ -77,28 +77,6 @@ public class Localization {
 			//nav.travelTo(0.0,0.0,false);
 			
 			nav.turnTo(90.0,true, true);
-			
-			
-			//nav.turnTo(90.0,true);	//only for test angle measurement
-			
-			//turn to face back wall, get y distance
-		    /*nav.turnTo(270.0, false);	
-			double yDist = getFilteredData();
-			yDist -= 28; 	//subtract the length of the tile minus the distance from sensor to wheel base
-	
-			//turn to face left wall, get x distance
-			nav.turnTo(180.0, false);
-			double xDist = getFilteredData();
-			xDist -= 28;	//subtract the length of the tile minus the distance from sensor to wheel base
-			
-			odo.setX(xDist);
-			odo.setY(yDist);
-			
-			// Travel close to the intersection. If the robot were to go directly 
-			// to (0,0), the light sensor would immediately read a line and the
-			// line count would be off
-			nav.travelTo(-2.0,-2.0);
-			nav.turnTo(90.0, true);*/
 
 		} else {
 			//this one runs
@@ -142,30 +120,6 @@ public class Localization {
 			nav.turnTo(90.0,true, true);
 			try {Thread.sleep(500);} catch (InterruptedException e) {}
 
-			
-			
-			//nav.turnTo(90.0,true); //test for angle measurement
-			
-			//face back wall, get y distance
-			/*nav.turnTo(270.0, false);
-			double yDist = getFilteredData();
-			yDist -= 28;	//offset for tile length and distance from sensor to wheel base
-			
-			//face left wall, get x distance
-			nav.turnTo(180.0, false);
-			double xDist = getFilteredData();
-			xDist -= 28;	//offset for tile length and distance from sensor to wheel base
-			
-			//update x and y coordinates
-			odo.setX(xDist);
-			odo.setY(yDist);
-			
-			//travel close to (0,0), but not exactly 
-			nav.travelTo(-2.0,-2.0);
-			nav.turnTo(90.0, true);//90
-			
-			leftMotor.forward();
-			rightMotor.forward();*/
 
 		}
 	}

@@ -14,6 +14,10 @@ import Master.Odometer;
 
 public class BTSendController {
 	
+	public static final double LW_RADIUS = 2.675;
+	public static final double RW_RADIUS = 2.685;
+	public static final double WHEEL_BASE = 17.3;
+	
 	public static UltrasonicSensor bottomUs = new UltrasonicSensor(SensorPort.S1);
 	public static ColorSensor odoSensor= new ColorSensor(SensorPort.S2);
 	public static ColorSensor colorSensor = new ColorSensor(SensorPort.S3);
@@ -22,10 +26,11 @@ public class BTSendController {
 	
 	public static final int DEFAULT_PERIOD = 25;
 	//public static Odometer odo = new Odometer(DEFAULT_PERIOD, true);
-	public static Odometer odo = new Odometer(2.67, 2.668, 17.4);
+	public static Odometer odo = new Odometer(LW_RADIUS, RW_RADIUS, WHEEL_BASE);
 	public static BTSend bts = new BTSend();
 	
-	public static Navigation nav = new Navigation(odo, bts, bottomUs, colorSensor);
+	public static ObjectRecognition or = new ObjectRecognition(colorSensor);
+	public static Navigation nav = new Navigation(odo, bts, bottomUs, colorSensor, or);
 	public static OdometryCorrection oc = new OdometryCorrection(odo, odoSensor, nav);
 
 	public static LCDInfo lc = new LCDInfo(odo);
@@ -47,10 +52,11 @@ public class BTSendController {
 	 */
 	public static void main(String[] args){
 		int buttonChoice = Button.waitForAnyPress();
+		or.calibrateBlueBlock();
 		bts.establishConnection();
 		odo.start();
-		usl.doLocalization();
-		usl.doLightLocalization();
+		//usl.doLocalization();
+		//usl.doLightLocalization();
 
 
 		//oc.start();

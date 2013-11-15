@@ -10,7 +10,6 @@ import lejos.nxt.comm.Bluetooth;
 
 public class SlaveController {
 	
-	public static ColorSensor colorSens= new ColorSensor(SensorPort.S1);
 	private static NXTRegulatedMotor armMotor = Motor.A;
 	private static NXTRegulatedMotor clampMotor = Motor.B;
 	private static Lift lift = new Lift(armMotor, clampMotor);
@@ -68,9 +67,6 @@ public class SlaveController {
 		//test command
 		if(command == 1){
 			testCount++;
-			Sound.beep();
-			try {Thread.sleep(500);} catch (InterruptedException e) {}
-			Sound.beep();
 			lift.lowerArms(450);
 			lift.release();
 			//replySignal(1);
