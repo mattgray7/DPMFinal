@@ -159,7 +159,7 @@ public class Navigation extends Thread {
 			while (Math.abs(error) > CORNER_ANGLE_THRESH) { 
 				error = (angle - this.odometer.getTheta())%360;
 		  
-				LCD.drawString("minang:" + angle, 0, 4, true);
+				//LCD.drawString("minang:" + angle, 0, 4, true);
 		  
 				if (error < -180.0) { 
 					this.setSpeeds(-SLOW, SLOW); 
@@ -175,7 +175,7 @@ public class Navigation extends Thread {
 			while (Math.abs(error) > ANGLE_THRESH) { 
 				error = (angle - this.odometer.getTheta())%360;
 		  
-				LCD.drawString("minang:" + angle, 0, 4, true);
+				//LCD.drawString("minang:" + angle, 0, 4, true);
 		  
 				if (error < -180.0) { 
 					this.setSpeeds(-SLOW, SLOW); 

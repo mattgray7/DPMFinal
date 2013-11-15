@@ -27,6 +27,7 @@ public class SlaveController {
 	 * Waits for connection to be sent from master brick
 	 * @return void
 	 */
+	/*
 	public static void main(String[] args){
 		LCD.clear();
 		LCD.drawString("Receiver wait...", 0, 0);
@@ -52,6 +53,7 @@ public class SlaveController {
 	
 		
 	}
+	*/
 	
 	/**
 	 * After connection is made, slave brick will wait for signal from master brick

@@ -7,101 +7,124 @@ import lejos.util.TimerListener;
 import lejos.nxt.Motor;
 import lejos.nxt.NXTRegulatedMotor;
 
+
+/*
+ * NOTE: Nicholas changed a lot of variable names and cleaned this up.
+ */
+
 /*
  * Odometer.java
+ * 
+ * @author Group-21
  */
-//Code written by Group 21
 public class Odometer extends Thread {
-	// robot position
-	private double x, y, theta;
-	//Declare other variables necessary in this class
-	//Current tachometers for each motor
-	private double tachoB;
-	private double tachoC;
-	//Previous tachometers for each motor
-	private double previousTachoB;
-	private double previousTachoC;
-	//Change in tachometers
-	private double deltaTachoB;
-	private double deltaTachoC;
-	//Angular displacement
-	private double deltaTheta;
-	//Arclength of travelled path
-	private double arcLength;
-	//Wheel radius
-	private double leftRadius;
-	private double rightRadius;
-	//Center-to-center wheel distance
-	private double width;
-	private double pi = Math.PI;
-
-	// odometer update period, in ms
-	private static final long ODOMETER_PERIOD = 25;
+	// Constants
+	private static final long ODOMETER_PERIOD = 25;	// Odometer's update period
+	
+	private double leftWheelRadius;
+	private double rightWheelRadius;
+	private double wheelBaseWidth;
+	
+	private double x;
+	private double y;
+	private double theta;
+	
+	private NXTRegulatedMotor leftMotor;
+	private NXTRegulatedMotor rightMotor;
+	
+	private long lastTachoLeft;
+	private long lastTachoRight;
+	
+	private long lastTime;
 
 	// lock object for mutual exclusion
 	private Object lock;
 
 	// default constructor
 	public Odometer(double leftRadius, double rightRadius, double width) {
+		leftMotor = Motor.B;
+		rightMotor = Motor.C;
+		
 		x = -15.0;
 		y = 0.0;
 		theta = 90.0;
 		lock = new Object();
-		//Left and right tachometer changes start at 0
-		deltaTachoB = 0;
-		deltaTachoC = 0;
-		this.leftRadius = leftRadius;
-		this.rightRadius = rightRadius;
-		this.width = width;
-		previousTachoB = 0;
-		previousTachoC = 0;
+		
+		leftWheelRadius = leftRadius;
+		rightWheelRadius = rightRadius;
+		wheelBaseWidth = width;
+		
+		lastTachoLeft = leftMotor.getTachoCount();
+		lastTachoRight = rightMotor.getTachoCount();
 	}
 
 	// run method (required for Thread)
 	public void run() {
-		long updateStart, updateEnd;
-
+		// Reset some variables (this is done only once, at the beginning)
+		lastTachoLeft = leftMotor.getTachoCount();
+		lastTachoRight = rightMotor.getTachoCount();
+		
+		// Initialize some other variables
+		long startTime = System.currentTimeMillis();
+		lastTime = startTime;
+		
+		// Continuously update the odometer's state
 		while (true) {
-			updateStart = System.currentTimeMillis();
-			//Get current tachometer for each motor
-			tachoB = Motor.B.getTachoCount();
-			tachoC = Motor.C.getTachoCount();
-			//Calculate the tachometer value of each motor for each interval of movement
-			//Convert to radians!
-			deltaTachoB = (tachoB - previousTachoB)*pi/180;
-			deltaTachoC = (tachoC - previousTachoC)*pi/180;
-			//calculate change in angle
-			deltaTheta = (deltaTachoC*rightRadius - deltaTachoB*leftRadius)*180/(pi*width);
-			//Calculate arc length
-			arcLength = (deltaTachoB*leftRadius + deltaTachoC*rightRadius)/2;
+			startTime = System.currentTimeMillis();
+			
+			// Current tachometers for each motor
+			long currentTachoLeft = leftMotor.getTachoCount();
+			long currentTachoRight = rightMotor.getTachoCount();
+			
+			// Change in wheel rotation angle since last update, in degrees.
+			double deltaTachoLeft = (currentTachoLeft - lastTachoLeft) * Math.PI / 180.0;
+			double deltaTachoRight = (currentTachoRight - lastTachoRight) * Math.PI / 180.0;
+			
+			// Change in the robot's heading
+			double deltaTheta = (deltaTachoLeft * leftWheelRadius - deltaTachoRight * rightWheelRadius) * 180.0 / (Math.PI * wheelBaseWidth);
+			
+			// Distance traveled by the robot's center
+			double distance = (deltaTachoLeft * leftWheelRadius + deltaTachoRight * rightWheelRadius) / 2.0;
+			double dx = distance * Math.cos((theta + deltaTheta / 2.0) * Math.PI / 180.0);
+			double dy = distance * Math.sin((theta + deltaTheta / 2.0) * Math.PI / 180.0);
+			
+			// Update odometer's state.
 			synchronized (lock) {
-				//Update current x and y coordinates of the robot
-				//Update angle
-				x += arcLength*Math.cos((theta + deltaTheta/2)*pi/180);
-				y += arcLength*Math.sin((theta + deltaTheta/2)*pi/180);
+				x += dx;
+				y += dy;
 				theta += deltaTheta;
-				//theta = (fixDegAngle(theta));
+				theta = fixDegAngle(theta);	// Can't be done outside
+				
+				// If you wanted to do it outside, you'd need a synchronized
+				// block to access theta. That would defeat the purpose (we
+				// want less stuff done inside synchronized blocks!)
 			}
-			//Set current tachometers to the previous tachometers and repeat loop
-			previousTachoB = tachoB;
-			previousTachoC= tachoC;
-			// this ensures that the odometer only runs once every period
-			updateEnd = System.currentTimeMillis();
-			if (updateEnd - updateStart < ODOMETER_PERIOD) {
+			
+			// Reset some variables for the next loop.
+			lastTime = startTime;
+			lastTachoLeft = currentTachoLeft;
+			lastTachoRight = currentTachoRight;
+			
+			// Waste some time to respect the odometer's period.
+			long endTime = System.currentTimeMillis();
+			long loopTime = endTime - startTime;
+			if (loopTime < ODOMETER_PERIOD) {
 				try {
-					Thread.sleep(ODOMETER_PERIOD - (updateEnd - updateStart));
+					Thread.sleep(ODOMETER_PERIOD - loopTime);
 				} catch (InterruptedException e) {
-					// there is nothing to be done here because it is not
-					// expected that the odometer will be interrupted by
-					// another thread
+					// Don't care.
 				}
 			}
 		}
 	}
-
-	// accessors
+	
+	/**
+	 * Get the state of the odometer.
+	 * 
+	 * @param position A "double" array (of size 3) to hold the x, y and theta
+	 * @param update A "boolean" array (of size 3) to state what state you want.
+	 */
 	public void getPosition(double[] position, boolean[] update) {
-		// ensure that the values don't change while the odometer is running
 		synchronized (lock) {
 			if (update[0])
 				position[0] = x;
@@ -112,6 +135,11 @@ public class Odometer extends Thread {
 		}
 	}
 
+	/**
+	 * Get the x coordinate.
+	 * 
+	 * @return The x coordinate.
+	 */
 	public double getX() {
 		double result;
 
@@ -122,6 +150,11 @@ public class Odometer extends Thread {
 		return result;
 	}
 
+	/**
+	 * Get the y coordinate.
+	 * 
+	 * @return The y coordinate.
+	 */
 	public double getY() {
 		double result;
 
@@ -132,6 +165,11 @@ public class Odometer extends Thread {
 		return result;
 	}
 
+	/**
+	 * Get the heading.
+	 * 
+	 * @return The heading (in degrees).
+	 */
 	public double getTheta() {
 		double result;
 
@@ -142,9 +180,13 @@ public class Odometer extends Thread {
 		return result;
 	}
 
-	// mutators
+	/**
+	 * Set the odometer's state.
+	 * 
+	 * @param position A "double" array (of size 3) to hold the x, y and theta
+	 * @param update A "boolean" array (of size 3) to state what state you want to change.
+	 */
 	public void setPosition(double[] position, boolean[] update) {
-		// ensure that the values don't change while the odometer is running
 		synchronized (lock) {
 			if (update[0])
 				x = position[0];
@@ -155,41 +197,84 @@ public class Odometer extends Thread {
 		}
 	}
 
+	/**
+	 * Set the x coordinate.
+	 * 
+	 * @return The x coordinate.
+	 */
 	public void setX(double x) {
 		synchronized (lock) {
 			this.x = x;
 		}
 	}
 
+	/**
+	 * Set the y coordinate.
+	 * 
+	 * @return The y coordinate.
+	 */
 	public void setY(double y) {
 		synchronized (lock) {
 			this.y = y;
 		}
 	}
 
+	/**
+	 * Get the heading.
+	 * 
+	 * @return The heading (in degrees).
+	 */
 	public void setTheta(double theta) {
+		theta = fixDegAngle(theta);
+		
 		synchronized (lock) {
 			this.theta = theta;
 		}
 	}
 
+	/**
+	 * Returns the equivalent angle in the range [0.0, 360.0].
+	 * 
+	 * @param angle The angle (can be negative or greater than 360.0).
+	 * 
+	 * @return The angle in the range [0.0, 360.0].
+	 */
 	public static double fixDegAngle(double angle) {
-		if (angle < 0.0)
-			angle = 360.0 + (angle % 360.0);
-
-		return angle % 360.0;
+		// Ensure that the angle is positive
+		while(angle < 0.0){
+			angle += 360.0;
+		}
+		
+		// Snap it to the range [0.0, 360.0]
+		angle %= 360.0;
+		
+		return angle;
 	}
 	
+	/**
+	 * Get the left wheel's radius (in cm).
+	 * 
+	 * @return The left wheel's radius (in cm).
+	 */
 	public double getLeftRadius(){
-		return this.leftRadius;
+		return this.leftWheelRadius;
 	}
 	
-	public double getWheelBase(){
-		return this.width;
-	}
-	
+	/**
+	 * Get the right wheel's radius (in cm).
+	 * 
+	 * @return The right wheel's radius (in cm).
+	 */
 	public double getRightRadius(){
-		return this.rightRadius;
+		return this.rightWheelRadius;
 	}
-
+	
+	/**
+	 * Get the wheel base's width (in cm).
+	 * 
+	 * @return The wheel base's width (in cm).
+	 */
+	public double getWheelBase(){
+		return this.wheelBaseWidth;
+	}
 }

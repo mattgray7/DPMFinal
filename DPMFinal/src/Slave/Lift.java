@@ -1,12 +1,19 @@
-
-
 package Slave;
 import lejos.nxt.*;
 
+/**
+ * Class for operating the lifting arms.
+ * 
+ * @author Matt ?
+ *
+ */
 public class Lift {
+	private static final int LOWERING_SPEED = 200;
+	private static final int RAISING_SPEED = 300;
+	private static final int CLAMPING_SPEED = 100;
+	
 	private static NXTRegulatedMotor armMotor = Motor.A;
 	private static NXTRegulatedMotor clampMotor = Motor.B;
-
 	
 	/**
 	 * Constructor
@@ -18,19 +25,17 @@ public class Lift {
 		clampMotor = clamp;
 	}
 	
-	
 	/**
 	 * Lowers the mechanical arms by an input angle
 	 * @param angle The angle in which to rotate the arm
 	 * @return void
 	 */
 	public static void lowerArms(int angle){
-		armMotor.setSpeed(200);
+		armMotor.setSpeed(LOWERING_SPEED);
 		armMotor.backward();
 		armMotor.rotate(-angle, false);
 		armMotor.stop();
 	}
-	
 	
 	/**
 	 * Raises the mechanical arms by an input angle
@@ -38,7 +43,7 @@ public class Lift {
 	 * @return void
 	 */
 	public static void raiseArms(int angle){
-		armMotor.setSpeed(300);
+		armMotor.setSpeed(RAISING_SPEED);
 		armMotor.forward();
 		armMotor.rotate(angle, false);
 		armMotor.stop();
@@ -52,7 +57,7 @@ public class Lift {
 	 * @return void
 	 */
 	public static void clamp(){
-		clampMotor.setSpeed(100);
+		clampMotor.setSpeed(CLAMPING_SPEED);
 		clampMotor.backward();
 		clampMotor.rotate(-95, false);
 	}
