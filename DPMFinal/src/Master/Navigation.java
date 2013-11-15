@@ -477,19 +477,13 @@ public class Navigation extends Thread {
 	 */
 	public void finishLine(){
 		//move back into position
-		sensMotor.setSpeed(150);
-		sensMotor.backward();
-		sensMotor.rotate(-80, false);
-		sensMotor.stop();
+		centerSensors();
 		
 		travelTo(gx0+2, gy0-1, true);
 		turnTo(35, true, true);
 		
 		//move away from claw
-		sensMotor.setSpeed(150);
-		sensMotor.forward();
-		sensMotor.rotate(80, false);
-		sensMotor.stop();
+		rotateSensorsRight();
 		
 		try {bts.sendSignal(1);} catch (IOException e) {}	//1 for lower arms and release
 		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
@@ -620,8 +614,92 @@ public class Navigation extends Thread {
 	 * @return void
 	 */
 	public void avoid(double i) {
+		leftMotor.backward();
+		rightMotor.backward();
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.rotate(-convertDistance(LW_RADIUS, 8.0), true);
+		rightMotor.rotate(-convertDistance(RW_RADIUS, 8.0), false);
+		leftMotor.stop();
+		rightMotor.stop();
+		
+		double initAngle = odometer.getTheta();
+		turnTo(odometer.getTheta() + 90.0, true, true);
+		int dist = getFilteredDistance();
+		int BAND_CENTER = 20;
+		int error = 0;
+		
+		
+		if (dist > 30){
+			//left wall follow
+			//right wall follow
+			sensMotor.setSpeed(150);
+			sensMotor.forward();
+			sensMotor.rotate(40, false);
+			sensMotor.stop();
+			leftMotor.setSpeed(FAST);
+			rightMotor.setSpeed(FAST);
+			leftMotor.forward();
+			rightMotor.forward();
+			
+			while(true){
+				dist = getFilteredDistance();
+				error = BAND_CENTER - dist;
+				
+				if(error > 100){
+					error = 50;
+				}else if (error < -100){
+					error = -50;
+				}
+				//if robot gets to starting x orientation, it has successfully avoided the block
+				
+				if(error < -2){
+					leftMotor.setSpeed(FAST + 50);
+					rightMotor.setSpeed(FAST + 30 + (error*2));	//error is negative, right move slower
+				}else if (error > 2){
+					leftMotor.setSpeed(FAST + 30);
+					rightMotor.setSpeed(FAST + 50 + (error * 2));
+				}else{
+					leftMotor.setSpeed(FAST + 50);
+					rightMotor.setSpeed(FAST + 50);
+				}
+				
+				if (Math.abs(odometer.getTheta() - (initAngle - 20)) < ANGLE_THRESH){
+					Sound.buzz();
+					leftMotor.setSpeed(JOG);
+					rightMotor.setSpeed(JOG);
+					break;
+				}
+			}
+			
+			sensMotor.setSpeed(150);
+			sensMotor.backward();
+			sensMotor.rotate(-40, false);
+			sensMotor.stop();
+			
+			try {Thread.sleep(1500);} catch (InterruptedException e) {}
+	
+			
+			
+		}else{
+			turnTo(odometer.getTheta() - 180.0, true, true);
+			if(dist > 30){
+				//right wall follow
+				
+			}else{
+				//reverse and try again
+				turnTo(odometer.getTheta() + 90.0, true, true);
+				leftMotor.setSpeed(JOG);
+				rightMotor.setSpeed(JOG);
+				leftMotor.rotate(-convertDistance(LW_RADIUS, 30.0), true);
+				rightMotor.rotate(-convertDistance(RW_RADIUS, 30.0), false);
+				avoid(i+1);
+			}
+		}
+		
+		
 		//turn to the left
-		isBusy = false;
+		/*isBusy = false;
 		turnTo(odometer.getTheta() + 90.0, true, true);
 		int dist = getFilteredDistance();
 		
@@ -678,7 +756,7 @@ public class Navigation extends Thread {
 				avoid(i+1);
 				return;
 			}
-		}
+		}*/
 		
 		if(!hasBlock){
 			generatePath();		//generate new list of points based on current location
@@ -712,6 +790,20 @@ public class Navigation extends Thread {
 		}
 		distance = bottomUs.getDistance();
 		return distance;
+	}
+	
+	public void rotateSensorsRight(){
+		sensMotor.setSpeed(150);
+		sensMotor.forward();
+		sensMotor.rotate(80, false);
+		sensMotor.stop();
+	}
+	
+	public void centerSensors(){
+		sensMotor.setSpeed(150);
+		sensMotor.backward();
+		sensMotor.rotate(-80, false);
+		sensMotor.stop();
 	}
 
 

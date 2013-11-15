@@ -55,8 +55,8 @@ public class BTSendController {
 		or.calibrateBlueBlock();
 		bts.establishConnection();
 		odo.start();
-		usl.doLocalization();
-		usl.doLightLocalization();
+		//usl.doLocalization();
+		//usl.doLightLocalization();
 
 
 		//oc.start();
