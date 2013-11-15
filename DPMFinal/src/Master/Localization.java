@@ -117,8 +117,6 @@ public class Localization {
 			odo.setTheta(theta);
 			//nav.travelTo(0.0,0.0,false);
 			
-			nav.turnTo(90.0,true, true);
-			try {Thread.sleep(500);} catch (InterruptedException e) {}
 
 
 		}
@@ -148,7 +146,7 @@ public class Localization {
 					Sound.beep();
 					//Sleep thread to detect line only one time
 					try {
-						Thread.sleep(100);
+						Thread.sleep(150);
 					}
 					catch (Exception e) {}
 					spinning = false;
@@ -168,8 +166,10 @@ public class Localization {
 		//Travel to proper (0,0) coordinates
 		nav.travelTo(0, 0, false);
 		nav.turnTo(90.0, true, true);
+		try {Thread.sleep(200);} catch (InterruptedException e) {}
 		odo.setX(x);
 		odo.setY(y);
+		cs.setFloodlight(false);
 		
 	}
 	

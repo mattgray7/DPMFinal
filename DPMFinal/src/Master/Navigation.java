@@ -29,7 +29,7 @@ public class Navigation extends Thread {
 	private double WHEEL_BASE;
 	
 	private Odometer odometer;
-	public Boolean isTurning = false;
+	public Boolean isBusy = true;
 	public Boolean isTraveling = false;
 	public Boolean isFinished = false;
 	public Boolean hasBlock = false;
@@ -90,21 +90,25 @@ public class Navigation extends Thread {
 		
 		//for loop starts at 1 since first elements are current position
 		for(int i=1; i < xPath.length; i++){
-			travelTo(xPath[i], yPath[i], false);
-			pathIndex = i;
+			if(!hasBlock){
+				travelTo(xPath[i], yPath[i], false);
+				pathIndex = i;
 
-			if((Math.abs(odometer.getX() - xDestination) < POINT_THRESH + 10) 
-				&& (Math.abs(odometer.getY() - yDestination) < POINT_THRESH + 10)){
-				Sound.buzz();
+				if((Math.abs(odometer.getX() - xDestination) < POINT_THRESH + 10) 
+						&& (Math.abs(odometer.getY() - yDestination) < POINT_THRESH + 10)){
+					Sound.buzz();
+					break;
+				}
+			
+				if(resetPath){
+					i=1;
+					resetPath = false;
+				}
+			
+				scan();
+			}else{
 				break;
 			}
-			
-			if(resetPath){
-				i=1;
-				resetPath = false;
-			}
-			
-			scan();
 		}
 		/*travelTo(0.0, 60.0, false);
 		//turnTo(0.0, true, true);
@@ -132,6 +136,7 @@ public class Navigation extends Thread {
 	 */
 	
 	 public void travelTo(double x, double y, boolean ignore){ 
+		 isBusy = false;
 		 double minAng;
 		 boolean temp = true; 
 		 double distance = Math.sqrt(Math.pow(Math.abs(x -odometer.getX()), 2) + Math.pow(Math.abs(y - odometer.getY()), 2));
@@ -149,6 +154,7 @@ public class Navigation extends Thread {
 			 if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
 				 leftMotor.stop();
 				 rightMotor.stop();
+				 isBusy = true;
 				 if(recog.checkColor()){
 					 capture(18.0);		//special distance that the robot should reverse to lower arm
 				 }else{
@@ -182,6 +188,7 @@ public class Navigation extends Thread {
 			 this.setSpeeds(FAST, FAST); 
 		 } 
 		 this.setSpeeds(0,0); 
+		 isBusy = false;
 		 turnTo(masterAng, true, true);
 	}
 	 
@@ -199,7 +206,7 @@ public class Navigation extends Thread {
 	*/
 		
 	public void turnTo(double angle, boolean stop, boolean corner) { 
-		isTurning = true;
+		isBusy = true;
 		double error = (angle - this.odometer.getTheta())%360;
 		if(corner){
 			while (Math.abs(error) > CORNER_ANGLE_THRESH) { 
@@ -239,7 +246,7 @@ public class Navigation extends Thread {
 		if (stop) { 
 			this.setSpeeds(0, 0); 
 		} 
-		isTurning = false; 
+		isBusy = false; 
 	}
 	 
 
@@ -292,7 +299,7 @@ public class Navigation extends Thread {
 				}
 			}
 
-			if ((Math.abs(objDist - dist) > 7) && (object == true)) {
+			if ((Math.abs(objDist - dist) > 9) && (object == true)) {
 				// end of object
 				objects[2][objIndex] = objDist;
 				objects[3][objIndex] = (int) odometer.getTheta();
@@ -341,12 +348,12 @@ public class Navigation extends Thread {
 			travelAng = ((objects[1][i] + objects[3][i]) / 2.0 + ANGLE_OFFSET); 
 			if (travelDist > 0) {
 				if (!hasBlock){
+					colorSens.setFloodlight(Color.RED);
 					inspect(travelAng, travelDist);
 				}else{
 					
 				}
-				colorSens.setFloodlight(Color.RED);
-				inspect(travelAng, travelDist);
+
 			}
 		}
 		colorSens.setFloodlight(false);
@@ -434,30 +441,74 @@ public class Navigation extends Thread {
 		
 		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
 		
-		leftMotor.rotate(convertDistance(LW_RADIUS, distance+7), true);//travel same distance forward with claw down
-		rightMotor.rotate(convertDistance(RW_RADIUS, distance+7), false);//dist may need to be less since the claw is down
+		leftMotor.rotate(convertDistance(LW_RADIUS, distance), true);//travel same distance forward with claw down
+		rightMotor.rotate(convertDistance(RW_RADIUS, distance), false);//dist may need to be less since the claw is down
+		
+		leftMotor.setSpeed(JOG + 50);
+		rightMotor.setSpeed(JOG - 50);
+		leftMotor.forward();
+		rightMotor.forward();
+		try {Thread.sleep(700);} catch (InterruptedException e1) {}
+		leftMotor.setSpeed(JOG - 50);
+		rightMotor.setSpeed(JOG + 50);
+		leftMotor.forward();
+		rightMotor.forward();
+		try {Thread.sleep(700);} catch (InterruptedException e1) {}
+		leftMotor.setSpeed(JOG);
+		rightMotor.setSpeed(JOG);
+		leftMotor.rotate(convertDistance(LW_RADIUS, 5), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);
+		
+		
+		leftMotor.stop();
+		rightMotor.stop();
+		
 		
 		try {bts.sendSignal(2);} catch (IOException e) {Sound.buzz();}	//2 for clamp and raise arms
-		//try {Thread.sleep(5000);} catch (InterruptedException e1) {}
 		
-		Sound.beep();
-		try {Thread.sleep(750);} catch (InterruptedException e1) {}
-		Sound.beep();
-
+		try {Thread.sleep(1700);} catch (InterruptedException e1) {}
 		
-		Sound.buzz();
+		finishLine();
 		
-		travelTo(gx0, gy0, true);
-		turnTo(50, true, true);
+	}
+	
+	/**
+	 * Will take the robot from it's current position directly to the bottom left corner of the green zone
+	 */
+	public void finishLine(){
+		//move back into position
+		sensMotor.setSpeed(150);
+		sensMotor.backward();
+		sensMotor.rotate(-80, false);
+		sensMotor.stop();
+		
+		travelTo(gx0+2, gy0-1, true);
+		turnTo(35, true, true);
+		
+		//move away from claw
+		sensMotor.setSpeed(150);
+		sensMotor.forward();
+		sensMotor.rotate(80, false);
+		sensMotor.stop();
+		
 		try {bts.sendSignal(1);} catch (IOException e) {}	//1 for lower arms and release
 		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+		
+		
+		leftMotor.backward();
+		rightMotor.backward();
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.rotate(-convertDistance(LW_RADIUS, 10.0), true);
+		rightMotor.rotate(-convertDistance(RW_RADIUS, 10.0), false);
+		leftMotor.stop();
+		rightMotor.stop();
 
 		Sound.beep();
 		try {Thread.sleep(500);} catch (InterruptedException e1) {}
 		Sound.beep();
 		try {Thread.sleep(500);} catch (InterruptedException e1) {}
 		Sound.beep();
-		
 	}
 
 
@@ -568,10 +619,16 @@ public class Navigation extends Thread {
 	 * 
 	 * @return void
 	 */
-	public void avoid(int i) {
+	public void avoid(double i) {
 		//turn to the left
+		isBusy = false;
 		turnTo(odometer.getTheta() + 90.0, true, true);
 		int dist = getFilteredDistance();
+		
+		if (i != 1){
+			i *= 0.75;
+		}
+		
 		if(dist > 30){
 			 Sound.beep();
 			 leftMotor.setSpeed(JOG);
@@ -622,8 +679,14 @@ public class Navigation extends Thread {
 				return;
 			}
 		}
-		generatePath();
-		resetPath = true;
+		
+		if(!hasBlock){
+			generatePath();		//generate new list of points based on current location
+			resetPath = true;	//update the path
+		}else{
+			finishLine();
+		}
+		isBusy = true;
 
 	}
 

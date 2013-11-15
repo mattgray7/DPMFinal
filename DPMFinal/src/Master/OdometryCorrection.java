@@ -77,7 +77,7 @@ public class OdometryCorrection extends Thread{
 				|| (Math.abs(odometer.getTheta() - 90.0) < ANGLE_THRESH) 
 				|| (Math.abs(odometer.getTheta() - 180.0) < ANGLE_THRESH) 
 				|| (Math.abs(odometer.getTheta() - 270.0) < ANGLE_THRESH))
-				&& (nav.isTurning == false)){
+				&& (nav.isBusy == false)){
 				//LCD.drawString("CORRECT ZONE", 0, 4, false);
 				calculateThetaError();
 			}

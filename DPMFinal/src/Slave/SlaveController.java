@@ -15,7 +15,6 @@ public class SlaveController {
 	private static Lift lift = new Lift(armMotor, clampMotor);
 	private static BTConnection connection;
 	
-	private static int testCount = 0;
 	
 	/**
 	 * Constructor
@@ -38,11 +37,11 @@ public class SlaveController {
 			connection = Bluetooth.waitForConnection();
 			if (connection == null)
 				throw new IOException("Connect fail");
-			DataOutputStream output = connection.openDataOutputStream();
+			/*DataOutputStream output = connection.openDataOutputStream();
 			
 			output.writeInt(1);
 			output.flush();
-			output.close();
+			output.close();*/
 			
 			waitForSignal();
 
@@ -59,38 +58,28 @@ public class SlaveController {
 	 * @return void
 	 */
 	public static void waitForSignal(){
-		LCD.drawString(" " + testCount + " signals sent", 0, 4, false);
+		LCD.drawString("WAITING", 0, 4, false);
 		DataInputStream input = connection.openDataInputStream();
 		int command = 0;
-		try {command = input.readInt();} catch (IOException e) {}	//blocking
+		try {command = input.readInt();} catch (IOException e) {Sound.buzz();}	//blocking
 		
 		//test command
 		if(command == 1){
-			testCount++;
 			lift.lowerArms(450);
 			lift.release();
-			//replySignal(1);
 			Sound.beep();
-			try {input.close();} catch (IOException e) {}
+			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}
 		
 		if(command == 2){
-			testCount++;
 			Sound.beep();
 			lift.clamp();
 			lift.raiseArms(400);
-			//replySignal(1);
-			Sound.beep();
-			try {input.close();} catch (IOException e) {}
+			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}
-		
-
-		try {input.close();} catch (IOException e) {}
 		connection.close();
-		
-		
 	}
 	
 	/**

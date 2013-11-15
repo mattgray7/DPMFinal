@@ -14,8 +14,8 @@ import Master.Odometer;
 
 public class BTSendController {
 	
-	public static final double LW_RADIUS = 2.675;
-	public static final double RW_RADIUS = 2.685;
+	public static final double LW_RADIUS = 2.665;
+	public static final double RW_RADIUS = 2.675;
 	public static final double WHEEL_BASE = 17.3;
 	
 	public static UltrasonicSensor bottomUs = new UltrasonicSensor(SensorPort.S1);
@@ -55,8 +55,8 @@ public class BTSendController {
 		or.calibrateBlueBlock();
 		bts.establishConnection();
 		odo.start();
-		//usl.doLocalization();
-		//usl.doLightLocalization();
+		usl.doLocalization();
+		usl.doLightLocalization();
 
 
 		//oc.start();

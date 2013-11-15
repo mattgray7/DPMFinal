@@ -4,8 +4,8 @@ package Slave;
 import lejos.nxt.*;
 
 public class Lift {
-	private static NXTRegulatedMotor armMotor = Motor.A;
-	private static NXTRegulatedMotor clampMotor = Motor.B;
+	private static NXTRegulatedMotor armMotor;
+	private static NXTRegulatedMotor clampMotor;
 
 
 	
@@ -117,22 +117,5 @@ public class Lift {
 	public void destroyTower(){
 		
 	}
-	
-	/*
-	 * These methods are commented as I don't they will be included in the final system. They involve sending
-	 * messages back and forth with the master brick to reposition the robot to be in a better position to lift the brick.
-	 * If our clamps grab it well enough at any orientation adn the robot can be positioned well before
-	 * the control is switched over, these methods should be unnecessary.
-	 */
-	/*
-	//will send signal to master to better position the robot
-	public void positionRobot(){
-		
-	}
-	
-	//will rotate(?) sensor to get orientation of block, may lead to repositioning the robot to grab block
-	//currently our mechanical design clamps rather well regardless of the blocks orientation
-	public void getBlockOrientation(){
-		
-	}*/
+
 }
