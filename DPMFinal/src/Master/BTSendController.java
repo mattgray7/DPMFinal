@@ -6,6 +6,8 @@ import java.io.IOException;
 
 import javax.bluetooth.RemoteDevice;
 
+import bluetooth.BluetoothConnection;
+import bluetooth.Transmission;
 import lejos.nxt.*;
 import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
@@ -52,13 +54,17 @@ public class BTSendController {
 	 */
 	public static void main(String[] args){
 		int buttonChoice = Button.waitForAnyPress();
+		
 		colorSensor.setFloodlight(true);
 		or.calibrateBlueBlock();
+		
+		getTransmission();
 		LCDInfo lc = new LCDInfo(odo);
-		//bts.establishConnection();
+		bts.establishConnection();
 		odo.start();
-		//usl.doLocalization();
-		//usl.doLightLocalization();
+		
+		usl.doLocalization();
+		usl.doLightLocalization();
 
 
 		//oc.start();
@@ -71,19 +77,17 @@ public class BTSendController {
 		//connection.close();
 	}
 	
-	
-
-	
-	//testcommit
-
-	
-	
-	//called when the slave brick is operating, will pause execution until "finished" signal received
-	/*public void slaveFlow(){
-		DataInputStream input = connection.openDataInputStream();
-		int reply = input.readInt();
+	public static void getTransmission(){
+		BluetoothConnection compConnection = new BluetoothConnection();
+		Transmission t = compConnection.getTransmission();
 		
-	}*/
+		int greenZone[] = t.greenZone;
+		nav.setGX0(greenZone[0]*30);
+		nav.setGY0(greenZone[1]*30);
+		nav.setGX1(greenZone[2]*30);
+		nav.setGY1(greenZone[3]*30);
+		
+	}
 	
 	
 }

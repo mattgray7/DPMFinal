@@ -36,10 +36,10 @@ public class Navigation extends Thread {
 	public Boolean resetPath = false;
 	
 	private double theta;
-	private double gx0 = 90.0;
-	private double gx1 = 120.0;
-	private double gy0 = 90.0;
-	private double gy1 = 120.0;
+	private double gx0;
+	private double gx1;
+	private double gy0;
+	private double gy1;
 	
 	private double[] xPath = new double[40];
 	private double[] yPath = new double[40];
@@ -115,11 +115,21 @@ public class Navigation extends Thread {
 				break;
 			}
 		}
-		/*travelTo(0.0, 60.0, false);
-		//turnTo(0.0, true, true);
-		travelTo(60.0, 60.0, false);
-		travelTo(60.0, 0.0, false);
-		travelTo(0.0, 0.0, false);*/
+		
+		if(!hasBlock){
+			travelTo(gx1 + 30, gy0, false);
+			scan();
+		}
+		if(!hasBlock){
+			travelTo(gx1 + 30, gy1, false);
+			scan();
+		}
+		if(!hasBlock){
+			travelTo(gx1 + 30, gy1 + 30, false);
+			scan();
+		}
+
+
 		
 		
 	}
@@ -920,6 +930,22 @@ public class Navigation extends Thread {
 
 	private static int convertAngle(double radius, double width, double angle) {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
+	}
+	
+	public void setGX0(int x){
+		this.gx0 = x;
+	}
+	
+	public void setGY0(int y){
+		this.gy0 = y;
+	}
+	
+	public void setGX1(int x){
+		this.gx1 = x;
+	}
+	
+	public void setGY1(int y){
+		this.gy1 = y;
 	}
 	
 	
