@@ -115,11 +115,16 @@ public class Localization {
 			odo.setX(-10.0);
 			odo.setY(-5.0);
 			odo.setTheta(theta);
+			nav.turnTo(90.0, true, true);
 			//nav.travelTo(0.0,0.0,false);
 			
 
 
 		}
+		
+		
+		
+		
 	}
 	
 	public void doLightLocalization() {
@@ -141,12 +146,15 @@ public class Localization {
 			while (spinning) {
 				LCD.clear();
 				LCD.drawInt(cs.getNormalizedLightValue(), 0, 7);
-				if (cs.getNormalizedLightValue() < 490) {
+				if (cs.getNormalizedLightValue() < 485) {
+					/*if (i == 0){
+						odo.setTheta(88.0);
+					}*/
 					angles[i] = odo.getTheta();	
 					Sound.beep();
 					//Sleep thread to detect line only one time
 					try {
-						Thread.sleep(150);
+						Thread.sleep(180);
 					}
 					catch (Exception e) {}
 					spinning = false;

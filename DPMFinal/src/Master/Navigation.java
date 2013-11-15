@@ -80,7 +80,12 @@ public class Navigation extends Thread {
 	 * @return void
 	 */
 	public void run() {
-
+		
+		/*while(true){
+			Button.waitForAnyPress();
+			colorSens.setFloodlight(true);
+			recog.checkColor();
+		}*/
 
 		//scan();	
 		travelTo(30.0, 30.0, false);
@@ -400,7 +405,7 @@ public class Navigation extends Thread {
 		leftMotor.stop();
 		rightMotor.stop();
 		
-		colorSens.setFloodlight(false);
+		//colorSens.setFloodlight();
 		try {Thread.sleep(100);} catch (InterruptedException e) {}
 		
 		//if(colorSens.getNormalizedLightValue() > 330){
@@ -614,6 +619,7 @@ public class Navigation extends Thread {
 	 * @return void
 	 */
 	public void avoid(double i) {
+		
 		leftMotor.backward();
 		rightMotor.backward();
 		leftMotor.setSpeed(SLOW);
@@ -632,15 +638,31 @@ public class Navigation extends Thread {
 		
 		if (dist > 30){
 			//left wall follow
-			//right wall follow
+			
+			//rotate sensor right
 			sensMotor.setSpeed(150);
 			sensMotor.forward();
 			sensMotor.rotate(40, false);
 			sensMotor.stop();
+			
 			leftMotor.setSpeed(FAST);
 			rightMotor.setSpeed(FAST);
 			leftMotor.forward();
 			rightMotor.forward();
+			
+			if(i != 1){
+				turnTo(initAngle + 45, true, true);
+				//drive until a distance is set
+				while(dist > BAND_CENTER){
+					dist = getFilteredDistance();
+					leftMotor.setSpeed(FAST);
+					rightMotor.setSpeed(FAST);
+					leftMotor.forward();
+					rightMotor.forward();
+				}
+			}
+			
+
 			
 			while(true){
 				dist = getFilteredDistance();
@@ -682,15 +704,79 @@ public class Navigation extends Thread {
 			
 			
 		}else{
+			
 			turnTo(odometer.getTheta() - 180.0, true, true);
+			dist = getFilteredDistance();
 			if(dist > 30){
-				//right wall follow
+				Sound.beep();
+				//rotate sensor right
+				sensMotor.setSpeed(150);
+				sensMotor.backward();
+				sensMotor.rotate(-40, false);
+				sensMotor.stop();
+				
+				leftMotor.setSpeed(FAST);
+				rightMotor.setSpeed(FAST);
+				leftMotor.forward();
+				rightMotor.forward();
+				
+				if(i != 1){
+					turnTo(initAngle - 45, true, true);
+					//drive until a distance is set
+					while(dist > BAND_CENTER){
+						dist = getFilteredDistance();
+						leftMotor.setSpeed(FAST);
+						rightMotor.setSpeed(FAST);
+						leftMotor.forward();
+						rightMotor.forward();
+					}
+				}
+				
+				while(true){
+					dist = getFilteredDistance();
+					error = BAND_CENTER - dist;
+					
+					if(error > 100){
+						error = 50;
+					}else if (error < -100){
+						error = -50;
+					}
+					//if robot gets to starting x orientation, it has successfully avoided the block
+					
+					if(error < -2){
+						leftMotor.setSpeed(FAST + 30 + (error*2));
+						rightMotor.setSpeed(FAST + 50);	//error is negative, right move slower
+					}else if (error > 2){
+						leftMotor.setSpeed(FAST + 30 + (error*2));
+						rightMotor.setSpeed(FAST + 50);
+					}else{
+						leftMotor.setSpeed(FAST + 50);
+						rightMotor.setSpeed(FAST + 50);
+					}
+					
+					if (Math.abs(odometer.getTheta() - (initAngle + 20)) < ANGLE_THRESH){
+						Sound.buzz();
+						leftMotor.setSpeed(JOG);
+						rightMotor.setSpeed(JOG);
+						break;
+					}
+					
+				}
+				//rotate sensor back forward
+				sensMotor.setSpeed(150);
+				sensMotor.forward();
+				sensMotor.rotate(40, false);
+				sensMotor.stop();
+				
+				try {Thread.sleep(1500);} catch (InterruptedException e) {}
+				
+				
 				
 			}else{
 				//reverse and try again
 				turnTo(odometer.getTheta() + 90.0, true, true);
-				leftMotor.setSpeed(JOG);
-				rightMotor.setSpeed(JOG);
+				leftMotor.setSpeed(FAST);
+				rightMotor.setSpeed(FAST);
 				leftMotor.rotate(-convertDistance(LW_RADIUS, 30.0), true);
 				rightMotor.rotate(-convertDistance(RW_RADIUS, 30.0), false);
 				avoid(i+1);

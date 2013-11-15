@@ -33,7 +33,7 @@ public class BTSendController {
 	public static Navigation nav = new Navigation(odo, bts, bottomUs, colorSensor, or);
 	public static OdometryCorrection oc = new OdometryCorrection(odo, odoSensor, nav);
 
-	public static LCDInfo lc = new LCDInfo(odo);
+
 	public static Localization usl = new Localization(odo, bottomUs, nav, odoSensor);
 	
 
@@ -52,8 +52,10 @@ public class BTSendController {
 	 */
 	public static void main(String[] args){
 		int buttonChoice = Button.waitForAnyPress();
+		colorSensor.setFloodlight(true);
 		or.calibrateBlueBlock();
-		bts.establishConnection();
+		LCDInfo lc = new LCDInfo(odo);
+		//bts.establishConnection();
 		odo.start();
 		//usl.doLocalization();
 		//usl.doLightLocalization();

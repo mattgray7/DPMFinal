@@ -87,7 +87,7 @@ public class ObjectRecognition {
 		boolean isBlueBlock = (Math.abs(1.0 - cosTheta) < COS_THETA_MARGIN) &&
 				              currentColor.length() > LENGTH_THRESHOLD;
 		
-		/*
+		
 		// Debugging information:
 		// Current color
 		LCD.drawString("+ " + (int)currentColor.getX() + ", " + (int)currentColor.getY() + ", " + (int)currentColor.getZ(), 0, 4);
@@ -97,7 +97,7 @@ public class ObjectRecognition {
 		LCD.drawString("$ " + cosTheta, 0, 6);
 		// Theta
 		LCD.drawString("% " + Math.acos(cosTheta) * 180.0 / Math.PI, 0, 7);
-		*/
+		
 		
 		return isBlueBlock;
 	}
