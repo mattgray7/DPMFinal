@@ -419,15 +419,55 @@ public class Navigation extends Thread {
 		try {Thread.sleep(100);} catch (InterruptedException e) {}
 		
 		//if(colorSens.getNormalizedLightValue() > 330){
+		
+		
 		if(recog.checkColor()){
 			Sound.beep();
 			hasBlock = true;
 			capture(distTraveled);		//takes the starting x and y as input
 		}else{
-			leftMotor.rotate(-convertDistance(LW_RADIUS, distTraveled), true);
-			rightMotor.rotate(-convertDistance(RW_RADIUS, distTraveled), false);
-			leftMotor.stop();
-			rightMotor.stop();
+			sensMotor.setSpeed(150);
+			sensMotor.backward();
+			sensMotor.rotate(-15, false);
+			sensMotor.stop();
+			if(recog.checkColor()){
+				
+				sensMotor.setSpeed(150);
+				sensMotor.forward();
+				sensMotor.rotate(15, false);
+				sensMotor.stop();
+				
+				Sound.beep();
+				hasBlock = true;
+				capture(distTraveled);	
+			}else{
+				sensMotor.setSpeed(150);
+				sensMotor.forward();
+				sensMotor.rotate(30, false);
+				sensMotor.stop();
+				if(recog.checkColor()){
+					
+					sensMotor.setSpeed(150);
+					sensMotor.backward();
+					sensMotor.rotate(-15, false);
+					sensMotor.stop();
+					
+					Sound.beep();
+					hasBlock = true;
+					capture(distTraveled);
+				}else{
+					
+					sensMotor.setSpeed(150);
+					sensMotor.backward();
+					sensMotor.rotate(-15, false);
+					sensMotor.stop();
+					
+					leftMotor.rotate(-convertDistance(LW_RADIUS, distTraveled), true);
+					rightMotor.rotate(-convertDistance(RW_RADIUS, distTraveled), false);
+					leftMotor.stop();
+					rightMotor.stop();
+				}
+			}
 		}
 
 	}
