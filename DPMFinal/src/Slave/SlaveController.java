@@ -81,35 +81,5 @@ public class SlaveController {
 		}
 		connection.close();
 	}
-	
-	/**
-	 * Slave brick is in control, will control execution from here
-	 * @param signal The signal sent from the master brick indicating which operation the slave should perform
-	 * @return void
-	 */
-	public static void hasControl(int signal){
-		
-	}
-	
-	/**
-	 * Sends a confirmation or failure signal back to the master brick indicating that the slave process has completed
-	 * @param signal The confirmation or failure signal
-	 * @return void
-	 */
-	public static void replySignal(int signal){
-		DataOutputStream output = connection.openDataOutputStream();
 
-		try
-		{
-			output.writeInt(signal);
-			output.flush();
-			output.close();
-		}
-		catch(Exception ioe)
-		{
-			Sound.beep();
-			LCD.drawString("Could not send signal", 0, 0, false);
-		}
-
-	}
 }

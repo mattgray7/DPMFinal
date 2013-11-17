@@ -72,13 +72,11 @@ public class Lift {
 	 * @return void
 	 */
 	public static void clamp(){
-		//clampMotor.flt();
 		clampMotor.setSpeed(150);
 		clampMotor.backward();
 		clampMotor.rotate(-90, false);
 		clampMotor.flt();
-		//clampMotor.setSpeed(20);
-		//clampMotor.backward();
+
 	}
 	
 	
@@ -91,13 +89,6 @@ public class Lift {
 		clampMotor.forward();
 		clampMotor.rotate(95, false);
 		clampMotor.stop();
-		//clampMotor.rotate(95, false);
-		//clampMotor.stop();
-		/*clampMotor.setSpeed(100);
-		clampMotor.forward();
-		
-		try { Thread.sleep(200); }catch (InterruptedException e) {}
-		clampMotor.stop();*/
 	}
 	
 	

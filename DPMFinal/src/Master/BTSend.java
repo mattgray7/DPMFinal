@@ -13,12 +13,9 @@ import lejos.nxt.Sound;
 import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 
-
 public class BTSend {
 
 	private static BTConnection connection;
-	
-	
 	
 	/**
 	 * Send a signal to the slave brick and wait for response
@@ -34,7 +31,6 @@ public class BTSend {
 			output.flush();
 			output.close();
 			
-			
 		}
 		catch(Exception ioe)
 		{
@@ -44,9 +40,8 @@ public class BTSend {
 	}
 	
 	/**
-	 * Sets up BlueTooth connection immediately
-	 * @return True once the connection has been made
-	 * @return False if connection exception detected
+	 * Sets up BlueTooth connection between master and slave brick
+	 * @return void
 	 */
 	public void establishConnection(){
 		String name = "slave2";		//friendly name of other brick
@@ -75,9 +70,4 @@ public class BTSend {
 		}
 		
 	}
-	
-
-	
-
-	
 }

@@ -57,7 +57,9 @@ public class Odometer extends Thread {
 		previousTachoC = 0;
 	}
 
-	// run method (required for Thread)
+	/**
+	 * The main method that constantly updates the odometer
+	 */
 	public void run() {
 		long updateStart, updateEnd;
 
@@ -99,7 +101,11 @@ public class Odometer extends Thread {
 		}
 	}
 
-	// accessors
+	/**
+	 * Gets the position of the odometer
+	 * @param position The array of x, y, and theta values
+	 * @param update 
+	 */
 	public void getPosition(double[] position, boolean[] update) {
 		// ensure that the values don't change while the odometer is running
 		synchronized (lock) {
@@ -112,6 +118,9 @@ public class Odometer extends Thread {
 		}
 	}
 
+	/**
+	 * @return The x component of the odometer
+	 */
 	public double getX() {
 		double result;
 
@@ -122,6 +131,9 @@ public class Odometer extends Thread {
 		return result;
 	}
 
+	/**
+	 * @return The y component of the odometer
+	 */
 	public double getY() {
 		double result;
 
@@ -132,6 +144,9 @@ public class Odometer extends Thread {
 		return result;
 	}
 
+	/**
+	 * @return The theta component of the odometer
+	 */
 	public double getTheta() {
 		double result;
 
@@ -142,7 +157,11 @@ public class Odometer extends Thread {
 		return result;
 	}
 
-	// mutators
+	/**
+	 * Sets the position of the odometer
+	 * @param position The list of values that will overwrite the current values
+	 * @param update
+	 */
 	public void setPosition(double[] position, boolean[] update) {
 		// ensure that the values don't change while the odometer is running
 		synchronized (lock) {
@@ -154,25 +173,42 @@ public class Odometer extends Thread {
 				theta = position[2];
 		}
 	}
-
+	
+	/**
+	 * 
+	 * @param x The x position to set the odometer 
+	 */
 	public void setX(double x) {
 		synchronized (lock) {
 			this.x = x;
 		}
 	}
 
+	/**
+	 * 
+	 * @param y The y position to set the odometer 
+	 */
 	public void setY(double y) {
 		synchronized (lock) {
 			this.y = y;
 		}
 	}
 
+	/**
+	 * 
+	 * @param theta The theta position to set the odometer 
+	 */
 	public void setTheta(double theta) {
 		synchronized (lock) {
 			this.theta = theta;
 		}
 	}
 
+	/**
+	 * Ensures the input angle is the positive equivalent if it's negative
+	 * @param angle The input angle to be inverted if necessary
+	 * @return The positive equivalent of the input angle
+	 */
 	public static double fixDegAngle(double angle) {
 		if (angle < 0.0)
 			angle = 360.0 + (angle % 360.0);
@@ -180,14 +216,23 @@ public class Odometer extends Thread {
 		return angle % 360.0;
 	}
 	
+	/**
+	 * @return the left radius of the odometer
+	 */
 	public double getLeftRadius(){
 		return this.leftRadius;
 	}
 	
+	/**
+	 * @return the wheel base of the odometer
+	 */
 	public double getWheelBase(){
 		return this.width;
 	}
 	
+	/**
+	 * @return the right radius of the odometer
+	 */
 	public double getRightRadius(){
 		return this.rightRadius;
 	}

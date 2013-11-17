@@ -27,7 +27,6 @@ public class BTSendController {
 	
 	
 	public static final int DEFAULT_PERIOD = 25;
-	//public static Odometer odo = new Odometer(DEFAULT_PERIOD, true);
 	public static Odometer odo = new Odometer(LW_RADIUS, RW_RADIUS, WHEEL_BASE);
 	public static BTSend bts = new BTSend();
 	
@@ -39,13 +38,9 @@ public class BTSendController {
 	public static Localization usl = new Localization(odo, bottomUs, nav, odoSensor);
 	
 
-	
+	private NXTRegulatedMotor sensorMotor = Motor.A;
 	private NXTRegulatedMotor leftMotor = Motor.B;
 	private NXTRegulatedMotor rightMotor = Motor.C;
-	private NXTRegulatedMotor sensorMotor = Motor.A;	//if we need a sensor motor
-	
-
-	//TouchSensor touchSensor = new TouchSensor(SensorPort.S4);
 	
 	
 	/**
@@ -53,22 +48,31 @@ public class BTSendController {
 	 * @return void
 	 */
 	public static void main(String[] args){
+		//start the program
 		int buttonChoice = Button.waitForAnyPress();
 		
+		//calibrate light sensor with blue block
 		colorSensor.setFloodlight(true);
 		or.calibrateBlueBlock();
 		
+		//get role, starting position, green and red zone coordinates
 		getTransmission();
-		LCDInfo lc = new LCDInfo(odo);
-		bts.establishConnection();
-		odo.start();
 		
+		//start odometry display
+		LCDInfo lc = new LCDInfo(odo);
+		
+		//connect to slave brick
+		bts.establishConnection();
+		
+		//localize
+		odo.start();
 		usl.doLocalization();
 		usl.doLightLocalization();
 
-
+		//start odometry correction once localization is complete
 		//oc.start();
-
+		
+		//start main navigation
 		nav.start();
 
 		
@@ -77,10 +81,15 @@ public class BTSendController {
 		//connection.close();
 	}
 	
+	/**
+	 * Receives packet containing robot role, starting location, and the location of the red and green zones
+	 * @return void
+	 */
 	public static void getTransmission(){
 		BluetoothConnection compConnection = new BluetoothConnection();
 		Transmission t = compConnection.getTransmission();
 		
+		//set the green zone coordinates
 		int greenZone[] = t.greenZone;
 		nav.setGX0(greenZone[0]*30);
 		nav.setGY0(greenZone[1]*30);

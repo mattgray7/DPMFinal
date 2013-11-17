@@ -15,6 +15,13 @@ public class Localization {
 	private Navigation nav;
 	//private Navigation nav;
 	
+	/**
+	 * Constructor
+	 * @param odo The shared Odometer
+	 * @param us Ultrasonic sensor used for ultrasonic localization
+	 * @param navi	Main navigation class to turn and drive to origin
+	 * @param colsens	Color sensor used for light localization
+	 */
 	public Localization(Odometer odo, UltrasonicSensor us, Navigation navi, ColorSensor colsens) {
 		this.odo = odo;
 		//this.nav = nav;
@@ -25,11 +32,14 @@ public class Localization {
 		us.off();
 	}
 	
+	/**
+	 * Performs rising or falling edge ultrasonic localization depending on if the sensor
+	 * initially reads a wall.
+	 */
 	public void doLocalization() {
 		double angleA, angleB;
 		double theta = 0.0;
 		
-		//int buttonChoice = Button.waitForAnyPress();
 		
 		//determine localization type
 		if (wallInSight()) { 
@@ -38,9 +48,9 @@ public class Localization {
 			locType = LocalizationType.RISING_EDGE;
 		}
 		
+		//facing a wall
 		if (locType == LocalizationType.FALLING_EDGE) {
 			// rotate the robot until it sees no wall
-			
 			while(wallInSight()){
 				spinLeft();
 			}
@@ -70,13 +80,13 @@ public class Localization {
 				theta = 45.0 - ((angleA + angleB)/2);
 				theta += odo.getTheta();
 			}
-
-			odo.setX(-15.0);	//reset x and y positions
-			odo.setY(-15.0);
-			odo.setTheta(theta);	//update new theta
-			//nav.travelTo(0.0,0.0,false);
 			
-			nav.turnTo(90.0,true, true);
+			//give approximate location so the robot can drive to (0,0) with some accuracy
+			odo.setX(-10.0);	
+			odo.setY(-5.0);
+			odo.setTheta(theta);	//update new theta
+			nav.travelTo(0.0,0.0);
+
 
 		} else {
 			//this one runs
@@ -111,14 +121,12 @@ public class Localization {
 				theta += odo.getTheta();
 			}
 			
-			//reset x and y position, update theta
+			//give approximate location so the robot can drive to (0,0) with some accuracy
 			odo.setX(-10.0);
 			odo.setY(-5.0);
 			odo.setTheta(theta);
-			nav.turnTo(90.0, true, true);
-			//nav.travelTo(0.0,0.0,false);
+			nav.travelTo(0.0,0.0);
 			
-
 
 		}
 		
@@ -127,9 +135,10 @@ public class Localization {
 		
 	}
 	
+	/**
+	 * Performs light localization around a grid intersection. Method assumes robot is close to an intersection
+	 */
 	public void doLightLocalization() {
-		nav.travelTo(0.0,0.0,false);
-		Sound.buzz();
 		boolean spinning;
 		double thetaX;
 		double thetaY;
@@ -172,7 +181,7 @@ public class Localization {
 		odo.setX(x);
 		odo.setY(y);
 		//Travel to proper (0,0) coordinates
-		nav.travelTo(0, 0, false);
+		nav.travelTo(0.0, 0.0);
 		nav.turnTo(90.0, true, true);
 		try {Thread.sleep(200);} catch (InterruptedException e) {}
 		odo.setX(x);
@@ -181,7 +190,10 @@ public class Localization {
 		
 	}
 	
-	//returns true if a wall is close enough to be considered
+	/**
+	 * Checks if the ultrasonic sensor reads a wall less than a set distance
+	 * @return True if the ultrasonic sensor reading is less than than the clipping distance
+	 */
 	public boolean wallInSight(){
 		if (getFilteredData() <= 40){
 			return true;
@@ -190,6 +202,10 @@ public class Localization {
 		}
 	}
 	
+	/**
+	 * Pings the ultrasonic sensor and ignored distances greater than 100
+	 * @return
+	 */
 	private int getFilteredData() {
 		int distance;
 		
@@ -210,6 +226,9 @@ public class Localization {
 		return distance;
 	}
 	
+	/**
+	 * Spin the robot left, will spin until stopped.
+	 */
 	public void spinLeft(){
 		leftMotor.setSpeed(200); 
 		rightMotor.setSpeed(200);
@@ -217,6 +236,9 @@ public class Localization {
 		rightMotor.forward();
 	}
 	
+	/**
+	 * Spin the robot right, will wpin until stopped.
+	 */
 	public void spinRight(){
 		leftMotor.setSpeed(200); 
 		rightMotor.setSpeed(200);
