@@ -3,6 +3,6 @@
 
 
 # Files
-.class
-.nxj
-.nxd
+*.class
+*.nxj
+*.nxd
