@@ -45,7 +45,7 @@ public class Odometer extends Thread {
 		leftMotor = Motor.B;
 		rightMotor = Motor.C;
 		
-		x = -15.0;
+		x = 0.0;
 		y = 0.0;
 		theta = 90.0;
 		lock = new Object();

@@ -1,4 +1,4 @@
-package Slave;
+package Master;
 
 /**
  * For representing and operating on 3D vectors
@@ -115,10 +115,12 @@ public class Vector {
 	}
 	
 	/**
-	 * Returns the cosine of the angle between two vectors
-	 * @param a The first Vector
-	 * @param b The second Vector
-	 * @return The cosine of the angle between a and b
+	 * Returns the cosine of the angle between two vectors.
+	 * 
+	 * @param a The first Vector.
+	 * @param b The second Vector.
+	 * 
+	 * @return The cosine of the angle between a and b.
 	 */
 	public static double cosTheta(Vector a, Vector b){
 		double cosTheta = Vector.dot(a,  b);
@@ -129,8 +131,10 @@ public class Vector {
 
 	/**
 	 * Returns the the angle between two vectors
+	 * 
 	 * @param a The first Vector
 	 * @param b The second Vector
+	 * 
 	 * @return The angle between a and b
 	 */
 	public static double theta(Vector a, Vector b){

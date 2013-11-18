@@ -3,18 +3,22 @@ package Master;
 import java.io.IOException;
 
 import lejos.nxt.*;
+import lejos.nxt.ColorSensor.Color;
 
 public class Navigation extends Thread {
 
 	private NXTRegulatedMotor sensMotor = Motor.A;
 	private NXTRegulatedMotor leftMotor = Motor.B;
 	private NXTRegulatedMotor rightMotor = Motor.C;
-	private UltrasonicSensor topUs;
+
 	private UltrasonicSensor bottomUs;
+	private ColorSensor colorSens;
+	private ObjectRecognition recog;
 	
 	private final double POINT_THRESH = 0.5;
 	private final double ANGLE_THRESH = 5.0;
 	private final double CORNER_ANGLE_THRESH = .5;
+	private final int COLOR_THRESH = 330;
 	
 	private final int FAST = 200;
 	private final int JOG = 150;
@@ -25,18 +29,24 @@ public class Navigation extends Thread {
 	private double WHEEL_BASE;
 	
 	private Odometer odometer;
-	public Boolean isTurning = false;
+	public Boolean isBusy = true;
 	public Boolean isTraveling = false;
 	public Boolean isFinished = false;
+	public Boolean hasBlock = false;
+	public Boolean resetPath = false;
 	
 	private double theta;
-	private double gx0 = 60.0;
-	private double gx1 = 90.0;
-	private double gy0 = 60.0;
-	private double gy1 = 90.0;;
+	private double gx0;
+	private double gx1;
+	private double gy0;
+	private double gy1;
 	
-	private double[] xPath;
-	private double[] yPath;
+	private double[] xPath = new double[40];
+	private double[] yPath = new double[40];
+	
+	private double xDestination = 0.0;
+	private double yDestination = 0.0;
+	private int pathIndex = 0;
 
 	// test
 	private BTSend bts;
@@ -49,12 +59,12 @@ public class Navigation extends Thread {
 	 * @param bot
 	 *            The bottom ultrasonic sensor
 	 */
-	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor top,
-			UltrasonicSensor bot) {
-		topUs = top;
+	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor bot, ColorSensor cs, ObjectRecognition or) {
 		bottomUs = bot;
 		odometer = odom;
 		bts = sender;
+		colorSens = cs;
+		recog = or;
 		LW_RADIUS = odometer.getLeftRadius();
 		RW_RADIUS = odometer.getRightRadius();
 		WHEEL_BASE = odometer.getWheelBase();
@@ -63,27 +73,65 @@ public class Navigation extends Thread {
 		this.theta = odometer.getTheta();
 	}
 
+
 	/**
 	 * Controls the flow of execution in the Navigation class
 	 * 
 	 * @return void
 	 */
 	public void run() {
-		// try {bts.sendSignal(2);} catch (IOException e1) {}
+		
+		/*while(true){
+			Button.waitForAnyPress();
+			colorSens.setFloodlight(true);
+			recog.checkColor();
+		}*/
 
-		 scan();
-		/*travelTo(-15.0, 45.0, false);
-		travelTo(45.0, 45.0, false);
-		travelTo(45.0, -15.0, false);
-		travelTo(0.0, 0.0, false);
-		turnTo(90.0, true, true);*/
-		// travelTo(100.0, 100.0, false);
+		//scan();	
+		travelTo(30.0, 30.0, false);
+		turnTo(90.0, true, true);
+		generatePath();
+		scan();
+		
+		//for loop starts at 1 since first elements are current position
+		for(int i=1; i < xPath.length; i++){
+			if(!hasBlock){
+				travelTo(xPath[i], yPath[i], false);
+				pathIndex = i;
 
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
+				if((Math.abs(odometer.getX() - xDestination) < POINT_THRESH + 10) 
+						&& (Math.abs(odometer.getY() - yDestination) < POINT_THRESH + 10)){
+					Sound.buzz();
+					break;
+				}
+			
+				if(resetPath){
+					i=1;
+					resetPath = false;
+				}
+			
+				scan();
+			}else{
+				break;
+			}
+		}
+		
+		if(!hasBlock){
+			travelTo(gx1 + 30, gy0, false);
+			scan();
+		}
+		if(!hasBlock){
+			travelTo(gx1 + 30, gy1, false);
+			scan();
+		}
+		if(!hasBlock){
+			travelTo(gx1 + 30, gy1 + 30, false);
+			scan();
 		}
 
+
+		
+		
 	}
 
 	/**
@@ -103,22 +151,40 @@ public class Navigation extends Thread {
 	 */
 	
 	 public void travelTo(double x, double y, boolean ignore){ 
+		 isBusy = false;
 		 double minAng;
 		 boolean temp = true; 
 		 double distance = Math.sqrt(Math.pow(Math.abs(x -odometer.getX()), 2) + Math.pow(Math.abs(y - odometer.getY()), 2));
 		 double masterDist = distance; 
+		 double masterAng = 0;
+		 colorSens.setFloodlight(Color.RED);
 		 while (Math.abs(x - odometer.getX()) > POINT_THRESH || Math.abs(y - odometer.getY()) > POINT_THRESH) {
 	  
 			 minAng = (Math.atan2(y - odometer.getY(), x - odometer.getX())) * (180.0/ Math.PI); 
 			 distance = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()),2) + Math.pow(Math.abs(y - odometer.getY()), 2));
 	  
-	  
+			LCD.drawString("nx: " + xPath[pathIndex], 0, 5, false);
+			LCD.drawString("ny: " + yPath[pathIndex], 0, 6, false);
+			 
+			 if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
+				 leftMotor.stop();
+				 rightMotor.stop();
+				 isBusy = true;
+				 if(recog.checkColor()){
+					 capture(18.0);		//special distance that the robot should reverse to lower arm
+				 }else{
+					 avoid(1);
+				 }
+				 return;
+			 }
+			 
 			 if (minAng < 0) minAng += 360.0;
 	  
 			 //Only correct angle during first iteration of the call, otherwise the robot is too oscillatory. 
 			 //This is why coordinates are split into 30cmsegments, update every 30cm 
 			 if (temp){ 
-				 this.turnTo(minAng, true, true); 
+				 this.turnTo(minAng, true, true);
+				 masterAng = minAng;
 				 temp = false;
 			 }
 	  
@@ -137,6 +203,8 @@ public class Navigation extends Thread {
 			 this.setSpeeds(FAST, FAST); 
 		 } 
 		 this.setSpeeds(0,0); 
+		 isBusy = false;
+		 turnTo(masterAng, true, true);
 	}
 	 
 	 /**
@@ -153,7 +221,7 @@ public class Navigation extends Thread {
 	*/
 		
 	public void turnTo(double angle, boolean stop, boolean corner) { 
-		isTurning = true;
+		isBusy = true;
 		double error = (angle - this.odometer.getTheta())%360;
 		if(corner){
 			while (Math.abs(error) > CORNER_ANGLE_THRESH) { 
@@ -193,7 +261,7 @@ public class Navigation extends Thread {
 		if (stop) { 
 			this.setSpeeds(0, 0); 
 		} 
-		isTurning = false; 
+		isBusy = false; 
 	}
 	 
 
@@ -205,39 +273,40 @@ public class Navigation extends Thread {
 	 * @return void
 	 */
 	public void scan() {
-		double endAngle = odometer.getTheta() - 90.0;
-		turnTo(odometer.getTheta() + 90.0, true, true);
-		try {
-			Thread.sleep(500);
-
-		} catch (InterruptedException e) {
-		}
+		double endAngle = odometer.getTheta() - 90.0;	//set end angle of scan
+		turnTo(odometer.getTheta() + 90.0, true, true);	//turn to start angle of scan
+		
+		try {Thread.sleep(500);} catch (InterruptedException e) {}
 
 		leftMotor.setSpeed(SLOW);
 		rightMotor.setSpeed(SLOW);
 		leftMotor.forward();
 		rightMotor.backward();
 
-		int dist;
-		Boolean object = false;
-		int objDist = 0;
+		int dist;	//distance read from us sensor
+		Boolean object = false;		//true when scan is passing over an object, false in between
+		Boolean anyObjectFound = false;		//true if at least one object has been found
+		int objDist = 0;	//previously read distanc of object
+		
 		// assuming 5 is the max objects the robot can distinguish in one square
-		int[][] objects = new int[4][5];
+		int[][] objects = new int[4][20];		//20 is arbitrary size, shouldn't be more than 20 edges per scan
 		int objIndex = 0;
 
 		while (odometer.getTheta() > endAngle) {
 
-			dist = getFilteredDistance();
+			dist = getFilteredDistance();		//update the distance
 
-			LCD.drawString("tacho:" + sensMotor.getTachoCount(), 0, 5, false);
+			LCD.drawString("nx: " + xPath[pathIndex], 0, 5, false);
+			LCD.drawString("ny: " + yPath[pathIndex], 0, 6, false);
 
-			if (dist < 40) {
+			if (dist < 32) {
 				if (object == false) {
 					// first reading of object
 					object = true;
 					objDist = dist;
 					objects[0][objIndex] = dist;
 					objects[1][objIndex] = (int) odometer.getTheta();
+					anyObjectFound = true;
 					Sound.beep();
 				} else {
 					// still reading an object
@@ -245,7 +314,7 @@ public class Navigation extends Thread {
 				}
 			}
 
-			if ((Math.abs(objDist - dist) > 8) && (object == true)) {
+			if ((Math.abs(objDist - dist) > 9) && (object == true)) {
 				// end of object
 				objects[2][objIndex] = objDist;
 				objects[3][objIndex] = (int) odometer.getTheta();
@@ -254,6 +323,7 @@ public class Navigation extends Thread {
 				Sound.beep();
 			}
 		}
+
 
 		leftMotor.stop();
 		rightMotor.stop();
@@ -267,49 +337,230 @@ public class Navigation extends Thread {
 
 		int travelDist = 0;
 		double travelAng = 0;
-		sensMotor.setSpeed(150);
-		sensMotor.backward();
-		sensMotor.rotate(-70, false);
-		sensMotor.stop();
+		double ANGLE_OFFSET;
+		
+		
+		//try {bts.sendSignal(1);} catch (IOException e) {}	//1 for lower arms
+		
 
 		for (int i = 0; i <= objIndex; i++) {
-
-			travelDist = ((objects[0][i] + objects[2][i]) / 2 - 11); 
-			travelAng = ((objects[1][i] + objects[3][i]) / 2.0 + 8.0); 
-
+			double avgDist = (objects[0][i] + objects[2][i]) / 2.0;
+			travelDist = (int)avgDist- 10; //-10 for distance between sensor and wheel base
+			
+			//test offset
+			if(avgDist < 5){
+				ANGLE_OFFSET = 4;
+			}else if (avgDist <= 15){
+				ANGLE_OFFSET = 3;
+			}else if (avgDist <= 20){
+				ANGLE_OFFSET = 1;
+			}else if (avgDist <= 25){
+				ANGLE_OFFSET = 0;
+			}else{
+				ANGLE_OFFSET = -0.5;
+			}
+			
+			travelAng = ((objects[1][i] + objects[3][i]) / 2.0 + ANGLE_OFFSET); 
 			if (travelDist > 0) {
-				inspect(travelAng, travelDist);
+				if (!hasBlock){
+					colorSens.setFloodlight(Color.RED);
+					inspect(travelAng, travelDist);
+				}else{
+					
+				}
+
+			}
+		}
+		colorSens.setFloodlight(false);
+
+
+	}
+	
+	/**
+	 * Once an object is read, this method will take the robot to that block,
+	 * then control will be transferred to the slave
+	 * 
+	 * @return void
+	 */
+	public void inspect(double angle, int distance) {
+		/*
+		 * BRING THE CLAW DOWN Use light sensor as distance checker until it
+		 * gets close enough. either give control to slave while travelling
+		 * forward, then slave tells robot to stop, or we use virtual ports
+		 */
+		double x = odometer.getX();
+		double y = odometer.getY();
+		double distTraveled = 0;
+		turnTo(angle, true, true);
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.forward();
+		rightMotor.forward();
+		
+		while(colorSens.getNormalizedLightValue() < COLOR_THRESH){
+			//check for driving too far
+			LCD.drawString("cs:" + colorSens.getNormalizedLightValue(), 0, 5);
+			
+
+			distTraveled = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()),2) + Math.pow(Math.abs(y - odometer.getY()),2));
+			
+			if(Math.abs(distance - distTraveled) < 0.5){
+				break;
+			}
+			
+		}
+		
+		distTraveled = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()),2) + Math.pow(Math.abs(y - odometer.getY()),2));
+		
+		leftMotor.stop();
+		rightMotor.stop();
+		
+		//colorSens.setFloodlight();
+		try {Thread.sleep(100);} catch (InterruptedException e) {}
+		
+		//if(colorSens.getNormalizedLightValue() > 330){
+		
+		
+		if(recog.checkColor()){
+			Sound.beep();
+			hasBlock = true;
+			capture(distTraveled);		//takes the starting x and y as input
+		}else{
+			sensMotor.setSpeed(150);
+			sensMotor.backward();
+			sensMotor.rotate(-15, false);
+			sensMotor.stop();
+			if(recog.checkColor()){
+				
+				sensMotor.setSpeed(150);
+				sensMotor.forward();
+				sensMotor.rotate(15, false);
+				sensMotor.stop();
+				
+				Sound.beep();
+				hasBlock = true;
+				capture(distTraveled);	
+			}else{
+				sensMotor.setSpeed(150);
+				sensMotor.forward();
+				sensMotor.rotate(30, false);
+				sensMotor.stop();
+				if(recog.checkColor()){
+					
+					sensMotor.setSpeed(150);
+					sensMotor.backward();
+					sensMotor.rotate(-15, false);
+					sensMotor.stop();
+					
+					Sound.beep();
+					hasBlock = true;
+					capture(distTraveled);
+				}else{
+					
+					sensMotor.setSpeed(150);
+					sensMotor.backward();
+					sensMotor.rotate(-15, false);
+					sensMotor.stop();
+					
+					leftMotor.rotate(-convertDistance(LW_RADIUS, distTraveled), true);
+					rightMotor.rotate(-convertDistance(RW_RADIUS, distTraveled), false);
+					leftMotor.stop();
+					rightMotor.stop();
+				}
 			}
 		}
 
-		while (true) {
-			LCD.drawString("2ndang:" + travelAng, 0, 6, false);
-			LCD.drawString("objs: " + (objIndex + 1), 0, 7, false);
+	}
+	
+	public void capture(double distance){
+		
+		if(distance < 18){
+			distance = 18;
 		}
+		
+		leftMotor.rotate(-convertDistance(LW_RADIUS, distance), true);//back up far enough to bring claw down
+		rightMotor.rotate(-convertDistance(RW_RADIUS, distance), false);
+		leftMotor.stop();
+		rightMotor.stop();
+		
+		sensMotor.setSpeed(150);
+		sensMotor.forward();
+		sensMotor.rotate(80, false);
+		sensMotor.stop();
+		
+		try {
+			bts.sendSignal(1);
+		} catch (IOException e) {
+			Sound.buzz();
+		}	//1 for lower arms
+		
+		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+		
+		leftMotor.rotate(convertDistance(LW_RADIUS, distance), true);//travel same distance forward with claw down
+		rightMotor.rotate(convertDistance(RW_RADIUS, distance), false);//dist may need to be less since the claw is down
+		
+		leftMotor.setSpeed(JOG + 50);
+		rightMotor.setSpeed(JOG - 50);
+		leftMotor.forward();
+		rightMotor.forward();
+		try {Thread.sleep(700);} catch (InterruptedException e1) {}
+		leftMotor.setSpeed(JOG - 50);
+		rightMotor.setSpeed(JOG + 50);
+		leftMotor.forward();
+		rightMotor.forward();
+		try {Thread.sleep(700);} catch (InterruptedException e1) {}
+		leftMotor.setSpeed(JOG);
+		rightMotor.setSpeed(JOG);
+		leftMotor.rotate(convertDistance(LW_RADIUS, 5), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);
+		
+		
+		leftMotor.stop();
+		rightMotor.stop();
+		
+		
+		try {bts.sendSignal(2);} catch (IOException e) {Sound.buzz();}	//2 for clamp and raise arms
+		
+		try {Thread.sleep(1700);} catch (InterruptedException e1) {}
+		
+		finishLine();
+		
+	}
+	
+	/**
+	 * Will take the robot from it's current position directly to the bottom left corner of the green zone
+	 */
+	public void finishLine(){
+		//move back into position
+		centerSensors();
+		
+		travelTo(gx0+2, gy0-1, true);
+		turnTo(35, true, true);
+		
+		//move away from claw
+		rotateSensorsRight();
+		
+		try {bts.sendSignal(1);} catch (IOException e) {}	//1 for lower arms and release
+		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+		
+		
+		leftMotor.backward();
+		rightMotor.backward();
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.rotate(-convertDistance(LW_RADIUS, 10.0), true);
+		rightMotor.rotate(-convertDistance(RW_RADIUS, 10.0), false);
+		leftMotor.stop();
+		rightMotor.stop();
 
+		Sound.beep();
+		try {Thread.sleep(500);} catch (InterruptedException e1) {}
+		Sound.beep();
+		try {Thread.sleep(500);} catch (InterruptedException e1) {}
+		Sound.beep();
 	}
 
-	public void smoothTurnTo(double angle, double x, double y) {
-		isTurning = true;
-		double error = angle - odometer.getTheta();
 
-		while (Math.abs(error) > ANGLE_THRESH) {
-			angle = (Math.atan2(y - odometer.getY(), x - odometer.getX()))
-					* (180.0 / Math.PI);
-			error = angle - odometer.getTheta();
-
-			if (error < 0) {
-				leftMotor.setSpeed(200 + (int) (error * 3.5));
-				rightMotor.setSpeed(180);
-				Sound.beep();
-			} else {
-				leftMotor.setSpeed(180);
-				rightMotor.setSpeed(200 + (int) (error * 3));
-				Sound.beep();
-			}
-		}
-		isTurning = false;
-	}
 	
 	/**
 	 * Will generate a path of points that lead from the starting position
@@ -329,46 +580,82 @@ public class Navigation extends Thread {
 	    double xDest = (x0 + x1)/2.0;
 	    double yDest = (y0 + y1)/2.0;
 	    
-	    double[] xpath = new double[20];
-	    double[] ypath = new double[20];
+	    double[] xpath = new double[40];
+	    double[] ypath = new double[40];
 	    double length = xpath.length;
 	    
-	    xpath[0] = x + 30.0;     //first point manually chosen
+	    xpath[0] = x;     //first point manually chosen
 	    ypath[0] = y;
+
 	    
-	    for(int i=0; i< xpath.length-1; i++){
-	      if(xpath[i] <= x0){
-	        if ((xDest - xpath[i]) > 30.0){
-	          xpath[i+1] = xpath[i] + 30.0;
-	          ypath[i+1] = ypath[i];
-	        }else{
-	          xpath[i+1] = xDest;
-	          ypath[i+1] = ypath[i];
-	          
-	          if(ypath[i+1] == yDest && xpath[i+1] == xDest){
-	        	  length = i+1;
-	        	  break;
+	    for(int i=0; i< xpath.length - 1; i++){
+	        
+	        //left and below green zone
+	        
+	        if(xpath[i] <= x0){
+	          if ((xDest - xpath[i]) > 30.0){
+	            xpath[i+1] = xpath[i] + 30.0;
+	            ypath[i+1] = ypath[i];
+	          }else{
+	            xpath[i+1] = xDest;
+	            ypath[i+1] = ypath[i];
+	            
+	            if(ypath[i+1] == yDest && xpath[i+1] == xDest){
+	            	  length = i+1;
+	            	  break;
+	            }
+	            
 	          }
-	          
-	        }
-	      }else{
-	        if ((yDest - ypath[i]) > 30.0){
-	          ypath[i+1] = ypath[i] + 30.0;
-	          xpath[i+1] = xpath[i];
-	        }else{
-	          ypath[i+1] = yDest;
-	          xpath[i+1] = xpath[i];
-	          
-	          if(ypath[i+1] == yDest && xpath[i+1] == xDest){
-	        	  length = i+1;
-	        	  break;
+	        }else if (xpath[i] >= x1){
+	          if ((xpath[i] - xDest) > 30.0){
+	            xpath[i+1] = xpath[i] - 30.0;
+	            ypath[i+1] = ypath[i];
+	          }else{
+	            xpath[i+1] = xDest;
+	            ypath[i+1] = ypath[i];
+	            
+	            if(ypath[i+1] == yDest && xpath[i+1] == xDest){
+	            	  length = i+1;
+	            	  break;
+	            }
+	            
 	          }
-	          
+	        }else if (ypath[i] <= y0){
+	          if ((yDest - ypath[i]) > 30.0){
+	            ypath[i+1] = ypath[i] + 30.0;
+	            xpath[i+1] = xpath[i];
+	          }else{
+	            ypath[i+1] = yDest;
+	            xpath[i+1] = xpath[i];
+	            
+	            if(ypath[i+1] == yDest && xpath[i+1] == xDest){
+	            	  length = i+1;
+	            	  break;
+	            }
+	            
+	          }
+	        }else{
+	          if ((ypath[i] - yDest) >= 30.0){
+	            ypath[i+1] = ypath[i] - 30.0;
+	            xpath[i+1] = xpath[i];
+	          }else{
+	            ypath[i+1] = yDest;
+	            xpath[i+1] = xpath[i];
+	            
+	            if(ypath[i+1] == yDest && xpath[i+1] == xDest){
+	            	  length = i+1;
+	            	  break;
+	            }
+	            
+	          }
 	        }
 	      }
-	    }
 	    
-	    for(int i=0; i <= length; i++){
+
+	    xDestination = xDest;
+	    yDestination = yDest;
+	    
+	    for(int i=0; i < length; i++){
 	    	xPath[i] = xpath[i];
 	    	yPath[i] = ypath[i];
 	    }
@@ -381,7 +668,239 @@ public class Navigation extends Thread {
 	 * 
 	 * @return void
 	 */
-	public void avoid() {
+	public void avoid(double i) {
+		
+		leftMotor.backward();
+		rightMotor.backward();
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.rotate(-convertDistance(LW_RADIUS, 8.0), true);
+		rightMotor.rotate(-convertDistance(RW_RADIUS, 8.0), false);
+		leftMotor.stop();
+		rightMotor.stop();
+		
+		double initAngle = odometer.getTheta();
+		turnTo(odometer.getTheta() + 90.0, true, true);
+		int dist = getFilteredDistance();
+		int BAND_CENTER = 20;
+		int error = 0;
+		
+		
+		if (dist > 30){
+			//left wall follow
+			
+			//rotate sensor right
+			sensMotor.setSpeed(150);
+			sensMotor.forward();
+			sensMotor.rotate(40, false);
+			sensMotor.stop();
+			
+			leftMotor.setSpeed(FAST);
+			rightMotor.setSpeed(FAST);
+			leftMotor.forward();
+			rightMotor.forward();
+			
+			if(i != 1){
+				turnTo(initAngle + 45, true, true);
+				//drive until a distance is set
+				while(dist > BAND_CENTER){
+					dist = getFilteredDistance();
+					leftMotor.setSpeed(FAST);
+					rightMotor.setSpeed(FAST);
+					leftMotor.forward();
+					rightMotor.forward();
+				}
+			}
+			
+
+			
+			while(true){
+				dist = getFilteredDistance();
+				error = BAND_CENTER - dist;
+				
+				if(error > 100){
+					error = 50;
+				}else if (error < -100){
+					error = -50;
+				}
+				//if robot gets to starting x orientation, it has successfully avoided the block
+				
+				if(error < -2){
+					leftMotor.setSpeed(FAST + 50);
+					rightMotor.setSpeed(FAST + 30 + (error*2));	//error is negative, right move slower
+				}else if (error > 2){
+					leftMotor.setSpeed(FAST + 30);
+					rightMotor.setSpeed(FAST + 50 + (error * 2));
+				}else{
+					leftMotor.setSpeed(FAST + 50);
+					rightMotor.setSpeed(FAST + 50);
+				}
+				
+				if (Math.abs(odometer.getTheta() - (initAngle - 20)) < ANGLE_THRESH){
+					Sound.buzz();
+					leftMotor.setSpeed(JOG);
+					rightMotor.setSpeed(JOG);
+					break;
+				}
+			}
+			
+			sensMotor.setSpeed(150);
+			sensMotor.backward();
+			sensMotor.rotate(-40, false);
+			sensMotor.stop();
+			
+			try {Thread.sleep(1500);} catch (InterruptedException e) {}
+	
+			
+			
+		}else{
+			
+			turnTo(odometer.getTheta() - 180.0, true, true);
+			dist = getFilteredDistance();
+			if(dist > 30){
+				Sound.beep();
+				//rotate sensor right
+				sensMotor.setSpeed(150);
+				sensMotor.backward();
+				sensMotor.rotate(-40, false);
+				sensMotor.stop();
+				
+				leftMotor.setSpeed(FAST);
+				rightMotor.setSpeed(FAST);
+				leftMotor.forward();
+				rightMotor.forward();
+				
+				if(i != 1){
+					turnTo(initAngle - 45, true, true);
+					//drive until a distance is set
+					while(dist > BAND_CENTER){
+						dist = getFilteredDistance();
+						leftMotor.setSpeed(FAST);
+						rightMotor.setSpeed(FAST);
+						leftMotor.forward();
+						rightMotor.forward();
+					}
+				}
+				
+				while(true){
+					dist = getFilteredDistance();
+					error = BAND_CENTER - dist;
+					
+					if(error > 100){
+						error = 50;
+					}else if (error < -100){
+						error = -50;
+					}
+					//if robot gets to starting x orientation, it has successfully avoided the block
+					
+					if(error < -2){
+						leftMotor.setSpeed(FAST + 30 + (error*2));
+						rightMotor.setSpeed(FAST + 50);	//error is negative, right move slower
+					}else if (error > 2){
+						leftMotor.setSpeed(FAST + 30 + (error*2));
+						rightMotor.setSpeed(FAST + 50);
+					}else{
+						leftMotor.setSpeed(FAST + 50);
+						rightMotor.setSpeed(FAST + 50);
+					}
+					
+					if (Math.abs(odometer.getTheta() - (initAngle + 20)) < ANGLE_THRESH){
+						Sound.buzz();
+						leftMotor.setSpeed(JOG);
+						rightMotor.setSpeed(JOG);
+						break;
+					}
+					
+				}
+				//rotate sensor back forward
+				sensMotor.setSpeed(150);
+				sensMotor.forward();
+				sensMotor.rotate(40, false);
+				sensMotor.stop();
+				
+				try {Thread.sleep(1500);} catch (InterruptedException e) {}
+				
+				
+				
+			}else{
+				//reverse and try again
+				turnTo(odometer.getTheta() + 90.0, true, true);
+				leftMotor.setSpeed(FAST);
+				rightMotor.setSpeed(FAST);
+				leftMotor.rotate(-convertDistance(LW_RADIUS, 30.0), true);
+				rightMotor.rotate(-convertDistance(RW_RADIUS, 30.0), false);
+				avoid(i+1);
+			}
+		}
+		
+		
+		//turn to the left
+		/*isBusy = false;
+		turnTo(odometer.getTheta() + 90.0, true, true);
+		int dist = getFilteredDistance();
+		
+		if (i != 1){
+			i *= 0.75;
+		}
+		
+		if(dist > 30){
+			 Sound.beep();
+			 leftMotor.setSpeed(JOG);
+			 rightMotor.setSpeed(JOG);
+			 leftMotor.rotate(convertDistance(LW_RADIUS, 30.0*i), true);
+			 rightMotor.rotate(convertDistance(RW_RADIUS, 30.0*i), false);
+			 Sound.beep();
+			 
+			 turnTo(odometer.getTheta() - 90.0, true, true);
+			 leftMotor.setSpeed(JOG);
+			 rightMotor.setSpeed(JOG);
+			 leftMotor.rotate(convertDistance(LW_RADIUS, 50.0*i), true);
+			 rightMotor.rotate(convertDistance(RW_RADIUS, 50.0*i), false);
+			 
+			 turnTo(odometer.getTheta() - 90.0, true, true);
+			 leftMotor.setSpeed(JOG);
+			 rightMotor.setSpeed(JOG);
+			 leftMotor.rotate(convertDistance(LW_RADIUS, 30.0*i), true);
+			 rightMotor.rotate(convertDistance(RW_RADIUS, 30.0*i), false);
+		}else{
+			turnTo(odometer.getTheta() - 180.0, true, true);
+			if(dist > 30){
+				Sound.beep();
+				 leftMotor.setSpeed(JOG);
+				 rightMotor.setSpeed(JOG);
+				 leftMotor.rotate(convertDistance(LW_RADIUS, 30.0*i), true);
+				 rightMotor.rotate(convertDistance(RW_RADIUS, 30.0*i), false);
+				 
+				 leftMotor.setSpeed(JOG);
+				 rightMotor.setSpeed(JOG);
+				 turnTo(odometer.getTheta() + 90.0, true, true);
+				 leftMotor.rotate(convertDistance(LW_RADIUS, 50.0*i), true);
+				 rightMotor.rotate(convertDistance(RW_RADIUS, 50.0*i), false);
+				 
+				 leftMotor.setSpeed(JOG);
+				 rightMotor.setSpeed(JOG);
+				 turnTo(odometer.getTheta() + 90.0, true, true);
+				 leftMotor.rotate(convertDistance(LW_RADIUS, 30.0*i), true);
+				 rightMotor.rotate(convertDistance(RW_RADIUS, 30.0*i), false); 
+			}else{
+				Sound.buzz();
+				turnTo(odometer.getTheta() + 90.0, true, true);
+				leftMotor.setSpeed(JOG);
+				rightMotor.setSpeed(JOG);
+				leftMotor.rotate(-convertDistance(LW_RADIUS, 30.0), true);
+				rightMotor.rotate(-convertDistance(RW_RADIUS, 30.0), false);
+				avoid(i+1);
+				return;
+			}
+		}*/
+		
+		if(!hasBlock){
+			generatePath();		//generate new list of points based on current location
+			resetPath = true;	//update the path
+		}else{
+			finishLine();
+		}
+		isBusy = true;
 
 	}
 
@@ -408,41 +927,21 @@ public class Navigation extends Thread {
 		distance = bottomUs.getDistance();
 		return distance;
 	}
-
-	/**
-	 * Once an object is read, this method will take the robot to that block,
-	 * then control will be transferred to the slave
-	 * 
-	 * @return void
-	 */
-	public void inspect(double angle, int distance) {
-		/*
-		 * BRING THE CLAW DOWN Use light sensor as distance checker until it
-		 * gets close enough. either give control to slave while travelling
-		 * forward, then slave tells robot to stop, or we use virtual ports
-		 */
-
-		turnTo(angle, true, true);
-		leftMotor.setSpeed(SLOW);
-		rightMotor.setSpeed(SLOW);
-		leftMotor.forward();
-		rightMotor.forward();
-		leftMotor.rotate(convertDistance(LW_RADIUS, distance), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, distance), false);
-		leftMotor.stop();
-		rightMotor.stop();
-		Sound.beep();
-
-		// colour check
-
-		leftMotor.backward();
-		rightMotor.backward();
-		leftMotor.rotate(-convertDistance(LW_RADIUS, distance), true);
-		rightMotor.rotate(-convertDistance(RW_RADIUS, distance), false);
-		leftMotor.stop();
-		rightMotor.stop();
-
+	
+	public void rotateSensorsRight(){
+		sensMotor.setSpeed(150);
+		sensMotor.forward();
+		sensMotor.rotate(80, false);
+		sensMotor.stop();
 	}
+	
+	public void centerSensors(){
+		sensMotor.setSpeed(150);
+		sensMotor.backward();
+		sensMotor.rotate(-80, false);
+		sensMotor.stop();
+	}
+
 
 	/**
 	 * Sets the speeds of the robot
@@ -473,68 +972,22 @@ public class Navigation extends Thread {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
 	
-	/*public void travelTo(double x, double y, boolean ignore) {
-	isTraveling = true;
-	double heading;
-	while (isTraveling) {
-		// Takes care of division by zero in tangent function as well as
-		// When there is no change in distance on either axis
-		if (Math.abs(y - odometer.getY()) <= 2 && (x - odometer.getX()) < 0) {
-			heading = 180;
-		} else if (Math.abs(y - odometer.getY()) <= 2 && (x - odometer.getX()) > 0) {
-			heading = 0;
-		} else if (Math.abs(x - odometer.getX()) <= 2 && (y - odometer.getY()) > 0) {
-			heading = 90;
-		} else if (Math.abs(x - odometer.getX()) <= 2 && (y - odometer.getY()) < 0) {
-			heading = 270;
-		} else {
-			heading = Math.atan((y - odometer.getY()) / (x - odometer.getX())) * (180 / Math.PI);
-		}
-
-		// If robot heading is correct, then go straight
-		if (Math.abs(heading - theta) <= 10) {
-			// Heading is correct then go straight
-			leftMotor.setSpeed(FAST);
-			rightMotor.setSpeed(FAST);
-			leftMotor.forward();
-			rightMotor.forward();
-		} 
-		else if (heading - theta <= 180 && heading - theta >= -180) {
-			// Rotate minimum angle
-			 turnTo(heading - theta);
-		} else if (heading -theta < -180) {
-			// Rotate angle + 360
-			turnTo(heading - theta+ 360);
-		} else {
-			// Rotate angle - 360
-			turnTo(heading - theta - 360);
-		}
-
-		// Update theta
-		theta = odometer.getTheta();
-		// Break loop if destination is reached
-		if (Math.abs(odometer.getX() - x) < 2 && Math.abs(odometer.getY() - y) < 2) {
-			Sound.buzz();
-			leftMotor.stop();
-			rightMotor.stop();
-			isTraveling = false;
-		}
+	public void setGX0(int x){
+		this.gx0 = x;
 	}
-}*/
-
-/*
- * This method will allow the robot to turn the desired minimum angle All
- * computations are made in the travelTo method this method Just turns the
- * robot
- */
-/*public void turnTo(double newTheta) {
-	if (newTheta > 1){
-	leftMotor.setSpeed(SLOW);
-	rightMotor.setSpeed(SLOW);
-	leftMotor.rotate(-convertAngle(LW_RADIUS, WHEEL_BASE, newTheta), true);
-	rightMotor.rotate(convertAngle(RW_RADIUS, WHEEL_BASE, newTheta), false);
-	LCD.drawString("newTheta: " + newTheta, 0, 4, false);
+	
+	public void setGY0(int y){
+		this.gy0 = y;
 	}
-}*/
+	
+	public void setGX1(int x){
+		this.gx1 = x;
+	}
+	
+	public void setGY1(int y){
+		this.gy1 = y;
+	}
+	
+	
 
 }
