@@ -21,8 +21,9 @@ public class BTSendController {
 	public static final double WHEEL_BASE = 17.3;
 	
 	public static UltrasonicSensor bottomUs = new UltrasonicSensor(SensorPort.S1);
-	public static ColorSensor odoSensor= new ColorSensor(SensorPort.S2);
+	public static ColorSensor rightColorSensor= new ColorSensor(SensorPort.S2);
 	public static ColorSensor colorSensor = new ColorSensor(SensorPort.S3);
+	public static ColorSensor leftColorSensor = new ColorSensor(SensorPort.S4);
 	//public static UltrasonicSensor topUs = new UltrasonicSensor(SensorPort.S4);
 	
 	
@@ -32,10 +33,10 @@ public class BTSendController {
 	
 	public static ObjectRecognition or = new ObjectRecognition(colorSensor);
 	public static Navigation nav = new Navigation(odo, bts, bottomUs, colorSensor, or);
-	public static OdometryCorrection oc = new OdometryCorrection(odo, odoSensor, nav);
+	public static OdometryCorrection oc = new OdometryCorrection(odo, leftColorSensor, rightColorSensor, nav);
 
 
-	public static Localization usl = new Localization(odo, bottomUs, nav, odoSensor);
+	public static Localization usl = new Localization(odo, bottomUs, nav, rightColorSensor);
 	
 
 	private NXTRegulatedMotor sensorMotor = Motor.A;

@@ -8,7 +8,8 @@ import lejos.util.Timer;
 
 public class OdometryCorrection extends Thread{
 	Odometer odometer;
-	ColorSensor sens;
+	ColorSensor leftLightSensor;
+	ColorSensor rightLightSensor;
 	Navigation nav;
 	int[] values = new int[10];
 	private static final int CORRECTION_PERIOD = 10;
@@ -17,6 +18,8 @@ public class OdometryCorrection extends Thread{
 	private static final int DISTANCE_FROM_LSENSOR = 11; //distance from sensor to center
 	private static final int TIME_THRESH = 400; //Threshold that line readings are accepted in
 	private static final int LIGHT_THRESH = 20; //Threshold light reading difference for reading a line
+	private NXTRegulatedMotor leftMotor = Motor.B;
+	private NXTRegulatedMotor rightMotor = Motor.C;
 	
 	
 	int leftLineCount=0;
@@ -46,10 +49,11 @@ public class OdometryCorrection extends Thread{
 	 * @param l	The left side color sensor
 	 * @param r The right side color sensor
 	 */
-	public OdometryCorrection(Odometer odom, ColorSensor cs, Navigation navi){
+	public OdometryCorrection(Odometer odom, ColorSensor cs, ColorSensor cs2, Navigation navi){
 		this.odometer = odom;
 		this.nav = navi;
-		sens = cs;
+		leftLightSensor = cs;
+		rightLightSensor = cs2;
 		oldTime = System.currentTimeMillis();
 	}
 	
@@ -62,10 +66,10 @@ public class OdometryCorrection extends Thread{
 	 */
 	public void run(){
 		long correctionStart, correctionEnd;
-		sens.setFloodlight(Color.RED);
-
+		leftLightSensor.setFloodlight(Color.RED);
+		rightLightSensor.setFloodlight(Color.RED);
 		
-		fillWindows();
+		//fillWindows();
 		
 		
 		while (true) {
@@ -79,10 +83,11 @@ public class OdometryCorrection extends Thread{
 				|| (Math.abs(odometer.getTheta() - 270.0) < ANGLE_THRESH))
 				&& (nav.isBusy == false)){
 				//LCD.drawString("CORRECT ZONE", 0, 4, false);
-				calculateThetaError();
+				//calculateThetaError();
+				fixTheta();
 			}
 			
-			updateWindow();
+			//updateWindow();
 				
 			/*if(acceptRead){
 				newTheta = Math.atan((SENSOR_DIST*180)/((t2-t1)*.001*(Motor.A.getSpeed() * Math.PI * WHEEL_RADIUS)));	//1000 for ms conversion
@@ -124,8 +129,93 @@ public class OdometryCorrection extends Thread{
 	 * be accepted if they are within a certain time threshold.
 	 * @return void
 	 */
-	public void calculateThetaError(){
-		/*if(compareAverageWithCurrent(leftValues, leftSensor)){
+	
+	public void fixTheta() {
+		//Will only correct if robot is travelling north, south, east or west
+		//Stop one motor depending on which light sensor detects first
+		if(odometer.getTheta() > 89 || odometer.getTheta() < 91) {
+			while(leftLightSensor.getNormalizedLightValue() < 500 || rightLightSensor.getNormalizedLightValue() < 500) {
+				if(leftLightSensor.getNormalizedLightValue() < 500) {
+					leftMotor.stop();
+					while (rightLightSensor.getNormalizedLightValue() > 500) {
+						rightMotor.forward();
+					}
+					rightMotor.stop();
+				}
+				else {
+					rightMotor.stop();
+					while (leftLightSensor.getNormalizedLightValue() > 500) {
+						leftMotor.forward();
+					}
+					leftMotor.stop();
+				}
+				odometer.setTheta(90);
+			}
+		}
+		
+		if (odometer.getTheta() > 359 || odometer.getTheta() < 1) {
+			while(leftLightSensor.getNormalizedLightValue() < 500 || rightLightSensor.getNormalizedLightValue() < 500) {
+				if(leftLightSensor.getNormalizedLightValue() < 500) {
+					leftMotor.stop();
+					rightMotor.stop();
+					while (rightLightSensor.getNormalizedLightValue() > 500) {
+						rightMotor.forward();
+					}
+					rightMotor.stop();
+				}
+				else {
+					rightMotor.stop();
+					while (leftLightSensor.getNormalizedLightValue() > 500) {
+						leftMotor.forward();
+					}
+					leftMotor.stop();
+				}
+				odometer.setTheta(0);
+			}
+		}
+		if (odometer.getTheta() > 269 || odometer.getTheta() <271) {
+			while(leftLightSensor.getNormalizedLightValue() < 500 || rightLightSensor.getNormalizedLightValue() < 500) {
+				if(leftLightSensor.getNormalizedLightValue() < 500) {
+					leftMotor.stop();
+					rightMotor.stop();
+					while (rightLightSensor.getNormalizedLightValue() > 500) {
+						rightMotor.forward();
+					}
+					rightMotor.stop();
+				}
+				else {
+					rightMotor.stop();
+					while (leftLightSensor.getNormalizedLightValue() > 500) {
+						leftMotor.forward();
+					}
+					leftMotor.stop();
+				}
+				odometer.setTheta(270);
+			}
+		}
+		if (odometer.getTheta() > 179 || odometer.getTheta() < 181) {
+			while(leftLightSensor.getNormalizedLightValue() < 500 || rightLightSensor.getNormalizedLightValue() < 500) {
+				if(leftLightSensor.getNormalizedLightValue() < 500) {
+					leftMotor.stop();
+					rightMotor.stop();
+					while (rightLightSensor.getNormalizedLightValue() > 500) {
+						rightMotor.forward();
+					}
+					rightMotor.stop();
+				}
+				else {
+					rightMotor.stop();
+					while (leftLightSensor.getNormalizedLightValue() > 500) {
+						leftMotor.forward();
+					}
+					leftMotor.stop();
+				}
+				odometer.setTheta(180);
+			}
+		}
+	}
+	/*public void calculateThetaError(){
+		if(compareAverageWithCurrent(leftValues, leftSensor)){
 			t1 = System.currentTimeMillis();
 			//leftLineCount++;
 			//Sound.beep();
@@ -147,7 +237,7 @@ public class OdometryCorrection extends Thread{
 				calculatePositionError();
 
 			}
-		}*/
+		}
 		if(compareAverageWithCurrent(values, sens)){
 			calculatePositionError();
 			try {Thread.sleep(1000);} catch (InterruptedException e) {}
@@ -158,9 +248,9 @@ public class OdometryCorrection extends Thread{
 		
 		/*if(compareAverageWithCurrent(rightValues, rightSensor) || compareAverageWithCurrent(leftValues, leftSensor)){
 			calculatePositionError();
-		}*/
+		}
 		
-	}
+	}*/
 	
 	
 	/**
@@ -260,7 +350,7 @@ public class OdometryCorrection extends Thread{
 	 * Fills the base light value arrays with wood-colored readings
 	 * @return void
 	 */
-	public void fillWindows(){
+	/*public void fillWindows(){
 		for(int i=0; i < 10; i++){
 			values[i] = sens.getNormalizedLightValue();
 		}
