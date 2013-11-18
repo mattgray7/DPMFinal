@@ -81,7 +81,7 @@ public class Odometer extends Thread {
 			double deltaTachoRight = (currentTachoRight - lastTachoRight) * Math.PI / 180.0;
 			
 			// Change in the robot's heading
-			double deltaTheta = (deltaTachoLeft * leftWheelRadius - deltaTachoRight * rightWheelRadius) * 180.0 / (Math.PI * wheelBaseWidth);
+			double deltaTheta = (deltaTachoRight * rightWheelRadius - deltaTachoLeft * leftWheelRadius) * 180.0 / (Math.PI * wheelBaseWidth);
 			
 			// Distance traveled by the robot's center
 			double distance = (deltaTachoLeft * leftWheelRadius + deltaTachoRight * rightWheelRadius) / 2.0;

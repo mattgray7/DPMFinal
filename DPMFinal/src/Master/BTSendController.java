@@ -30,6 +30,20 @@ public class BTSendController {
 	public LCDInfo lcdInfo;
 	public Localization usLocalization;
 	
+
+	/**
+	 * Setup a BTSendController (the main bulk of the program) and start it.
+	 * 
+	 * @return void
+	 */
+	public static void main(String[] args){
+		BTSendController controller = new BTSendController();
+		
+		controller.execute();
+		
+		System.exit(0);
+	}
+	
 	/**
 	 * Constructor
 	 */
@@ -57,13 +71,15 @@ public class BTSendController {
 		//getTransmission();;
 		//bts.establishConnection();
 		lcdInfo.start();
-		//odo.start();
+		odo.start();
 		
 		//usLocalization.doLocalization();
 		//usLocalization.doLightLocalization();
 
 		//odometryCorrection.start();
 		//nav.start();
+		
+		Button.waitForAnyPress();
 	}
 	
 	/**
@@ -76,17 +92,6 @@ public class BTSendController {
 		LCD.drawString("DPM project", 0, 2);
 		LCD.drawString("Press button", 0, 3);
 		LCD.drawString("to start.", 0, 4);
-	}
-	
-	/**
-	 * Setup a BTSendController (the main bulk of the program) and start it.
-	 * 
-	 * @return void
-	 */
-	public static void main(String[] args){
-		BTSendController controller = new BTSendController();
-		
-		controller.execute();
 	}
 	
 	/**
