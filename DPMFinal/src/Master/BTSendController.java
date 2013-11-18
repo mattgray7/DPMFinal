@@ -28,7 +28,7 @@ public class BTSendController {
 	public Navigation nav;
 	public OdometryCorrection odometryCorrection;
 	public LCDInfo lcdInfo;
-	public Localization usLocalization;
+	public Localization localization;
 	
 
 	/**
@@ -58,7 +58,7 @@ public class BTSendController {
 		nav = new Navigation(odo, bts, bottomUs, colorSensor, objectRecognition);
 		odometryCorrection = new OdometryCorrection(odo, odoSensor, nav);
 		lcdInfo = new LCDInfo(odo);
-		usLocalization = new Localization(odo, bottomUs, nav, odoSensor);
+		localization = new Localization(odo, bottomUs, nav, odoSensor);
 	}
 	
 	public void execute(){
@@ -66,20 +66,26 @@ public class BTSendController {
 		int buttonChoice = Button.waitForAnyPress();
 		
 		colorSensor.setFloodlight(true);
-		objectRecognition.calibrateBlueBlock();
+		//objectRecognition.calibrateBlueBlock();
 		
 		//getTransmission();;
 		//bts.establishConnection();
 		lcdInfo.start();
 		odo.start();
 		
-		//usLocalization.doLocalization();
-		//usLocalization.doLightLocalization();
+		//localization.doLocalization();
+		
+		//nav.travelTo(0, 0, true);
+		
+		localization.doLightLocalization();
 
 		//odometryCorrection.start();
 		//nav.start();
 		
 		Button.waitForAnyPress();
+		
+		// Cleanup
+		colorSensor.setFloodlight(false);
 	}
 	
 	/**

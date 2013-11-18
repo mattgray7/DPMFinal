@@ -3,9 +3,10 @@ package Master;
 import lejos.nxt.*;
 
 public class Localization {
-	private static final int SPIN_SPEED = 30;
+	private static final int SPIN_SPEED = 100;
 	private static final int WALL_DISTANCE = 55;
 	private static final double CS_DISTANCE = 10.5;
+	private static final int BLACK_LINE_THRESHOLD = 485;
 
 	private NXTRegulatedMotor leftMotor = Motor.B;
 	private NXTRegulatedMotor rightMotor = Motor.C;
@@ -27,17 +28,15 @@ public class Localization {
 	public void doLocalization(){
 		if (!wallInSight()){
 			LCD.drawString("FALLING", 0, 0);
-			doLocalizationFallingEdge();
+			doUSLocalizationFallingEdge();
 		}
 		else{
 			LCD.drawString("RISING", 0, 0);
-			doLocalizationRisingEdge();
+			doUSLocalizationRisingEdge();
 		}
-		
-		LCD.drawString("New " + odo.getTheta(), 0, 7);
 	}
 	
-	private void doLocalizationFallingEdge(){
+	private void doUSLocalizationFallingEdge(){
 		// Rotate left until you don't see a wall
 		// This should already be established, and is not really necessary.
 		LCD.drawString("Init", 0, 3);
@@ -57,9 +56,13 @@ public class Localization {
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
-		while(System.currentTimeMillis() - startTime < 500){
-			spinRight();
+		long spinTime = 500;
+		Sound.beep();
+		spinRight();
+		while(System.currentTimeMillis() - startTime < spinTime){
+			// Wait
 		}
+		Sound.beep();
 		
 		// Rotate right until you see a wall
 		LCD.drawString("See wall...", 0, 3);
@@ -75,11 +78,10 @@ public class Localization {
 		
 		// Calibrate robot's angle
 		LCD.drawString("Calibrate", 0, 3);
-		double angleDelta = getAngleCorrection(angleA, angleB);
-		odo.setTheta(odo.getTheta() + angleDelta);
+		usLocalizationCorrection(angleA, angleB);
 	}
 
-	private void doLocalizationRisingEdge(){
+	private void doUSLocalizationRisingEdge(){
 		// Rotate left until you see a wall
 		// This should already be established, and is not really necessary.
 		LCD.drawString("Init", 0, 3);
@@ -98,9 +100,13 @@ public class Localization {
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
-		while(System.currentTimeMillis() - startTime < 500){
-			spinRight();
+		long spinTime = 500;
+		Sound.beep();
+		spinRight();
+		while(System.currentTimeMillis() - startTime < spinTime){
+			// Wait
 		}
+		Sound.beep();
 		
 		// Rotate right until you don't see a wall
 		LCD.drawString("Wall...", 0, 3);
@@ -116,41 +122,41 @@ public class Localization {
 		
 		// Calibrate robot's angle
 		LCD.drawString("Calibrate", 0, 3);
-		double angleDelta = getAngleCorrection(angleA, angleB);
-		odo.setTheta(odo.getTheta() + angleDelta);
+		usLocalizationCorrection(angleA, angleB);
 	}
 	
 	public void doLightLocalization() {
-		nav.travelTo(0.0,0.0,false);
+		//nav.travelTo(0.0,0.0,false);
 		Sound.buzz();
-		boolean spinning;
+		boolean hasSeenLine;
 		double thetaX;
 		double thetaY;
 		double x;
 		double y;
 		//Angle array
 		double[] angles = new double[4];
-		//nav.travelTo(8, 8, true);
+		
 		cs.setFloodlight(true);
+		
 		//Spin and clock angles at which black lines are detected
 		spinLeft();
 		for (int i=0; i<4; i++) {
-			spinning = true;
-			while (spinning) {
+			hasSeenLine = false;
+			
+			while (!hasSeenLine) {
 				LCD.clear();
 				LCD.drawInt(cs.getNormalizedLightValue(), 0, 7);
-				if (cs.getNormalizedLightValue() < 485) {
-					/*if (i == 0){
-						odo.setTheta(88.0);
-					}*/
+				
+				if (cs.getNormalizedLightValue() < BLACK_LINE_THRESHOLD) {
 					angles[i] = odo.getTheta();	
 					Sound.beep();
+					hasSeenLine = true;
+					
 					//Sleep thread to detect line only one time
-					try {
-						Thread.sleep(180);
+					long startTime = System.currentTimeMillis();
+					while(System.currentTimeMillis() - startTime < 250){
+						// Wait
 					}
-					catch (Exception e) {}
-					spinning = false;
 				}
 			}
 		}
@@ -167,18 +173,19 @@ public class Localization {
 		odo.setX(x);
 		odo.setY(y);
 		
-		// Travel to proper (0,0) coordinates
-		nav.travelTo(0, 0, false);
-		nav.turnTo(90.0, true, true);
-		
-		try {Thread.sleep(200);} catch (InterruptedException e) {}
-		
-		// WHAT: why is this called twice?
-		// When is is the odometer's theta corrected?
-		odo.setX(x);
-		odo.setY(y);
+		leftMotor.setSpeed(0);
+		rightMotor.setSpeed(0);
 		
 		cs.setFloodlight(false);
+	}
+	
+	private void usLocalizationCorrection(double angleA, double angleB){
+		double angleDelta = getAngleCorrection(angleA, angleB);
+		double distance = getDistanceToWall(angleA, angleB);
+		
+		odo.setTheta(odo.getTheta() + angleDelta);
+		odo.setX(distance - 30.0);
+		odo.setY(distance - 30.0);
 	}
 	
 	/**
@@ -205,11 +212,38 @@ public class Localization {
 			correction = 45.0 - average;
 		}
 		
-		LCD.drawString("A " + angleA, 0, 4);
-		LCD.drawString("B " + angleB, 0, 5);
-		LCD.drawString("C " + correction, 0, 6);
-		
 		return correction;
+	}
+	
+	private double getDistanceToWall(double angleA, double angleB){
+		double difference = Math.abs(angleA - angleB);
+		
+		// In case of weird angleA / angleB not in the range [0, 360]. Shouldn't happen.
+		difference = Odometer.fixDegAngle(difference);
+		
+		// We want the smallest angle between A and B
+		if(difference > 180.0){
+			difference = 360.0 - difference;
+		}
+		
+		// The robot should have recorded that the angle between the
+		// two walls is exactly 90.0 degrees. However, since it is a little far
+		// away from the wall's corner and it there is a threshold for what
+		// is considered a wall, it will see a little bit more than 90.0 degrees.
+		double excess = difference - 90.0;
+		
+		if(excess < 0.0){
+			return 0.0;
+		}
+		else{
+			double triangleHypothenuse = WALL_DISTANCE;
+			double triangleAngle = (excess / 2.0) * Math.PI / 180.0;
+			double triangleOppositeSide = triangleHypothenuse * Math.asin(triangleAngle);
+			
+			// In short, the US sees larger distances (than in real life),
+			// so we need to return a smaller distance.
+			return triangleOppositeSide / 1.5;	// Tweaked value
+		}
 	}
 	
 	/**

@@ -52,12 +52,9 @@ public class Navigation extends Thread {
 	private BTSend bts;
 
 	/**
-	 * @param odom
-	 *            The master odometer shared amongst all classes
-	 * @param top
-	 *            The top ultrasonic sensor
-	 * @param bot
-	 *            The bottom ultrasonic sensor
+	 * @param odom The master odometer shared amongst all classes
+	 * @param top The top ultrasonic sensor
+	 * @param bot The bottom ultrasonic sensor
 	 */
 	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor bot, ColorSensor cs, ObjectRecognition or) {
 		bottomUs = bot;
@@ -149,7 +146,6 @@ public class Navigation extends Thread {
 	 *            obstacle checking
 	 * @return void
 	 */
-	
 	 public void travelTo(double x, double y, boolean ignore){ 
 		 isBusy = false;
 		 double minAng;
@@ -212,20 +208,17 @@ public class Navigation extends Thread {
 	* 
 	* @param angle
 	*            The absolute angle to turn to
-	* @param stop
-	*            True if the robot should stop after reaching the angle, false
-	*            to keep rotating
-	* @param corner
-	* 			 True if the turn is at a corner, false if correcting angle while traveling
+	* @param stop True to stop rotating at the end, false to continue.
+	* @param corner True if the turn is at a corner, false if correcting angle while traveling
 	* @return void
 	*/
 		
-	public void turnTo(double angle, boolean stop, boolean corner) { 
+	public void turnTo(double angle, boolean stop, boolean corner) {
 		isBusy = true;
-		double error = (angle - this.odometer.getTheta())%360;
+		double error = (angle - this.odometer.getTheta()) % 360;
 		if(corner){
 			while (Math.abs(error) > CORNER_ANGLE_THRESH) { 
-				error = (angle - this.odometer.getTheta())%360;
+				error = (angle - this.odometer.getTheta()) % 360;
 		  
 				//LCD.drawString("minang:" + angle, 0, 4, true);
 		  
@@ -241,7 +234,7 @@ public class Navigation extends Thread {
 			}
 		 }else{
 			while (Math.abs(error) > ANGLE_THRESH) { 
-				error = (angle - this.odometer.getTheta())%360;
+				error = (angle - this.odometer.getTheta()) % 360;
 		  
 				//LCD.drawString("minang:" + angle, 0, 4, true);
 		  
