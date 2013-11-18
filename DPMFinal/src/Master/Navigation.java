@@ -84,17 +84,23 @@ public class Navigation extends Thread {
 	public void run() {
 		
 		//hardcoded for demo, move away from surrounding walls so they aren't picked up during scan
-		travelTo(30.0, 30.0);
-		turnTo(90.0, true, true);
+		//travelTo(30.0, 30.0);
+		//turnTo(90.0, true, true);
+		
+		travelTo(0, 60.0);
+		travelTo(60, 60);
+		travelTo(60, 0);
+		travelTo(0,0);
+		turnTo(90, true, false);
 		
 		//generate linear path to the green zone
-		generatePath();
+		//generatePath();
 		
 		//180 degree scan for objects
-		scan();
+		//scan();
 		
 		//for loop starts at 1 since first elements are current position
-		for(int i=1; i < xPath.length; i++){
+		/*for(int i=1; i < xPath.length; i++){
 			//if a block is not being transported, continue searching
 			if(!hasBlock){
 				travelTo(xPath[i], yPath[i]);
@@ -119,7 +125,7 @@ public class Navigation extends Thread {
 				//block is held
 				break;	//only for demo, will need to be handled for final demo
 			}
-		}	
+		}*/	
 	}
 
 	/**
@@ -142,14 +148,13 @@ public class Navigation extends Thread {
 		 colorSens.setFloodlight(Color.RED);		//turn on floodlight for obstacle detection
 		 double distance = Math.sqrt(Math.pow(Math.abs(x -odometer.getX()), 2) + Math.pow(Math.abs(y - odometer.getY()), 2));	//pythagorean theorum	
 		 double masterDist = distance;		//distance the robot will have to travel
-		 
 		 while (Math.abs(x - odometer.getX()) > POINT_THRESH || Math.abs(y - odometer.getY()) > POINT_THRESH) {
 	  
 			 minAng = (Math.atan2(y - odometer.getY(), x - odometer.getX())) * (180.0/ Math.PI); 	//update minimum angle
 			 distance = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()),2) + Math.pow(Math.abs(y - odometer.getY()), 2));	//update distance traveled
 	  
 			 //object detected immediately in front of robot
-			 if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
+			 /*if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
 				 leftMotor.stop();
 				 rightMotor.stop();
 				 
@@ -166,7 +171,7 @@ public class Navigation extends Thread {
 				 }
 				 //both capture and avoid will move the robot past it's next destination, break this travelTo call
 				 return;
-			 }
+			 }*/
 			 
 			 if (minAng < 0) minAng += 360.0;
 	  
@@ -193,7 +198,7 @@ public class Navigation extends Thread {
 		 turnTo(masterAng, true, true);
 		 isBusy = true;
 	}
-	 
+		 
 	 
 	/**
 	 * Turn to the absolute angle given with 2 levels of accuracy	
@@ -975,4 +980,10 @@ public class Navigation extends Thread {
 		this.gy1 = y;
 	}
 	
+	public boolean isBusy() {
+		return isBusy;
+	}
+	public void setBusy(boolean busy) {
+		isBusy = busy;
+	}
 }

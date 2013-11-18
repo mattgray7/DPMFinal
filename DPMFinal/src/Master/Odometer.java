@@ -210,7 +210,7 @@ public class Odometer extends Thread {
 	 * @return The positive equivalent of the input angle
 	 */
 	public static double fixDegAngle(double angle) {
-		if (angle < 0.0)
+		if (angle <= 0.0)
 			angle = 360.0 + (angle % 360.0);
 
 		return angle % 360.0;

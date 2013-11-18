@@ -53,25 +53,25 @@ public class BTSendController {
 		int buttonChoice = Button.waitForAnyPress();
 		
 		//calibrate light sensor with blue block
-		colorSensor.setFloodlight(true);
-		or.calibrateBlueBlock();
+		//colorSensor.setFloodlight(true);
+		//or.calibrateBlueBlock();
 		
 		//get role, starting position, green and red zone coordinates
-		getTransmission();
+		//getTransmission();
 		
 		//start odometry display
 		LCDInfo lc = new LCDInfo(odo);
 		
 		//connect to slave brick
-		bts.establishConnection();
+		//bts.establishConnection();
 		
 		//localize
 		odo.start();
-		usl.doLocalization();
-		usl.doLightLocalization();
+		//usl.doLocalization();
+		//usl.doLightLocalization();
 
 		//start odometry correction once localization is complete
-		//oc.start();
+		oc.start();
 		
 		//start main navigation
 		nav.start();
