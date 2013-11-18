@@ -133,9 +133,14 @@ public class OdometryCorrection extends Thread{
 		//Stop one motor depending on which light sensor detects first
 		if(!nav.isBusy()) {
 			while(leftLightSensor.getNormalizedLightValue() < 275 || rightLightSensor.getNormalizedLightValue() < 275) {
+				try {
+					//Sleep navigator in order to stop motors in this thread
+					nav.sleep(3000);
+				}
+				catch(Exception e) {
+				}
 				if (leftLightSensor.getNormalizedLightValue() < 275) {
 					leftMotor.stop();
-					rightMotor.stop();
 					while (rightLightSensor.getNormalizedLightValue() > 275) {
 						rightMotor.forward();
 					}
@@ -143,7 +148,6 @@ public class OdometryCorrection extends Thread{
 				}
 				else {
 					rightMotor.stop();
-					leftMotor.stop();
 					while(leftLightSensor.getNormalizedLightValue() > 275) {
 						leftMotor.forward();
 					}
@@ -151,12 +155,6 @@ public class OdometryCorrection extends Thread{
 				}
 				odometer.setTheta(correctTheta);
 				break;
-			}
-			try {
-				Thread.sleep(500);
-			}
-			catch (Exception e) {
-				
 			}
 		}
 	}
