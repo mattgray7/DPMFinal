@@ -980,7 +980,4 @@ public class Navigation extends Thread {
 	public void setGY1(int y){
 		this.gy1 = y;
 	}
-	
-	
-
 }
