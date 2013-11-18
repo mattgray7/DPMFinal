@@ -31,11 +31,14 @@ public class ObjectRecognition {
 	private Vector calibratedBlueColor;
 	
 	
-	/*
-	public static void main (String args[]){
+	/**
+	 * Call this function if you want to quickly setup the object
+	 * recognition and test it.
+	 */
+	public static void sampleMain (){
 		ColorSensor cs = new ColorSensor(SensorPort.S1);
 		cs.setFloodlight(true);
-		ObjectRecog or = new ObjectRecog(cs);
+		ObjectRecognition or = new ObjectRecognition(cs);
 		
 		or.calibrateBlueBlock();
 
@@ -52,10 +55,10 @@ public class ObjectRecognition {
 			LCD.drawString("Is blue: " + isBlueBlock, 0, 3);
 		}
 	}
-	*/
 	
 	/**
 	 * Constructor
+	 * 
 	 * @param cs The color sensor located on the claw
 	 */
 	public ObjectRecognition(ColorSensor cs){
@@ -65,17 +68,25 @@ public class ObjectRecognition {
 	
 	
 	/**
-	 * Check the distance from the sensor to the object, may lead to signal being sent
-	 * back to master to reposition robot in front of the block
+	 * Check the distance to an object, using the color sensor.
+	 * 
 	 * @return The distance from the sensor to the object
 	 */
 	public int checkDistance(){
-		return 0;
+		Color c = colorSensor.getColor();
+		Vector v = new Vector(c.getRed(), c.getGreen(), c.getBlue());
+
+		// Experimental formula
+		double lightIntensity = v.length();
+		double distance = Math.pow(350.0 / lightIntensity, 1 / 1.2);
+		
+		return (int)distance;
 	}
 	
 	
 	/**
 	 * Checks the color of the object
+	 * 
 	 * @return True if the object is a blue block, false otherwise
 	 */
 	public Boolean checkColor(){
