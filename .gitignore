@@ -6,7 +6,6 @@
 /bin
 
 # Files
-.class
-.nxt
-.nxd
-.nxj
+*.class
+*.nxd
+*.nxj
