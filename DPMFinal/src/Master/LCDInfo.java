@@ -26,8 +26,20 @@ public class LCDInfo implements TimerListener{
 	public LCDInfo(Odometer odo) {
 		this.odo = odo;
 		this.timer = new Timer(LCD_REFRESH, this);
-		
-		this.timer.start();
+	}
+	
+	/**
+	 * Start displaying odometry indformation
+	 */
+	public void start(){
+		timer.start();
+	}
+	
+	/**
+	 * Stop displaying odometry information
+	 */
+	public void stop(){
+		timer.stop();
 	}
 	
 	/**

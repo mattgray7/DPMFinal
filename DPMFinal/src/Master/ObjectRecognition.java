@@ -154,8 +154,9 @@ public class ObjectRecognition {
 	 */
 	private void printCalibrationMessage(){
 		LCD.clear();
-		LCD.drawString("Calibration:", 0, 0);
-		LCD.drawString("Press to calibr.", 0, 2);
-		LCD.drawString("Escape to stop", 0, 3);
+		LCD.drawString("Calibration", 0, 0);
+		LCD.drawString("(Blue block)", 0, 1);
+		LCD.drawString("Press to calibr.", 0, 3);
+		LCD.drawString("Escape to stop", 0, 4);
 	}
 }

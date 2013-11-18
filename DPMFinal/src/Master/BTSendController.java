@@ -24,11 +24,11 @@ public class BTSendController {
 	public ColorSensor colorSensor;
 	public Odometer odo;
 	public BTSend bts;
-	public ObjectRecognition or;
+	public ObjectRecognition objectRecognition;
 	public Navigation nav;
-	public OdometryCorrection oc;
-	public LCDInfo lc;
-	public Localization usl;
+	public OdometryCorrection odometryCorrection;
+	public LCDInfo lcdInfo;
+	public Localization usLocalization;
 	
 	/**
 	 * Constructor
@@ -40,29 +40,42 @@ public class BTSendController {
 		
 		odo = new Odometer(LEFT_WHEEL_RADIUS, RIGHT_WHEEL_RADIUS, WHEELBASE_WIDTH);
 		bts = new BTSend();
-		or = new ObjectRecognition(colorSensor);
-		nav = new Navigation(odo, bts, bottomUs, colorSensor, or);
-		oc = new OdometryCorrection(odo, odoSensor, nav);
-		lc = new LCDInfo(odo);
-		usl = new Localization(odo, bottomUs, nav, odoSensor);
+		objectRecognition = new ObjectRecognition(colorSensor);
+		nav = new Navigation(odo, bts, bottomUs, colorSensor, objectRecognition);
+		odometryCorrection = new OdometryCorrection(odo, odoSensor, nav);
+		lcdInfo = new LCDInfo(odo);
+		usLocalization = new Localization(odo, bottomUs, nav, odoSensor);
 	}
 	
 	public void execute(){
+		printWelcomeMessage();
 		int buttonChoice = Button.waitForAnyPress();
 		
 		colorSensor.setFloodlight(true);
-		or.calibrateBlueBlock();
+		objectRecognition.calibrateBlueBlock();
 		
-		getTransmission();
-		LCDInfo lc = new LCDInfo(odo);
-		bts.establishConnection();
-		odo.start();
+		//getTransmission();;
+		//bts.establishConnection();
+		lcdInfo.start();
+		//odo.start();
 		
-		usl.doLocalization();
-		usl.doLightLocalization();
+		//usLocalization.doLocalization();
+		//usLocalization.doLightLocalization();
 
-		//oc.start();
-		nav.start();
+		//odometryCorrection.start();
+		//nav.start();
+	}
+	
+	/**
+	 * Message that says what the program is, and to please press
+	 * a button to start.
+	 */
+	private void printWelcomeMessage(){
+		LCD.clear();
+		LCD.drawString("Welcome!", 0, 0);
+		LCD.drawString("DPM project", 0, 2);
+		LCD.drawString("Press button", 0, 3);
+		LCD.drawString("to start.", 0, 4);
 	}
 	
 	/**
