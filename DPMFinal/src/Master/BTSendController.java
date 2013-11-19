@@ -56,7 +56,7 @@ public class BTSendController {
 		or.calibrateBlueBlock();
 		
 		//get role, starting position, green and red zone coordinates
-		getTransmission();
+		//getTransmission();
 		
 		//start odometry display
 		LCDInfo lc = new LCDInfo(odo);
@@ -66,13 +66,17 @@ public class BTSendController {
 		
 		//localize
 		odo.start();
-		usl.doLocalization();
-		usl.doLightLocalization();
+		//usl.doLocalization();
+		//usl.doLightLocalization();
 
 		//start odometry correction once localization is complete
 		//oc.start();
 		
-		//start main navigation
+		//only for testing
+		nav.setGX0(90);
+		nav.setGY0(90);
+		nav.setGX1(120);
+		nav.setGY1(120);
 		nav.start();
 
 		

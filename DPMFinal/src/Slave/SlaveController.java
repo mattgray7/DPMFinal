@@ -79,6 +79,18 @@ public class SlaveController {
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}
+		
+		if(command == 3){
+			lift.clamp();
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		if(command == 4){
+			lift.raiseArms(400);
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
 		connection.close();
 	}
 
