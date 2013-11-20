@@ -273,7 +273,7 @@ public class Localization {
 			
 			// In short, the US sees larger distances (than in real life),
 			// so we need to return a smaller distance.
-			return triangleOppositeSide / 1.5;	// Tweaked value
+			return triangleOppositeSide / 1.3;	// Tweaked value
 		}
 	}
 	

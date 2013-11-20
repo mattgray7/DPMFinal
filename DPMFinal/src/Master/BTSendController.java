@@ -70,7 +70,7 @@ public class BTSendController {
 		
 		// Calibrate blue block
 		csFront.setFloodlight(true);
-		//objectRecognition.calibrateBlueBlock();
+		objectRecognition.calibrateBlueBlock();
 		
 		// Set up bluetooth connections
 		//getTransmission();;
@@ -81,9 +81,10 @@ public class BTSendController {
 		odo.start();
 		
 		// Do localization
-		//localization.doLocalization();
-		//nav.travelTo(0, 0, true);
-		localization.doLightLocalization();
+		localization.doLocalization();
+		nav.travelTo(0, 0);
+		nav.turnTo(90, true, true);
+		//localization.doLightLocalization();
 
 		// Start main operation
 		//odometryCorrection.start();
