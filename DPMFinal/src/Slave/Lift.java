@@ -9,7 +9,7 @@ import lejos.nxt.*;
  */
 public class Lift {
 	private static final int LOWERING_SPEED = 200;
-	private static final int RAISING_SPEED = 550;
+	private static final int RAISING_SPEED = 450;
 	private static final int CLAMPING_SPEED = 150;
 	
 	private static NXTRegulatedMotor armMotor = Motor.A;
@@ -21,9 +21,10 @@ public class Lift {
 	 * @param clamp The clamp motor that controls the claws
 	 */
 	public Lift(NXTRegulatedMotor arm, NXTRegulatedMotor clamp){
-		armMotor = arm;
-		clampMotor = clamp;
+		//armMotor = Motor.A;//arm;
+		//clampMotor = Motor.B;//clamp;
 	}
+
 	
 	/**
 	 * Lowers the mechanical arms by an input angle

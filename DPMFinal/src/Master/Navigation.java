@@ -14,6 +14,7 @@ public class Navigation extends Thread {
 	private UltrasonicSensor bottomUs;
 	private ColorSensor colorSens;
 	private ObjectRecognition recog;
+	private OdometryCorrection oc;
 	
 	private final double POINT_THRESH = 0.5;
 	private final double ANGLE_THRESH = 5.0;		//correcting angle thresh
@@ -26,6 +27,8 @@ public class Navigation extends Thread {
 	private final int JOG = 150;
 	private final int SLOW = 100;
 	
+	private int towerHeight = 0;
+	private int numTowers = 0;	
 	private double LW_RADIUS;
 	private double RW_RADIUS;
 	private double WHEEL_BASE;
@@ -63,12 +66,13 @@ public class Navigation extends Thread {
 	 * @param cs The color sensor used for object detection and recognition
 	 * @param or The object recognition class that computes light readings
 	 */
-	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor bot, ColorSensor cs, ObjectRecognition or) {
+	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor bot, ColorSensor cs, ObjectRecognition or, OdometryCorrection odomc) {
 		bottomUs = bot;
 		odometer = odom;
 		bts = sender;
 		colorSens = cs;
 		recog = or;
+		oc = odomc;
 		LW_RADIUS = odometer.getLeftRadius();	//update wheel values
 		RW_RADIUS = odometer.getRightRadius();
 		WHEEL_BASE = odometer.getWheelBase();
@@ -87,6 +91,8 @@ public class Navigation extends Thread {
 		//hardcoded for demo, move away from surrounding walls so they aren't picked up during scan
 		//travelTo(30.0, 30.0);
 		//turnTo(90.0, true, true);
+		//travelTo(30.0, 30.0);
+		//turnTo(90.0, true, true);
 		
 		travelTo(0, 60.0);
 		travelTo(60, 60);
@@ -98,7 +104,7 @@ public class Navigation extends Thread {
 		//generatePath();
 		
 		//180 degree scan for objects
-		//scan();
+		scan();
 		
 		//for loop starts at 1 since first elements are current position
 		/*for(int i=1; i < xPath.length; i++){
@@ -126,8 +132,16 @@ public class Navigation extends Thread {
 				//block is held
 				break;	//only for demo, will need to be handled for final demo
 			}
-		}*/	
+		}*/
+		travelTo(gx0 + 15, gy0 - 15);
+		scan();
+		
+		travelTo(gx0 - 15, gy0 + 15);
+		scan();
+		//travelTo(0.0,30.0);
+		
 	}
+	
 
 	/**
 	 * Will travel to the input x and y coordinates while checking for
@@ -148,15 +162,17 @@ public class Navigation extends Thread {
 		 colorSens.setFloodlight(Color.RED);		//turn on floodlight for obstacle detection
 		 double distance = Math.sqrt(Math.pow(Math.abs(x -odometer.getX()), 2) + Math.pow(Math.abs(y - odometer.getY()), 2));	//pythagorean theorum	
 		 double masterDist = distance;		//distance the robot will have to travel
+		 
 		 while (Math.abs(x - odometer.getX()) > POINT_THRESH || Math.abs(y - odometer.getY()) > POINT_THRESH) {
 	  
 			 minAng = (Math.atan2(y - odometer.getY(), x - odometer.getX())) * (180.0/ Math.PI); 	//update minimum angle
 			 distance = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()),2) + Math.pow(Math.abs(y - odometer.getY()), 2));	//update distance traveled
 	  
 			 //object detected immediately in front of robot
-			 /*if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
-				 leftMotor.stop();
+			 if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
 				 rightMotor.stop();
+				 leftMotor.stop();
+
 				 
 				 //begin inspection/avoidance, robot is busy
 				 isBusy = true;
@@ -171,7 +187,7 @@ public class Navigation extends Thread {
 				 }
 				 //both capture and avoid will move the robot past it's next destination, break this travelTo call
 				 return;
-			 }*/
+			 }
 			 
 			 if (minAng < 0) minAng += 360.0;
 	  
@@ -191,6 +207,19 @@ public class Navigation extends Thread {
 			 if(Math.abs(minAng - odometer.getTheta()) > 10){ 
 				 this.turnTo(minAng,true, false); 
 			 }
+			 
+			 if(oc.checkInterrupt() == true){
+				 leftMotor.stop();
+				 rightMotor.stop();
+				 oc.setInterruptAcknowledge(true);
+				 while(oc.checkInterrupt()){
+					 
+				 }
+				 oc.setInterruptAcknowledge(false);
+				 leftMotor.setSpeed(FAST);
+				 rightMotor.setSpeed(FAST);
+			 }
+			 
 	  
 			 this.setSpeeds(FAST, FAST); 
 		 } 
@@ -198,8 +227,8 @@ public class Navigation extends Thread {
 		 turnTo(masterAng, true, true);
 		 isBusy = true;
 	}
-		 
-	
+	 
+	 
 	/**
 	 * Turn to the absolute angle given with 2 levels of accuracy	
 	 * @param angle The absolute angle to turn to
@@ -396,18 +425,11 @@ public class Navigation extends Thread {
 			hasBlock = true;
 			capture();		
 		}else{
-			//sensor read false, rotate light sensor 15 degrees to the right and take another reading
-			sensMotor.setSpeed(150);
-			sensMotor.backward();
-			sensMotor.rotate(-15, false);
-			sensMotor.stop();
+			rotateSensorsRight(15);
 			
 			if(recog.checkColor()){
 				//if after the second reading, a blue block was sensed, return the sensor to it's initial position
-				sensMotor.setSpeed(150);
-				sensMotor.forward();
-				sensMotor.rotate(15, false);
-				sensMotor.stop();
+				rotateSensorsLeft(15);
 				
 				//and capture the block
 				Sound.beep();
@@ -416,17 +438,11 @@ public class Navigation extends Thread {
 			}else{
 				//first two sensor checks read wood blocks, rotate light sensor 30 degrees to the 
 				//left (15 degrees from starting orientation)
-				sensMotor.setSpeed(150);
-				sensMotor.forward();
-				sensMotor.rotate(30, false);
-				sensMotor.stop();
+				rotateSensorsLeft(30);
 				
 				if(recog.checkColor()){
 					//rotate sensor back to initial position
-					sensMotor.setSpeed(150);
-					sensMotor.backward();
-					sensMotor.rotate(-15, false);
-					sensMotor.stop();
+					rotateSensorsRight(15);
 					
 					//and capture the block
 					Sound.beep();
@@ -434,10 +450,7 @@ public class Navigation extends Thread {
 					capture();
 				}else{
 					//all checks read object as wood block, return sensor to starting position
-					sensMotor.setSpeed(150);
-					sensMotor.backward();
-					sensMotor.rotate(-15, false);
-					sensMotor.stop();
+					rotateSensorsRight(15);
 					
 					//reverse robot to starting position of inspection
 					leftMotor.rotate(-convertDistance(LW_RADIUS, distTraveled), true);
@@ -462,11 +475,8 @@ public class Navigation extends Thread {
 		leftMotor.stop();
 		rightMotor.stop();
 		
-		//rotate sensor out of the way of the claw
-		sensMotor.setSpeed(150);
-		sensMotor.forward();
-		sensMotor.rotate(80, false);
-		sensMotor.stop();
+		//move sensors out of the way of the claw
+		rotateSensorsRight(80);
 		
 		//send signal from BTSend class to lower arms and open the claw (this signal is 1)
 		try {bts.sendSignal(1);} catch (IOException e) {}	
@@ -475,21 +485,41 @@ public class Navigation extends Thread {
 		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
 		
 		//travel back to the block and slightly farther to position block in claw
-		leftMotor.rotate(convertDistance(LW_RADIUS, distance), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, distance), false);
+		leftMotor.rotate(convertDistance(LW_RADIUS, distance+4), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, distance+4), false);
 		
-		//Lifting sometimes fails for blocks at an angle, following code "wiggles" the claw with the blue
+		/*//Lifting sometimes fails for blocks at an angle, following code "wiggles" the claw with the blue
 		//block in it in an attempt to straighten out the block for lifting.
 		//rotate right
-		leftMotor.setSpeed(JOG + 50);
-		rightMotor.setSpeed(JOG - 50);
+		leftMotor.setSpeed(FAST);
+		rightMotor.setSpeed(FAST);
+		leftMotor.forward();
+		rightMotor.backward();
+		try {Thread.sleep(700);} catch (InterruptedException e1) {}
+		
+		//rotate left
+		leftMotor.setSpeed(FAST);
+		rightMotor.setSpeed(FAST);
+		leftMotor.backward();
+		rightMotor.forward();
+		try {Thread.sleep(700);} catch (InterruptedException e1) {}
+		
+		//go forward 5 more cm to ensure block is in claw and oriented properly
+		//MAY NEED TO BE CHANGED/CHECKED with second ultrasonic to see if there's anything behind the block
+		leftMotor.setSpeed(JOG);
+		rightMotor.setSpeed(JOG);
+		leftMotor.rotate(convertDistance(LW_RADIUS, 5), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);*/
+		
+		leftMotor.setSpeed(JOG+100);
+		rightMotor.setSpeed(JOG);
 		leftMotor.forward();
 		rightMotor.forward();
 		try {Thread.sleep(700);} catch (InterruptedException e1) {}
 		
 		//rotate left
-		leftMotor.setSpeed(JOG - 50);
-		rightMotor.setSpeed(JOG + 50);
+		leftMotor.setSpeed(JOG);
+		rightMotor.setSpeed(JOG+100);
 		leftMotor.forward();
 		rightMotor.forward();
 		try {Thread.sleep(700);} catch (InterruptedException e1) {}
@@ -501,18 +531,30 @@ public class Navigation extends Thread {
 		leftMotor.rotate(convertDistance(LW_RADIUS, 5), true);
 		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);
 		
-		
 		leftMotor.stop();
 		rightMotor.stop();
 		
 		//Send signal to clamp and lift the object
 		try {bts.sendSignal(2);} catch (IOException e) {Sound.buzz();}	//2 for clamp and raise arms
+		//try {bts.sendSignal(3);} catch (IOException e) {Sound.buzz();}	//3 for clamping only
 		
 		//wait for lift and clamp
 		try {Thread.sleep(1700);} catch (InterruptedException e1) {}
 		
+		//reverse far enough to lower claw
+		/*leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.backward();
+		rightMotor.backward();
+		leftMotor.rotate(-convertDistance(LW_RADIUS, distance), true);
+		rightMotor.rotate(-convertDistance(RW_RADIUS, distance), false);*/
+		
+		//try {bts.sendSignal(4);} catch (IOException e) {Sound.buzz();}	//4 for raising arms
+		
+		//try {Thread.sleep(1700);} catch (InterruptedException e1) {}
+		
 		//return sensors to original orientation
-		centerSensors();
+		rotateSensorsLeft(80);
 		
 		//drive and deposit in green zone.
 		finishLine();
@@ -522,16 +564,19 @@ public class Navigation extends Thread {
 	 * Will take the robot from it's current position directly to the bottom left corner of the green zone
 	 */
 	public void finishLine(){
+		hasBlock = false;
 		double x = odometer.getX();
 		double y = odometer.getY();
 		
-		//depenging on location in relation to green zone, travel to a green zone corner and turn to the center
-		if((x <= gx0) && (y <=gy0)){
-			travelTo(gx0, gy0);
-			turnTo(45, true, true);
+		//depending on location in relation to green zone, travel to a green zone corner and turn to the center
+		/*if((x <= gx0) && (y <=gy0)){
+
+				travelTo(gx0, gy0);
+				turnTo(45, true, true);
 		}else if ((x <= gx0) && (y >= gy1)){
-			travelTo(gx0, gy1);
-			turnTo(-45, true, true);
+				travelTo(gx0, gy1);
+				turnTo(-45, true, true);
+			
 		}else if ((x >= gx1) && (y <= gy0)){
 			travelTo(gx1, gy0);
 			turnTo(135, true, true);
@@ -542,16 +587,74 @@ public class Navigation extends Thread {
 			//default to bottom left corner
 			travelTo(gx0, gy0);
 			turnTo(45, true, true);
+		}*/
+		
+		if(towerHeight == 0){
+			travelTo(gx0, gy0);
+			turnTo(45.0, true, true);
+		}else if(towerHeight == 1){
+			travelTo(gx0 - 5.6, gy0 - 5.6);
+			turnTo(45.0, true, true);
+		}else if (towerHeight == 2){
+			travelTo(gx0 - 7, gy0 - 7);
+			turnTo(25.0, true, true);
 		}
 		
 		//rotate sensors away from claw
-		rotateSensorsRight();
+		rotateSensorsRight(80);
 		
 		//send signal to lower arms all the way and open claw - MAY NEED TO BE CHANGED FOR TOWER BUILDING
-		try {bts.sendSignal(1);} catch (IOException e) {}	
-		
-		//wait for lower
-		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+		if(towerHeight == 0){
+			try {bts.sendSignal(1);} catch (IOException e) {}
+			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+			
+			leftMotor.setSpeed(SLOW);
+			rightMotor.setSpeed(SLOW);
+			leftMotor.backward();
+			rightMotor.backward();
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 12), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 12), false);
+			
+			
+			try {bts.sendSignal(2);} catch (IOException e) {}	//raise arms to max
+			try {Thread.sleep(2000);} catch (InterruptedException e1) {}
+			
+		}else if (towerHeight == 1){
+			try {bts.sendSignal(10);} catch (IOException e) {}	
+			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+			
+			//reverse far enough to raise claw to the top again
+			leftMotor.setSpeed(SLOW);
+			rightMotor.setSpeed(SLOW);
+			leftMotor.backward();
+			rightMotor.backward();
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 10), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 10), false);
+			
+			try {bts.sendSignal(-10);} catch (IOException e) {}
+			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+		}else if (towerHeight == 2){
+			try {bts.sendSignal(11);} catch (IOException e) {}	
+			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+			
+			//reverse far enough to raise claw to the top again
+			leftMotor.setSpeed(SLOW);
+			rightMotor.setSpeed(SLOW);
+			leftMotor.backward();
+			rightMotor.backward();
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 10), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 10), false);
+			
+			try {bts.sendSignal(-11);} catch (IOException e) {}
+			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+			
+		}
+		towerHeight++;
+		if(towerHeight == 3){
+			towerHeight = 0;
+			numTowers++;
+		}
+		rotateSensorsLeft(80);
 	}
 
 
@@ -693,11 +796,7 @@ public class Navigation extends Thread {
 		if (dist > 30){
 			//no object within 30cm to the left, avoid this direction
 			
-			//rotate sensor right 40 degrees
-			sensMotor.setSpeed(150);
-			sensMotor.forward();
-			sensMotor.rotate(40, false);
-			sensMotor.stop();
+			rotateSensorsRight(40);
 			
 			//start driving
 			leftMotor.setSpeed(FAST);
@@ -707,16 +806,25 @@ public class Navigation extends Thread {
 			
 			//if this is a recursive iteration, drive until a wall is sensed
 			if(i != 1){
-				turnTo(initAngle + 45, true, true);
+				turnTo(initAngle + 75, true, true);
 				
 				//drive until a wall is read, then continue wall following
-				while(dist > BAND_CENTER){
+				/*while(dist > BAND_CENTER){
 					dist = getFilteredDistance();
 					leftMotor.setSpeed(FAST);
 					rightMotor.setSpeed(FAST);
 					leftMotor.forward();
 					rightMotor.forward();
-				}
+				}*/
+				leftMotor.forward();
+				rightMotor.forward();
+				leftMotor.setSpeed(FAST);
+				rightMotor.setSpeed(FAST);
+				leftMotor.rotate(convertDistance(LW_RADIUS, 25.0), true);
+				rightMotor.rotate(convertDistance(RW_RADIUS, 25.0), false);
+				leftMotor.forward();
+				rightMotor.forward();
+
 			}
 			
 
@@ -734,15 +842,15 @@ public class Navigation extends Thread {
 				
 				if(error < -2){
 					//too far away, need to turn right
-					leftMotor.setSpeed(FAST + 50);
-					rightMotor.setSpeed(FAST + 30 + (error*2));	//error is negative, right move slower
+					leftMotor.setSpeed(FAST + 75);
+					rightMotor.setSpeed(FAST + 50 + (error*2));	//error is negative, right move slower
 				}else if (error > 2){
 					//too close, need to turn left
-					leftMotor.setSpeed(FAST + 30);
+					leftMotor.setSpeed(FAST + 75);
 					rightMotor.setSpeed(FAST + 50 + (error * 2));	//error is positive, right moves faster
 				}else{
-					leftMotor.setSpeed(FAST + 50);
-					rightMotor.setSpeed(FAST + 50);
+					leftMotor.setSpeed(FAST + 100);
+					rightMotor.setSpeed(FAST + 100);
 				}
 				
 				//if the robot's orientation reaches its initial angle - 20 degrees, wall is assumed to be passed
@@ -754,14 +862,10 @@ public class Navigation extends Thread {
 				}
 			}
 			
-			//rotate sensor back to normal position
-			sensMotor.setSpeed(150);
-			sensMotor.backward();
-			sensMotor.rotate(-40, false);
-			sensMotor.stop();
+			rotateSensorsLeft(40);
 			
 			//drive straight for 1.5s to get sufficiently apst the block
-			try {Thread.sleep(1500);} catch (InterruptedException e) {}
+			try {Thread.sleep(2500*(long)i);} catch (InterruptedException e) {}
 
 		}else{
 			//turn to the right
@@ -773,11 +877,7 @@ public class Navigation extends Thread {
 				//nothing within 30cm, avoid to the right
 				Sound.beep();
 				
-				//rotate sensor right
-				sensMotor.setSpeed(150);
-				sensMotor.backward();
-				sensMotor.rotate(-40, false);
-				sensMotor.stop();
+				rotateSensorsLeft(40);
 				
 				leftMotor.setSpeed(FAST);
 				rightMotor.setSpeed(FAST);
@@ -786,15 +886,23 @@ public class Navigation extends Thread {
 				
 				//recursive handling
 				if(i != 1){
-					turnTo(initAngle - 45, true, true);
+					turnTo(initAngle - 75, true, true);
 					//drive until a distance is set
-					while(dist > BAND_CENTER){
+					/*while(dist > BAND_CENTER){
 						dist = getFilteredDistance();
 						leftMotor.setSpeed(FAST);
 						rightMotor.setSpeed(FAST);
 						leftMotor.forward();
 						rightMotor.forward();
-					}
+					}*/
+					leftMotor.forward();
+					rightMotor.forward();
+					leftMotor.setSpeed(FAST);
+					rightMotor.setSpeed(FAST);
+					leftMotor.rotate(convertDistance(LW_RADIUS, 25.0), true);
+					rightMotor.rotate(convertDistance(RW_RADIUS, 25.0), false);
+					leftMotor.forward();
+					rightMotor.forward();
 				}
 				
 				//actual wall following
@@ -811,12 +919,12 @@ public class Navigation extends Thread {
 					
 					if(error < -2){
 						//too far away, need to turn left
-						leftMotor.setSpeed(FAST + 30 + (error*2));	//error is negative, left moves slower
-						rightMotor.setSpeed(FAST + 50);	
+						leftMotor.setSpeed(FAST + 50 + (error*2));	//error is negative, left moves slower
+						rightMotor.setSpeed(FAST + 75);	
 					}else if (error > 2){
 						//too close, need to turn right
-						leftMotor.setSpeed(FAST + 30 + (error*2));	//error is positive, left moves faster
-						rightMotor.setSpeed(FAST + 50);
+						leftMotor.setSpeed(FAST + 50 + (error*2));	//error is positive, left moves faster
+						rightMotor.setSpeed(FAST + 75);
 					}else{
 						//within band, go straight
 						leftMotor.setSpeed(FAST + 50);
@@ -832,14 +940,10 @@ public class Navigation extends Thread {
 					}
 					
 				}
-				//rotate sensor back forward
-				sensMotor.setSpeed(150);
-				sensMotor.forward();
-				sensMotor.rotate(40, false);
-				sensMotor.stop();
+				rotateSensorsRight(40);
 				
 				//drive forward to get past block
-				try {Thread.sleep(1500);} catch (InterruptedException e) {}
+				try {Thread.sleep(2500*(long)i);} catch (InterruptedException e) {}
 				
 				
 				
@@ -848,8 +952,8 @@ public class Navigation extends Thread {
 				turnTo(initAngle, true, true);
 				leftMotor.setSpeed(FAST);
 				rightMotor.setSpeed(FAST);
-				leftMotor.rotate(-convertDistance(LW_RADIUS, 30.0), true);
-				rightMotor.rotate(-convertDistance(RW_RADIUS, 30.0), false);
+				leftMotor.rotate(-convertDistance(LW_RADIUS, 25.0), true);
+				rightMotor.rotate(-convertDistance(RW_RADIUS, 25.0), false);
 				
 				//recursive avoid, will turn and travel until a wall is sensed, then will wall follow
 				avoid(i+1);
@@ -886,20 +990,20 @@ public class Navigation extends Thread {
 	/**
 	 * Rotates sensor motor clockwise 80 degrees
 	 */
-	public void rotateSensorsRight(){
+	public void rotateSensorsRight(int angle){
 		sensMotor.setSpeed(150);
 		sensMotor.forward();
-		sensMotor.rotate(80, false);
+		sensMotor.rotate(angle, false);
 		sensMotor.stop();
 	}
 	
 	/**
 	 * Rotates sensor motor counter-clockwise 80 degrees
 	 */
-	public void centerSensors(){
+	public void rotateSensorsLeft(int angle){
 		sensMotor.setSpeed(150);
 		sensMotor.backward();
-		sensMotor.rotate(-80, false);
+		sensMotor.rotate(-angle, false);
 		sensMotor.stop();
 	}
 

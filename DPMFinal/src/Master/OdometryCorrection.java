@@ -10,7 +10,7 @@ public class OdometryCorrection extends Thread{
 	Odometer odometer;
 	ColorSensor leftLightSensor;
 	ColorSensor rightLightSensor;
-	Navigation nav;
+	//Navigation nav;
 	int[] values = new int[10];
 	private static final int CORRECTION_PERIOD = 10;
 	private static final int ANGLE_THRESH = 15; //angle threshold of when to correct angle
@@ -20,6 +20,9 @@ public class OdometryCorrection extends Thread{
 	private static final int LIGHT_THRESH = 20; //Threshold light reading difference for reading a line
 	private NXTRegulatedMotor leftMotor = Motor.B;
 	private NXTRegulatedMotor rightMotor = Motor.C;
+	
+	private Boolean interrupt = false;
+	private Boolean interruptAck = false;
 	
 	
 	int leftLineCount=0;
@@ -49,15 +52,26 @@ public class OdometryCorrection extends Thread{
 	 * @param l	The left side color sensor
 	 * @param r The right side color sensor
 	 */
-	public OdometryCorrection(Odometer odom, ColorSensor cs, ColorSensor cs2, Navigation navi){
+	/*public OdometryCorrection(Odometer odom, ColorSensor cs, ColorSensor cs2){
 		this.odometer = odom;
-		this.nav = navi;
+		//this.nav = navi;
 		leftLightSensor = cs;
 		rightLightSensor = cs2;
 		oldTime = System.currentTimeMillis();
+	}*/
+	
+	
+	public OdometryCorrection(Odometer odo, ColorSensor leftColorSensor,
+			ColorSensor rightColorSensor) {
+		this.odometer = odo;
+		//this.nav = navi;
+		leftLightSensor = leftColorSensor;
+		rightLightSensor = rightColorSensor;
+		oldTime = System.currentTimeMillis();
+		// TODO Auto-generated constructor stub
 	}
-	
-	
+
+
 	/**
 	 * Main execution of odometry correction. The odometer will only be corrected when the 
 	 * orientation of the robot is around 0, 90, 180, or 270 degrees. This should prevent lines read
@@ -85,7 +99,7 @@ public class OdometryCorrection extends Thread{
 				//LCD.drawString("CORRECT ZONE", 0, 4, false);
 				//calculateThetaError();
 			}*/
-			//fixTheta();
+			fixTheta();
 			//updateWindow();
 				
 			/*if(acceptRead){
@@ -129,35 +143,50 @@ public class OdometryCorrection extends Thread{
 	 * @return void
 	 */
 	public void fixTheta() {
-		double correctTheta = odometer.getTheta();
 		//Stop one motor depending on which light sensor detects first
-		if(!nav.isBusy()) {
-			while(leftLightSensor.getNormalizedLightValue() < 275 || rightLightSensor.getNormalizedLightValue() < 275) {
-				try {
+		//if((odometer.getTheta() < 94 && odometer.getTheta() > 87)) {
+			if(leftLightSensor.getNormalizedLightValue() < 285 || rightLightSensor.getNormalizedLightValue() < 285){
+			//while(leftLightSensor.getNormalizedLightValue() < 285 || rightLightSensor.getNormalizedLightValue() < 285) {
+				Sound.beep();
+				interrupt = true;
+				//nav.stopMotors();
+
+				while(interruptAck == false){
+					
+				}
+
+				/*try {
 					//Sleep navigator in order to stop motors in this thread
 					nav.sleep(3000);
 				}
 				catch(Exception e) {
-				}
-				if (leftLightSensor.getNormalizedLightValue() < 275) {
+				}*/
+				
+				
+				if (leftLightSensor.getNormalizedLightValue() < 285) {
 					leftMotor.stop();
-					while (rightLightSensor.getNormalizedLightValue() > 275) {
+					while (rightLightSensor.getNormalizedLightValue() > 255) {
+						rightMotor.setSpeed(100);
 						rightMotor.forward();
 					}
 					rightMotor.stop();
 				}
 				else {
 					rightMotor.stop();
-					while(leftLightSensor.getNormalizedLightValue() > 275) {
+					while(leftLightSensor.getNormalizedLightValue() > 255) {
+						leftMotor.setSpeed(100);
 						leftMotor.forward();
 					}
 					leftMotor.stop();
 				}
-				odometer.setTheta(correctTheta);
-				break;
+				
+				odometer.setTheta(90);
+				 interrupt = false;
+				 interruptAck = false;
+				//break;
 			}
 		}
-	}
+	//}
 	
 	
 	/**
@@ -253,6 +282,10 @@ public class OdometryCorrection extends Thread{
 		return false;
 	}
 	
+	public Boolean checkInterrupt(){
+		return interrupt;
+	}
+	
 	/**
 	 * Fills the base light value arrays with wood-colored readings
 	 * @return void
@@ -281,6 +314,10 @@ public class OdometryCorrection extends Thread{
 			sum += arr[i];
 		}
 		return (double)(sum/arr.length);
+	}
+	
+	public void setInterruptAcknowledge(Boolean set){
+		interruptAck = set;
 	}
 	
 

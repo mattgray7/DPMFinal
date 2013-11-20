@@ -58,10 +58,10 @@ public class BTSendController {
 		odo = new Odometer(LEFT_WHEEL_RADIUS, RIGHT_WHEEL_RADIUS, WHEELBASE_WIDTH);
 		bts = new BTSend();
 		objectRecognition = new ObjectRecognition(csFront);
-		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition);
-		odometryCorrection = new OdometryCorrection(odo, csOdoLeft, csOdoRight, nav);
+		odometryCorrection = new OdometryCorrection(odo, csOdoLeft, csOdoRight);
+		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition, odometryCorrection);
 		lcdInfo = new LCDInfo(odo);
-		localization = new Localization(odo, bottomUs, nav, csFront);
+		localization = new Localization(odo, bottomUs, nav, csOdoRight);
 	}
 	
 	public void execute(){
