@@ -10,7 +10,7 @@ import lejos.nxt.SensorPort;
 import lejos.robotics.Color;
 
 /**
- * Class to recognize whether a block is a blue block or not
+ * Class to recognize whether a block is a blue block or not.
  * 
  * First, you should calibrate the blue block's color by calling the
  * calibrateBlueBlock() method. If you don't, then it won't consider anything
