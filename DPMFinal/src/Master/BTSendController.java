@@ -21,8 +21,9 @@ public class BTSendController {
 	public static final double WHEEL_BASE = 17.3;
 	
 	public static UltrasonicSensor bottomUs = new UltrasonicSensor(SensorPort.S1);
-	public static ColorSensor odoSensor= new ColorSensor(SensorPort.S2);
+	public static ColorSensor rightColorSensor= new ColorSensor(SensorPort.S2);
 	public static ColorSensor colorSensor = new ColorSensor(SensorPort.S3);
+	public static ColorSensor leftColorSensor = new ColorSensor(SensorPort.S4);
 	//public static UltrasonicSensor topUs = new UltrasonicSensor(SensorPort.S4);
 	
 	
@@ -31,11 +32,12 @@ public class BTSendController {
 	public static BTSend bts = new BTSend();
 	
 	public static ObjectRecognition or = new ObjectRecognition(colorSensor);
-	public static Navigation nav = new Navigation(odo, bts, bottomUs, colorSensor, or);
-	public static OdometryCorrection oc = new OdometryCorrection(odo, odoSensor, nav);
+	public static OdometryCorrection oc = new OdometryCorrection(odo, leftColorSensor, rightColorSensor);
+	public static Navigation nav = new Navigation(odo, bts, bottomUs, colorSensor, or, oc);
 
 
-	public static Localization usl = new Localization(odo, bottomUs, nav, odoSensor);
+
+	public static Localization usl = new Localization(odo, bottomUs, nav, rightColorSensor);
 	
 
 	private NXTRegulatedMotor sensorMotor = Motor.A;
@@ -52,8 +54,8 @@ public class BTSendController {
 		int buttonChoice = Button.waitForAnyPress();
 		
 		//calibrate light sensor with blue block
-		colorSensor.setFloodlight(true);
-		or.calibrateBlueBlock();
+		//colorSensor.setFloodlight(true);
+		//or.calibrateBlueBlock();
 		
 		//get role, starting position, green and red zone coordinates
 		//getTransmission();
@@ -62,7 +64,7 @@ public class BTSendController {
 		LCDInfo lc = new LCDInfo(odo);
 		
 		//connect to slave brick
-		bts.establishConnection();
+		//bts.establishConnection();
 		
 		//localize
 		odo.start();
@@ -70,13 +72,13 @@ public class BTSendController {
 		//usl.doLightLocalization();
 
 		//start odometry correction once localization is complete
-		//oc.start();
+		oc.start();
 		
 		//only for testing
-		nav.setGX0(60);
+		/*nav.setGX0(60);
 		nav.setGY0(60);
 		nav.setGX1(90);
-		nav.setGY1(90);
+		nav.setGY1(90);*/
 		nav.start();
 
 		

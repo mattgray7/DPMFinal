@@ -1,7 +1,5 @@
 package Master;
 
-/* add ultrasonic sensor at a higher height than blue block, if object behind blue block, push blue block into object, clamp, reverse, lift, then youre good*/
-
 import java.io.IOException;
 
 import lejos.nxt.*;
@@ -29,8 +27,7 @@ public class Navigation extends Thread {
 	private final int SLOW = 100;
 	
 	private int towerHeight = 0;
-	private int numTowers = 0;
-	
+	private int numTowers = 0;	
 	private double LW_RADIUS;
 	private double RW_RADIUS;
 	private double WHEEL_BASE;
@@ -91,6 +88,14 @@ public class Navigation extends Thread {
 		//hardcoded for demo, move away from surrounding walls so they aren't picked up during scan
 		//travelTo(30.0, 30.0);
 		//turnTo(90.0, true, true);
+		//travelTo(30.0, 30.0);
+		//turnTo(90.0, true, true);
+		
+		travelTo(0, 60.0);
+		travelTo(60, 60);
+		travelTo(60, 0);
+		travelTo(0,0);
+		turnTo(90, true, false);
 		
 		//generate linear path to the green zone
 		//generatePath();
@@ -132,6 +137,7 @@ public class Navigation extends Thread {
 		scan();
 		//travelTo(0.0,30.0);
 		
+		}
 	}
 
 	/**

@@ -138,6 +138,7 @@ public class Localization {
 	/**
 	 * Performs light localization around a grid intersection. Method assumes robot is close to an intersection
 	 */
+	//Need to adjust angle offset for right light sensor
 	public void doLightLocalization() {
 		boolean spinning;
 		double thetaX;
