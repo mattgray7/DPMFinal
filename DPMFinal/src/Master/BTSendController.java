@@ -73,10 +73,10 @@ public class BTSendController {
 		//oc.start();
 		
 		//only for testing
-		nav.setGX0(90);
-		nav.setGY0(90);
-		nav.setGX1(120);
-		nav.setGY1(120);
+		nav.setGX0(60);
+		nav.setGY0(60);
+		nav.setGX1(90);
+		nav.setGY1(90);
 		nav.start();
 
 		

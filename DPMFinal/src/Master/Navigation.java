@@ -28,6 +28,9 @@ public class Navigation extends Thread {
 	private final int JOG = 150;
 	private final int SLOW = 100;
 	
+	private int towerHeight = 0;
+	private int numTowers = 0;
+	
 	private double LW_RADIUS;
 	private double RW_RADIUS;
 	private double WHEEL_BASE;
@@ -86,17 +89,17 @@ public class Navigation extends Thread {
 	public void run() {
 		
 		//hardcoded for demo, move away from surrounding walls so they aren't picked up during scan
-		/*travelTo(30.0, 30.0);
-		turnTo(90.0, true, true);
+		//travelTo(30.0, 30.0);
+		//turnTo(90.0, true, true);
 		
 		//generate linear path to the green zone
-		generatePath();
+		//generatePath();
 		
 		//180 degree scan for objects
 		scan();
 		
 		//for loop starts at 1 since first elements are current position
-		for(int i=1; i < xPath.length; i++){
+		/*for(int i=1; i < xPath.length; i++){
 			//if a block is not being transported, continue searching
 			if(!hasBlock){
 				travelTo(xPath[i], yPath[i]);
@@ -122,6 +125,10 @@ public class Navigation extends Thread {
 				break;	//only for demo, will need to be handled for final demo
 			}
 		}*/
+		travelTo(gx0 + 15, gy0 - 15);
+		scan();
+		
+		travelTo(gx0 - 15, gy0 + 15);
 		scan();
 		//travelTo(0.0,30.0);
 		
@@ -462,7 +469,7 @@ public class Navigation extends Thread {
 		leftMotor.rotate(convertDistance(LW_RADIUS, distance+4), true);
 		rightMotor.rotate(convertDistance(RW_RADIUS, distance+4), false);
 		
-		//Lifting sometimes fails for blocks at an angle, following code "wiggles" the claw with the blue
+		/*//Lifting sometimes fails for blocks at an angle, following code "wiggles" the claw with the blue
 		//block in it in an attempt to straighten out the block for lifting.
 		//rotate right
 		leftMotor.setSpeed(FAST);
@@ -483,30 +490,49 @@ public class Navigation extends Thread {
 		leftMotor.setSpeed(JOG);
 		rightMotor.setSpeed(JOG);
 		leftMotor.rotate(convertDistance(LW_RADIUS, 5), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);*/
 		
+		leftMotor.setSpeed(JOG+100);
+		rightMotor.setSpeed(JOG);
+		leftMotor.forward();
+		rightMotor.forward();
+		try {Thread.sleep(700);} catch (InterruptedException e1) {}
+		
+		//rotate left
+		leftMotor.setSpeed(JOG);
+		rightMotor.setSpeed(JOG+100);
+		leftMotor.forward();
+		rightMotor.forward();
+		try {Thread.sleep(700);} catch (InterruptedException e1) {}
+		
+		//go forward 5 more cm to ensure block is in claw and oriented properly
+		//MAY NEED TO BE CHANGED/CHECKED with second ultrasonic to see if there's anything behind the block
+		leftMotor.setSpeed(JOG);
+		rightMotor.setSpeed(JOG);
+		leftMotor.rotate(convertDistance(LW_RADIUS, 5), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);
 		
 		leftMotor.stop();
 		rightMotor.stop();
 		
 		//Send signal to clamp and lift the object
-		//try {bts.sendSignal(2);} catch (IOException e) {Sound.buzz();}	//2 for clamp and raise arms
-		try {bts.sendSignal(3);} catch (IOException e) {Sound.buzz();}	//3 for clamping only
+		try {bts.sendSignal(2);} catch (IOException e) {Sound.buzz();}	//2 for clamp and raise arms
+		//try {bts.sendSignal(3);} catch (IOException e) {Sound.buzz();}	//3 for clamping only
 		
 		//wait for lift and clamp
 		try {Thread.sleep(1700);} catch (InterruptedException e1) {}
 		
 		//reverse far enough to lower claw
-		leftMotor.setSpeed(SLOW);
+		/*leftMotor.setSpeed(SLOW);
 		rightMotor.setSpeed(SLOW);
 		leftMotor.backward();
 		rightMotor.backward();
 		leftMotor.rotate(-convertDistance(LW_RADIUS, distance), true);
-		rightMotor.rotate(-convertDistance(RW_RADIUS, distance), false);
+		rightMotor.rotate(-convertDistance(RW_RADIUS, distance), false);*/
 		
-		try {bts.sendSignal(4);} catch (IOException e) {Sound.buzz();}	//4 for raising arms
+		//try {bts.sendSignal(4);} catch (IOException e) {Sound.buzz();}	//4 for raising arms
 		
-		try {Thread.sleep(1700);} catch (InterruptedException e1) {}
+		//try {Thread.sleep(1700);} catch (InterruptedException e1) {}
 		
 		//return sensors to original orientation
 		rotateSensorsLeft(80);
@@ -519,16 +545,19 @@ public class Navigation extends Thread {
 	 * Will take the robot from it's current position directly to the bottom left corner of the green zone
 	 */
 	public void finishLine(){
+		hasBlock = false;
 		double x = odometer.getX();
 		double y = odometer.getY();
 		
 		//depending on location in relation to green zone, travel to a green zone corner and turn to the center
-		if((x <= gx0) && (y <=gy0)){
-			travelTo(gx0, gy0);
-			turnTo(45, true, true);
+		/*if((x <= gx0) && (y <=gy0)){
+
+				travelTo(gx0, gy0);
+				turnTo(45, true, true);
 		}else if ((x <= gx0) && (y >= gy1)){
-			travelTo(gx0, gy1);
-			turnTo(-45, true, true);
+				travelTo(gx0, gy1);
+				turnTo(-45, true, true);
+			
 		}else if ((x >= gx1) && (y <= gy0)){
 			travelTo(gx1, gy0);
 			turnTo(135, true, true);
@@ -539,16 +568,74 @@ public class Navigation extends Thread {
 			//default to bottom left corner
 			travelTo(gx0, gy0);
 			turnTo(45, true, true);
+		}*/
+		
+		if(towerHeight == 0){
+			travelTo(gx0, gy0);
+			turnTo(45.0, true, true);
+		}else if(towerHeight == 1){
+			travelTo(gx0 - 5.6, gy0 - 5.6);
+			turnTo(45.0, true, true);
+		}else if (towerHeight == 2){
+			travelTo(gx0 - 7, gy0 - 7);
+			turnTo(25.0, true, true);
 		}
 		
 		//rotate sensors away from claw
 		rotateSensorsRight(80);
 		
 		//send signal to lower arms all the way and open claw - MAY NEED TO BE CHANGED FOR TOWER BUILDING
-		try {bts.sendSignal(1);} catch (IOException e) {}	
-		
-		//wait for lower
-		try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+		if(towerHeight == 0){
+			try {bts.sendSignal(1);} catch (IOException e) {}
+			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+			
+			leftMotor.setSpeed(SLOW);
+			rightMotor.setSpeed(SLOW);
+			leftMotor.backward();
+			rightMotor.backward();
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 12), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 12), false);
+			
+			
+			try {bts.sendSignal(2);} catch (IOException e) {}	//raise arms to max
+			try {Thread.sleep(2000);} catch (InterruptedException e1) {}
+			
+		}else if (towerHeight == 1){
+			try {bts.sendSignal(10);} catch (IOException e) {}	
+			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+			
+			//reverse far enough to raise claw to the top again
+			leftMotor.setSpeed(SLOW);
+			rightMotor.setSpeed(SLOW);
+			leftMotor.backward();
+			rightMotor.backward();
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 10), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 10), false);
+			
+			try {bts.sendSignal(-10);} catch (IOException e) {}
+			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+		}else if (towerHeight == 2){
+			try {bts.sendSignal(11);} catch (IOException e) {}	
+			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
+			
+			//reverse far enough to raise claw to the top again
+			leftMotor.setSpeed(SLOW);
+			rightMotor.setSpeed(SLOW);
+			leftMotor.backward();
+			rightMotor.backward();
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 10), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 10), false);
+			
+			try {bts.sendSignal(-11);} catch (IOException e) {}
+			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+			
+		}
+		towerHeight++;
+		if(towerHeight == 3){
+			towerHeight = 0;
+			numTowers++;
+		}
+		rotateSensorsLeft(80);
 	}
 
 

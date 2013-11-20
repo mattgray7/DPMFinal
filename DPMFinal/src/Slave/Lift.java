@@ -4,8 +4,8 @@ package Slave;
 import lejos.nxt.*;
 
 public class Lift {
-	private static NXTRegulatedMotor armMotor;
-	private static NXTRegulatedMotor clampMotor;
+	private static NXTRegulatedMotor armMotor = Motor.A;
+	private static NXTRegulatedMotor clampMotor = Motor.B;
 
 
 	
@@ -15,12 +15,12 @@ public class Lift {
 	 * @param clamp The clamp motor that controls the claws
 	 */
 	public Lift(NXTRegulatedMotor arm, NXTRegulatedMotor clamp){
-		armMotor = arm;
-		clampMotor = clamp;
+		//armMotor = Motor.A;//arm;
+		//clampMotor = Motor.B;//clamp;
 	}
 	
 	/*public static void main(String[] args){
-		lowerArms(450);
+		lowerArms(400);
 		Sound.beep();
 		try {Thread.sleep(500);} catch (InterruptedException e) {}
 		
@@ -32,8 +32,17 @@ public class Lift {
 		Sound.beep();
 		try {Thread.sleep(500);} catch (InterruptedException e) {}
 		
-		raiseArms(450);
+		raiseArms(400);
 		Sound.beep();
+		try {Thread.sleep(500);} catch (InterruptedException e) {}
+		
+		//lowerArms(230);
+		lowerArms(170);
+		Sound.beep();
+		try {Thread.sleep(500);} catch (InterruptedException e) {}
+		
+		release();
+		Sound.buzz();
 		try {Thread.sleep(500);} catch (InterruptedException e) {}
 		
 	}*/
@@ -58,7 +67,7 @@ public class Lift {
 	 * @return void
 	 */
 	public static void raiseArms(int angle){
-		armMotor.setSpeed(550);
+		armMotor.setSpeed(450);
 		armMotor.forward();
 		armMotor.rotate(angle, false);//maybe true?
 		armMotor.stop();
