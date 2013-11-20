@@ -16,12 +16,14 @@ public class BTSendController {
 	private static final NXTRegulatedMotor rightMotor = Motor.C;
 	private static final NXTRegulatedMotor sensorMotor = Motor.A;
 	private static final SensorPort US_PORT = SensorPort.S1;
-	private static final SensorPort CS_PORT = SensorPort.S2;
-	private static final SensorPort CS_ODO_CORRECTION_PORT = SensorPort.S3;
+	private static final SensorPort CS_FRONT_PORT = SensorPort.S3;
+	private static final SensorPort CS_ODO_LEFT_PORT = SensorPort.S4;
+	private static final SensorPort CS_ODO_RIGHT_PORT = SensorPort.S2;
 	
 	public UltrasonicSensor bottomUs;
-	public ColorSensor odoSensor;
-	public ColorSensor colorSensor;
+	public ColorSensor csOdoLeft;
+	public ColorSensor csOdoRight;
+	public ColorSensor csFront;
 	public Odometer odo;
 	public BTSend bts;
 	public ObjectRecognition objectRecognition;
@@ -30,7 +32,7 @@ public class BTSendController {
 	public LCDInfo lcdInfo;
 	public Localization localization;
 	
-
+	
 	/**
 	 * Setup a BTSendController (the main bulk of the program) and start it.
 	 * 
@@ -49,43 +51,50 @@ public class BTSendController {
 	 */
 	public BTSendController(){
 		bottomUs = new UltrasonicSensor(US_PORT);
-		odoSensor= new ColorSensor(CS_PORT);
-		colorSensor = new ColorSensor(CS_ODO_CORRECTION_PORT);
+		csOdoLeft= new ColorSensor(CS_ODO_LEFT_PORT);
+		csOdoRight= new ColorSensor(CS_ODO_RIGHT_PORT);
+		csFront = new ColorSensor(CS_FRONT_PORT);
 		
 		odo = new Odometer(LEFT_WHEEL_RADIUS, RIGHT_WHEEL_RADIUS, WHEELBASE_WIDTH);
 		bts = new BTSend();
-		objectRecognition = new ObjectRecognition(colorSensor);
-		nav = new Navigation(odo, bts, bottomUs, colorSensor, objectRecognition);
-		odometryCorrection = new OdometryCorrection(odo, odoSensor, nav);
+		objectRecognition = new ObjectRecognition(csFront);
+		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition);
+		odometryCorrection = new OdometryCorrection(odo, csOdoLeft, csOdoRight, nav);
 		lcdInfo = new LCDInfo(odo);
-		localization = new Localization(odo, bottomUs, nav, odoSensor);
+		localization = new Localization(odo, bottomUs, nav, csFront);
 	}
 	
 	public void execute(){
 		printWelcomeMessage();
 		int buttonChoice = Button.waitForAnyPress();
 		
-		colorSensor.setFloodlight(true);
+		// Calibrate blue block
+		csFront.setFloodlight(true);
 		//objectRecognition.calibrateBlueBlock();
 		
+		// Set up bluetooth connections
 		//getTransmission();;
 		//bts.establishConnection();
+		
+		// Start sensor threads
 		lcdInfo.start();
 		odo.start();
 		
+		// Do localization
 		//localization.doLocalization();
-		
 		//nav.travelTo(0, 0, true);
-		
 		localization.doLightLocalization();
 
+		// Start main operation
 		//odometryCorrection.start();
 		//nav.start();
 		
 		Button.waitForAnyPress();
 		
 		// Cleanup
-		colorSensor.setFloodlight(false);
+		csFront.setFloodlight(false);
+		csOdoLeft.setFloodlight(false);
+		csOdoRight.setFloodlight(false);
 	}
 	
 	/**
@@ -110,6 +119,7 @@ public class BTSendController {
 		BluetoothConnection compConnection = new BluetoothConnection();
 		Transmission t = compConnection.getTransmission();
 		
+		//set the green zone coordinates
 		int greenZone[] = t.greenZone;
 		nav.setGX0(greenZone[0]*30);
 		nav.setGY0(greenZone[1]*30);

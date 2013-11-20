@@ -16,7 +16,14 @@ public class Localization {
 	private ColorSensor cs;
 	private Navigation nav;
 	
-	public Localization(Odometer odo, UltrasonicSensor us, Navigation nav, ColorSensor cs) {
+	/**
+	 * Constructor
+	 * @param odo The shared Odometer
+	 * @param us Ultrasonic sensor used for ultrasonic localization
+	 * @param navi	Main navigation class to turn and drive to origin
+	 * @param colsens	Color sensor used for light localization
+	 */
+	public Localization(Odometer odo, UltrasonicSensor us, Navigation navi, ColorSensor colsens) {
 		this.odo = odo;
 		this.cs = cs;
 		this.nav = nav;
@@ -24,7 +31,12 @@ public class Localization {
 		
 		us.off();
 	}
+
 	
+	/**
+	 * Performs rising or falling edge ultrasonic localization depending on
+	 * if the sensor initially reads a wall.
+	 */
 	public void doLocalization(){
 		if (!wallInSight()){
 			LCD.drawString("FALLING", 0, 0);
@@ -52,7 +64,7 @@ public class Localization {
 		LCD.drawString("Angle A", 0, 3);
 		double angleA = odo.getTheta();
 		
-		// Rotate right a little to get out of wall
+		// Rotate right a little to get out of wall.
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
@@ -125,15 +137,17 @@ public class Localization {
 		usLocalizationCorrection(angleA, angleB);
 	}
 	
+	/**
+	 * Performs light localization around a grid intersection. Method assumes robot is close to an intersection
+	 */
+	//Need to adjust angle offset for right light sensor
 	public void doLightLocalization() {
-		//nav.travelTo(0.0,0.0,false);
-		Sound.buzz();
 		boolean hasSeenLine;
+		
 		double thetaX;
 		double thetaY;
 		double x;
 		double y;
-		//Angle array
 		double[] angles = new double[4];
 		
 		cs.setFloodlight(true);
@@ -179,6 +193,12 @@ public class Localization {
 		cs.setFloodlight(false);
 	}
 	
+	/**
+	 * Reset the odometer using the two angles from US localization.
+	 * 
+	 * @param angleA The angle at which the first wall was detected (in degrees).
+	 * @param angleB The angle at which the second wall was detected (in degrees).
+	 */
 	private void usLocalizationCorrection(double angleA, double angleB){
 		double angleDelta = getAngleCorrection(angleA, angleB);
 		double distance = getDistanceToWall(angleA, angleB);
@@ -193,10 +213,10 @@ public class Localization {
 	 * 
 	 * This angle just needs to be added to the odometer' angle.
 	 * 
-	 * @param angleA Angle at which one wall was detected (in rads)
-	 * @param angleB Angle at which the other wall was detected (in rads).
+	 * @param angleA The angle at which the first wall was detected (in degrees).
+	 * @param angleB The angle at which the second wall was detected (in degrees).
 	 * 
-	 * @return The angle needed to correct the odometer's heading.
+	 * @return The angle to add to the odometer's heading, such that the heading is corrected.
 	 */
 	private double getAngleCorrection(double angleA, double angleB){
 		// Method written by Nick. I'd need to draw a picture to explain...
@@ -215,6 +235,17 @@ public class Localization {
 		return correction;
 	}
 	
+	/**\
+	 * Get an approximation of the robot's initial position after US localization.
+	 * 
+	 * This uses the angles at which the two walls were detected. It assumes
+	 * the x and y distances are the same.
+	 * 
+	 * @param angleA The angle at which the first wall was detected (in degrees).
+	 * @param angleB The angle at which the second wall was detected (in degrees).
+	 * 
+	 * @return The distance from the robot to the wall.
+	 */
 	private double getDistanceToWall(double angleA, double angleB){
 		double difference = Math.abs(angleA - angleB);
 		
@@ -228,7 +259,7 @@ public class Localization {
 		
 		// The robot should have recorded that the angle between the
 		// two walls is exactly 90.0 degrees. However, since it is a little far
-		// away from the wall's corner and it there is a threshold for what
+		// away from the wall's corner and there is a threshold for what
 		// is considered a wall, it will see a little bit more than 90.0 degrees.
 		double excess = difference - 90.0;
 		

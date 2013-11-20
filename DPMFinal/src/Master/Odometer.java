@@ -58,7 +58,9 @@ public class Odometer extends Thread {
 		lastTachoRight = rightMotor.getTachoCount();
 	}
 
-	// run method (required for Thread)
+	/**
+	 * The main method that constantly updates the odometer
+	 */
 	public void run() {
 		// Reset some variables (this is done only once, at the beginning)
 		lastTachoLeft = leftMotor.getTachoCount();
@@ -183,8 +185,8 @@ public class Odometer extends Thread {
 	/**
 	 * Set the odometer's state.
 	 * 
-	 * @param position A "double" array (of size 3) to hold the x, y and theta
-	 * @param update A "boolean" array (of size 3) to state what state you want to change.
+	 * @param position A "double" array (of size 3) to hold the x, y and theta.
+	 * @param update A "boolean" array (of size 3) to say what state you want to change.
 	 */
 	public void setPosition(double[] position, boolean[] update) {
 		synchronized (lock) {
