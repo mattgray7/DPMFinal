@@ -89,14 +89,14 @@ public class BTSendController {
 		//localization.doLightLocalization();
 
 		// Start main operation
-		odometryCorrection.start();
+		//odometryCorrection.start();
 		
-		odometryCorrection.setMode(Mode.WAITING);
+		/*odometryCorrection.setMode(Mode.WAITING);
 		nav.turnTo(7.6, true, true);
-		odometryCorrection.setMode(Mode.CORRECTING);
+		odometryCorrection.setMode(Mode.CORRECTING);*/
 		
-		nav.travelTo(30.0, 225.0);
-		//nav.start();
+		//nav.travelTo(30.0, 225.0);
+		nav.start();
 		
 		Button.waitForAnyPress();
 		

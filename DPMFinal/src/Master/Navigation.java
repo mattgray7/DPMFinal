@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import lejos.nxt.*;
 import lejos.nxt.ColorSensor.Color;
+import java.util.Random;
 
 public class Navigation extends Thread {
 
@@ -63,6 +64,10 @@ public class Navigation extends Thread {
 	private double xDestination = 0.0;		//the desired destination at the end of the current path
 	private double yDestination = 0.0;	
 
+	int randX;
+	int randY;
+	double previousX;
+	double previousY;
 
 	// test
 	private BTSend bts;			//Bluetooth sender class
@@ -96,6 +101,11 @@ public class Navigation extends Thread {
 	 * @return void
 	 */
 	public void run() {
+		rx0 = 30;
+		rx1 = 60;
+		ry0 = 30;
+		ry1 = 60;
+		randomPathFinder();
 		
 		//hardcoded for demo, move away from surrounding walls so they aren't picked up during scan
 		//travelTo(30.0, 30.0);
@@ -103,7 +113,7 @@ public class Navigation extends Thread {
 		//travelTo(30.0, 30.0);
 		//turnTo(90.0, true, true);
 		
-		travelTo(0, 60.0);
+		//travelTo(0, 60.0);
 		/*travelTo(60, 60);
 		travelTo(60, 0);
 		travelTo(0,0);
@@ -1258,5 +1268,53 @@ public class Navigation extends Thread {
 	
 	public void setBusy(boolean busy) {
 		isBusy = busy;
+	}
+	public void randomPathFinder() {
+		boolean goodPath;
+		Random x = new Random();
+		for (int i = 0; i< 100000000; i++) {
+			randX = x.nextInt(75);
+			randY = x.nextInt(75);
+			//If destination coordinate is in red zone, generate another point
+			if (randX >= rx0 && randX <= rx1 && randY >= ry0 && randY <= ry1) {
+				randX = x.nextInt(75);
+				randY = x.nextInt(75);
+			}
+			goodPath = checkPath(randX, randY);
+			if (goodPath) {
+				travelTo(randX, randY);
+				//scan();
+			}
+		} 
+	}
+	public boolean checkPath(int x, int y) {
+		double currentX = odometer.getX();
+		double currentY = odometer.getY();
+		double heading = Math.atan2(y - odometer.getY(), x - odometer.getX()) * (180.0/ Math.PI);
+		double testY;
+		//Check if any point along path intersects the red zone
+		if (x - currentX > 0) {
+			while (currentX <= x) {
+				testY = currentX * Math.tan(heading * Math.PI/180);
+				if (currentX >= rx0-25 && currentX <= rx1 + 25 && testY >= ry0 - 25 && testY <= ry1 + 25) {
+					return false;
+				}
+				else {
+					currentX++;
+				}
+			}
+		}
+		else {
+			while (x <= currentX) {
+				testY = currentX * Math.tan((180 - heading) * Math.PI/180);
+				if (currentX >= rx0-25 && currentX <= rx1 + 25 && testY >= ry0 - 25 && testY <= ry1 + 25) {
+					return false;
+				}
+				else {
+					currentX--;
+				}
+			}
+		}
+		return true;
 	}
 }
