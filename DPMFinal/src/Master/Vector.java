@@ -46,10 +46,44 @@ public class Vector {
 	}
 	
 	/**
-	 * @return The length of the vector
+	 * @return The x component of the vector.
+	 */
+	public void setX(double x){
+		this.x = x;
+	}
+	
+	/**
+	 * @return The y component of the vector.
+	 */
+	public void setY(double y){
+		this.y = y;
+	}
+	
+	/**
+	 * @return The z component of the vector.
+	 */
+	public void setZ(double z){
+		this.z = z;
+	}
+	
+	/**
+	 * @return The length of the vector.
 	 */
 	public double length(){
 		return Math.sqrt(x*x + y*y + z*z);
+	}
+	
+	/**
+	 * Set the vector to new values.
+	 * 
+	 * @param x New x coordinate.
+	 * @param y New y coordinate.
+	 * @param z New z coordinate.
+	 */
+	public void set(double x, double y, double z){
+		this.x = x;
+		this.y = y;
+		this.z = z;
 	}
 	
 	/**

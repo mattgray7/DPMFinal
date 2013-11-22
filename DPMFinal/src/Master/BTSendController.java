@@ -4,12 +4,13 @@ import bluetooth.BluetoothConnection;
 import bluetooth.Transmission;
 import lejos.nxt.*;
 import Master.Odometer;
+import Master.OdometryCorrection.Mode;
 
 
 public class BTSendController {
-	private static final double LEFT_WHEEL_RADIUS = 2.665;
-	private static final double RIGHT_WHEEL_RADIUS = 2.675;
-	private static final double WHEELBASE_WIDTH = 17.3;
+	public static final double LEFT_WHEEL_RADIUS = 2.665;
+	public static final double RIGHT_WHEEL_RADIUS = 2.675;
+	public static final double WHEELBASE_WIDTH = 17.3;
 	private static final int DEFAULT_PERIOD = 25;
 	
 	private static final NXTRegulatedMotor leftMotor = Motor.B;
@@ -58,8 +59,8 @@ public class BTSendController {
 		odo = new Odometer(LEFT_WHEEL_RADIUS, RIGHT_WHEEL_RADIUS, WHEELBASE_WIDTH);
 		bts = new BTSend();
 		objectRecognition = new ObjectRecognition(csFront);
-		odometryCorrection = new OdometryCorrection(odo, csOdoLeft, csOdoRight);
-		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition, odometryCorrection);
+		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition);
+		odometryCorrection = new OdometryCorrection(nav, odo, csOdoLeft, csOdoRight);
 		lcdInfo = new LCDInfo(odo);
 		localization = new Localization(odo, bottomUs, nav, csOdoRight);
 	}
@@ -71,6 +72,7 @@ public class BTSendController {
 		// Calibrate blue block
 		csFront.setFloodlight(true);
 		objectRecognition.calibrateBlueBlock();
+		csFront.setFloodlight(false);
 		
 		// Set up bluetooth connections
 		//getTransmission();;
@@ -81,13 +83,19 @@ public class BTSendController {
 		odo.start();
 		
 		// Do localization
-		localization.doLocalization();
-		nav.travelTo(0, 0);
-		nav.turnTo(90, true, true);
+		//localization.doLocalization();
+		//nav.travelTo(0, 0);
+		//nav.turnTo(90, true, true);
 		//localization.doLightLocalization();
 
 		// Start main operation
-		//odometryCorrection.start();
+		odometryCorrection.start();
+		
+		odometryCorrection.setMode(Mode.WAITING);
+		nav.turnTo(7.6, true, true);
+		odometryCorrection.setMode(Mode.CORRECTING);
+		
+		nav.travelTo(30.0, 225.0);
 		//nav.start();
 		
 		Button.waitForAnyPress();

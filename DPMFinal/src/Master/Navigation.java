@@ -14,7 +14,6 @@ public class Navigation extends Thread {
 	private UltrasonicSensor bottomUs;
 	private ColorSensor colorSens;
 	private ObjectRecognition recog;
-	private OdometryCorrection oc;
 	
 	private final double POINT_THRESH = 0.5;
 	private final double ANGLE_THRESH = 5.0;		//correcting angle thresh
@@ -66,13 +65,12 @@ public class Navigation extends Thread {
 	 * @param cs The color sensor used for object detection and recognition
 	 * @param or The object recognition class that computes light readings
 	 */
-	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor bot, ColorSensor cs, ObjectRecognition or, OdometryCorrection odomc) {
+	public Navigation(Odometer odom, BTSend sender, UltrasonicSensor bot, ColorSensor cs, ObjectRecognition or) {
 		bottomUs = bot;
 		odometer = odom;
 		bts = sender;
 		colorSens = cs;
 		recog = or;
-		oc = odomc;
 		LW_RADIUS = odometer.getLeftRadius();	//update wheel values
 		RW_RADIUS = odometer.getRightRadius();
 		WHEEL_BASE = odometer.getWheelBase();
@@ -207,25 +205,14 @@ public class Navigation extends Thread {
 			 if(Math.abs(minAng - odometer.getTheta()) > 10){ 
 				 this.turnTo(minAng,true, false); 
 			 }
-			 
-			 if(oc.checkInterrupt() == true){
-				 leftMotor.stop();
-				 rightMotor.stop();
-				 oc.setInterruptAcknowledge(true);
-				 while(oc.checkInterrupt()){
-					 
-				 }
-				 oc.setInterruptAcknowledge(false);
-				 leftMotor.setSpeed(FAST);
-				 rightMotor.setSpeed(FAST);
-			 }
-			 
 	  
-			 this.setSpeeds(FAST, FAST); 
+			 this.setSpeeds(FAST, FAST);
+			 //this.setSpeeds(SLOW,  SLOW); // For testing
 		 } 
 		 this.setSpeeds(0,0); 
 		 turnTo(masterAng, true, true);
 		 isBusy = true;
+		 colorSens.setFloodlight(false);
 	}
 	 
 	 

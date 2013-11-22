@@ -5,321 +5,494 @@ import lejos.nxt.*;
 //import lejos.nxt.ColorSensor.Color;
 import lejos.util.Timer;
 
-
+/**
+ * Class to correct the robot's position and heading as it crosses black grid lines.
+ * 
+ * The position
+ * 
+ * @author Nick
+ * @version 1.0
+ */
 public class OdometryCorrection extends Thread{
-	Odometer odometer;
-	ColorSensor leftLightSensor;
-	ColorSensor rightLightSensor;
-	//Navigation nav;
-	int[] values = new int[10];
-	private static final int CORRECTION_PERIOD = 10;
-	private static final int ANGLE_THRESH = 15; //angle threshold of when to correct angle
-	private static final int POINT_THRESH = 10; //distance threshold of which point to snap to
-	private static final int DISTANCE_FROM_LSENSOR = 11; //distance from sensor to center
-	private static final int TIME_THRESH = 400; //Threshold that line readings are accepted in
-	private static final int LIGHT_THRESH = 20; //Threshold light reading difference for reading a line
-	private NXTRegulatedMotor leftMotor = Motor.B;
-	private NXTRegulatedMotor rightMotor = Motor.C;
+	enum Mode {WAITING, CORRECTING};
 	
-	private Boolean interrupt = false;
-	private Boolean interruptAck = false;
+	// Constants
+	private final Vector leftCSPosition = new Vector(-8.7, -10.5, 0.0);
+	private final Vector rightCSPosition = new Vector(9.3, -10.5, 0.0);
+	private final long CORRECTION_INTERVAL = 20;
+	private final int LIGHT_THRESHOLD = 450;
+	private final long TIME_THRESHOLD = 500;
+	private final double MIN_DISTANCE_FROM_INTERSECTION = 3;
+	private final double ERROR = 0.001;	// General double precision error
 	
+	// Variables
+	private Navigation navigation;
+	private Odometer odometer;
+	private ColorSensor csLeft;
+	private ColorSensor csRight;
 	
-	int leftLineCount=0;
-	int rightLineCount=0;
+	private Boolean running;
+	private Mode currentMode;
 	
-	private final double[] gridLines = {0.0, 30.0, 60.0, 90.0, 120.0, 150.0, 180.0, 210.0, 240.0, 270.0, 300.0, 330.0, 360.0, 390.0, 410.0};		//missing the last wall line?
-	private Boolean acceptRead = false;
-	private Boolean lineRead = false;
+	// Each CS keeps track of the last X and Y grid lines it saw.
+	private Vector lastXGridlineLeft;
+	private Vector lastYGridlineLeft;
+	private Vector lastXGridlineRight;
+	private Vector lastYGridlineRight;
 	
-	double lastX = 0.0;
-	double lastY = 0.0;
-	double updX = 0.0;
-	double updY = 0.0;
+	// Keep track of whether you saw at least one grid line since the beginning.
+	private Boolean sawXGridlineLeft;
+	private Boolean sawYGridlineLeft;
+	private Boolean sawXGridlineRight;
+	private Boolean sawYGridlineRight;
 	
-	private long t1=0;
-	private long t2=0;
-	private double newTheta = 90.0;
-	private final double WHEEL_RADIUS = 2.7;
-	private final double SENSOR_DIST = 12.5;
+	// Keep track of whether you just saw a new grid line.
+	// (So that you'll only correct once).
+	private Boolean newXGridlineLeft;
+	private Boolean newYGridlineLeft;
+	private Boolean newXGridlineRight;
+	private Boolean newYGridlineRight;
 	
-	long oldTime;
-	long newTime;
+	private long lastTimeGridlineLeft;
+	private long lastTimeGridlineRight;
+	
+	private int numLeftLines = 0;
+	private int numRightLines = 0;
 	
 	/**
 	 * Constructor
-	 * @param odom The shared odometer amongst classes
-	 * @param l	The left side color sensor
-	 * @param r The right side color sensor
+	 * 
+	 * @param odometer The robot's odometer.
+	 * @param csLeft The left color sensor.
+	 * @param csRight The right color sensor.
 	 */
-	/*public OdometryCorrection(Odometer odom, ColorSensor cs, ColorSensor cs2){
-		this.odometer = odom;
-		//this.nav = navi;
-		leftLightSensor = cs;
-		rightLightSensor = cs2;
-		oldTime = System.currentTimeMillis();
-	}*/
-	
-	
-	public OdometryCorrection(Odometer odo, ColorSensor leftColorSensor,
-			ColorSensor rightColorSensor) {
-		this.odometer = odo;
-		//this.nav = navi;
-		leftLightSensor = leftColorSensor;
-		rightLightSensor = rightColorSensor;
-		oldTime = System.currentTimeMillis();
-		// TODO Auto-generated constructor stub
+	public OdometryCorrection(Navigation navigation, Odometer odometer, ColorSensor csLeft, ColorSensor csRight){
+		this.navigation = navigation;
+		this.odometer = odometer;
+		this.csLeft = csLeft;
+		this.csRight = csRight;
+		
+		running = false;
+		
+		lastXGridlineLeft = new Vector(0.0, 0.0, 0.0);
+		lastXGridlineRight = new Vector(0.0, 0.0, 0.0);
+		lastYGridlineLeft = new Vector(0.0, 0.0, 0.0);
+		lastYGridlineRight = new Vector(0.0, 0.0, 0.0);
+		
+		currentMode = Mode.CORRECTING;
+		
+		csLeft.setFloodlight(Color.RED);
+		csRight.setFloodlight(Color.RED);
+		
+		resetState();
 	}
-
-
+	
 	/**
-	 * Main execution of odometry correction. The odometer will only be corrected when the 
-	 * orientation of the robot is around 0, 90, 180, or 270 degrees. This should prevent lines read
-	 * during turning from affecting the odometer
-	 * @return void
+	 * Start the odometry correction.
+	 * 
+	 * The position and heading of the robot will be corrected.
 	 */
 	public void run(){
-		long correctionStart, correctionEnd;
-		leftLightSensor.setFloodlight(Color.BLUE);
-		rightLightSensor.setFloodlight(Color.BLUE);
+		running = true;
+		currentMode = Mode.CORRECTING;
 		
-		//fillWindows();
-		
-		
-		while (true) {
-			correctionStart = System.currentTimeMillis();
-			LCD.drawInt(leftLightSensor.getNormalizedLightValue(), 0, 6);
-			LCD.drawInt(rightLightSensor.getNormalizedLightValue(), 0, 7);
+		while(running){
+			long startTime = System.currentTimeMillis();
 			
-			/*if(((Math.abs(odometer.getTheta()) < ANGLE_THRESH) 
-				|| (Math.abs(odometer.getTheta() - 90.0) < ANGLE_THRESH) 
-				|| (Math.abs(odometer.getTheta() - 180.0) < ANGLE_THRESH) 
-				|| (Math.abs(odometer.getTheta() - 270.0) < ANGLE_THRESH))
-				&& (nav.isBusy == false)){
-				//LCD.drawString("CORRECT ZONE", 0, 4, false);
-				//calculateThetaError();
-			}*/
-			fixTheta();
-			//updateWindow();
-				
-			/*if(acceptRead){
-				newTheta = Math.atan((SENSOR_DIST*180)/((t2-t1)*.001*(Motor.A.getSpeed() * Math.PI * WHEEL_RADIUS)));	//1000 for ms conversion
-				//newTheta = Math.atan(SENSOR_DIST/((Math.abs(t2-t1)) * 9.076));//test
-				newTheta = ((newTheta * 180)/Math.PI);
-				//Sound.buzz();
-				//odometer.setTheta(90.0 - newTheta);
-				if(Math.abs(odometer.getTheta() - newTheta) < 40){	//if new angle is ridiculous, ignore it
-					odometer.setTheta(newTheta);
-					Sound.buzz();
-					//calculatePositionError();
-				}
-				acceptRead = false;
-				//calculatePositionError(); //may need to be before corrected angle depnding on what we do
-				try { Thread.sleep(500); }catch (InterruptedException e) {}		//to avoid reading the same line?
-			}*/
+			LCD.drawString("" + numLeftLines + "-L: " + csLeft.getNormalizedLightValue(), 0, 5);
+			LCD.drawString("" + numRightLines + "-R: " + csRight.getNormalizedLightValue(), 0, 6);
 			
+			// Do stuff
+			execute();
 			
-			// this ensure the odometry correction occurs only once every period - IS THIS NECESSARY/A PROBLEM
-			correctionEnd = System.currentTimeMillis();
-			if (correctionEnd - correctionStart < CORRECTION_PERIOD) {
-				try {
-					Thread.sleep(CORRECTION_PERIOD - (correctionEnd - correctionStart));
-				} catch (InterruptedException e) {
-					// there is nothing to be done here because it is not
-					// expected that the odometry correction will be
-					// interrupted by another thread
-				}
+			// Wait until end of loop time
+			long timeTaken = System.currentTimeMillis() - startTime;
+			long waitTime = CORRECTION_INTERVAL - timeTaken;
+			if(waitTime > 0){
+				try { Thread.sleep(waitTime); }
+				catch (InterruptedException e) { e.printStackTrace(); }
 			}
-			
 		}
 	}
 	
-
-	
+	/**
+	 * Do a loop, where you check for gridlines and correct if you can.
+	 */
+	private void execute(){
+		// Check the mode of operation
+		//if(navigation.isObstacleAvoiding()){
+		if(false){
+			setMode(Mode.WAITING);
+			return;
+		}
+		else{
+			setMode(Mode.CORRECTING);
+		}
+		
+		checkForNewGridlines();
+		//checkForCorrection();
+	}
 	
 	/**
-	 * Modifies the thetaError attribute but ONLY at certain times. Line readings will only
-	 * be accepted if they are within a certain time threshold.
-	 * @return void
+	 * Check the CS to see if the robot is passing over a grid line.
 	 */
-	public void fixTheta() {
-		//Stop one motor depending on which light sensor detects first
-		//if((odometer.getTheta() < 94 && odometer.getTheta() > 87)) {
-			if(leftLightSensor.getNormalizedLightValue() < 285 || rightLightSensor.getNormalizedLightValue() < 285){
-			//while(leftLightSensor.getNormalizedLightValue() < 285 || rightLightSensor.getNormalizedLightValue() < 285) {
+	private void checkForNewGridlines(){
+		checkForNewGridlineLeft();
+		checkForNewGridlineRight();
+	}
+	
+	/**
+	 * Check if the left CS passed over a new grid line.
+	 */
+	private void checkForNewGridlineLeft(){
+		//LCD.drawString("see L :" + seesLine(csLeft), 0, 3);
+		//LCD.drawString("same L :" + sameLine(lastTimeGridlineLeft), 0, 4);
+		if(seesLine(csLeft)){
+			if(!sameLine(lastTimeGridlineLeft)){
+				numLeftLines++;
 				Sound.beep();
-				interrupt = true;
-				//nav.stopMotors();
+				
+				lastTimeGridlineLeft = System.currentTimeMillis();
+				
+				double odometerX = odometer.getX();
+				double odometerY = odometer.getY();
+				
+				Vector odometerPosition = new Vector(odometerX, odometerY, 0.0);
+				Vector gridPosition = Vector.add(odometerPosition,  leftCSPosition);
+				
+				double distanceX = distanceToNearestXGridline(gridPosition.getX());
+				double distanceY = distanceToNearestYGridline(gridPosition.getY());
+				
+				if(Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > MIN_DISTANCE_FROM_INTERSECTION){
+					gridPosition.setY(nearestYGridline(odometerY));
+					odometer.setY(odometerY + distanceY);
 
-				while(interruptAck == false){
-					
+					sawYGridlineLeft = true;
+					newYGridlineLeft = true;
+					lastYGridlineLeft = gridPosition;
 				}
+				else if(Math.abs(distanceX) < Math.abs(distanceY) && Math.abs(distanceY) > MIN_DISTANCE_FROM_INTERSECTION){
+					gridPosition.setX(nearestXGridline(odometerX));
+					odometer.setX(odometerX + distanceX);
 
-				/*try {
-					//Sleep navigator in order to stop motors in this thread
-					nav.sleep(3000);
+					sawXGridlineLeft = true;
+					newXGridlineLeft = true;
+					lastXGridlineLeft = gridPosition;
 				}
-				catch(Exception e) {
-				}*/
-				
-				
-				if (leftLightSensor.getNormalizedLightValue() < 285) {
-					leftMotor.stop();
-					while (rightLightSensor.getNormalizedLightValue() > 255) {
-						rightMotor.setSpeed(100);
-						rightMotor.forward();
-					}
-					rightMotor.stop();
-				}
-				else {
-					rightMotor.stop();
-					while(leftLightSensor.getNormalizedLightValue() > 255) {
-						leftMotor.setSpeed(100);
-						leftMotor.forward();
-					}
-					leftMotor.stop();
-				}
-				
-				odometer.setTheta(90);
-				 interrupt = false;
-				 interruptAck = false;
-				//break;
 			}
 		}
-	//}
-	
+	}
 	
 	/**
-	 * Modified the x and y position based on orientation and proximity to closest grid line
-	 * @return void
+	 * Check if the right CS passed over a new grid line.
 	 */
-	public void calculatePositionError(){
-		
-		lastX = odometer.getX();
-		lastY = odometer.getY();
-		
-		for(int i=0; i<gridLines.length; i++){
-			
-			if( (Math.abs(odometer.getTheta()) < ANGLE_THRESH) 
-				&& (Math.abs((odometer.getX() - DISTANCE_FROM_LSENSOR) - gridLines[i]) < POINT_THRESH)){	//distance from lensor will need to change
-					//going "right"
-					
-					//dont correct 
-					for(int k=0; k<gridLines.length; k++){
-						if (Math.abs(odometer.getY() - gridLines[i]) < 2){
-							return;
-						}
-					}
-					odometer.setX(gridLines[i] + DISTANCE_FROM_LSENSOR);
-					
-					
-					updX = gridLines[i] + DISTANCE_FROM_LSENSOR;
-					Sound.buzz();
-					
-			}else if ( (Math.abs(odometer.getTheta() - 90.0) < ANGLE_THRESH) 
-				&& (Math.abs((odometer.getY() - DISTANCE_FROM_LSENSOR) - gridLines[i]) < POINT_THRESH)){
-					//going "up"
-					
-					for(int k=0; k<gridLines.length; k++){
-						if (Math.abs(odometer.getX() - gridLines[i]) < 2){
-							return;
-						}
-					}
-					odometer.setY(gridLines[i] + DISTANCE_FROM_LSENSOR);
-					updY = gridLines[i] + DISTANCE_FROM_LSENSOR;
-					Sound.buzz();
-					
-			}else if ( (Math.abs(odometer.getTheta() - 180.0) < ANGLE_THRESH) 
-				&& (Math.abs((odometer.getX() + DISTANCE_FROM_LSENSOR) - gridLines[i]) < POINT_THRESH)){
-					//going "left"
+	private void checkForNewGridlineRight(){
+		if(seesLine(csRight)){
+			if(!sameLine(lastTimeGridlineRight)){
+				numRightLines++;
+				Sound.beep();
 				
-					for(int k=0; k<gridLines.length; k++){
-						if (Math.abs(odometer.getY() - gridLines[i]) < 2){
-							return;
-						}
-					}
-					odometer.setX(gridLines[i] - DISTANCE_FROM_LSENSOR);
-					updX = gridLines[i] - DISTANCE_FROM_LSENSOR;
-					Sound.buzz();
-					
-			}else if ( (Math.abs(odometer.getTheta() - 270.0) < ANGLE_THRESH)
-				&& (Math.abs((odometer.getY() + DISTANCE_FROM_LSENSOR) - gridLines[i]) < POINT_THRESH)){
-					//going "down"
-					for(int k=0; k<gridLines.length; k++){
-						if (Math.abs(odometer.getX() - gridLines[i]) < 2){
-							return;
-						}
-					}
-					odometer.setY(gridLines[i] - DISTANCE_FROM_LSENSOR);
-					updY = gridLines[i] - DISTANCE_FROM_LSENSOR;
-					Sound.buzz();
+				lastTimeGridlineRight = System.currentTimeMillis();
+				
+				double odometerX = odometer.getX();
+				double odometerY = odometer.getY();
+				
+				Vector odometerPosition = new Vector(odometerX, odometerY, 0.0);
+				Vector gridPosition = Vector.add(odometerPosition,  rightCSPosition);
+				
+				double distanceX = distanceToNearestXGridline(gridPosition.getX());
+				double distanceY = distanceToNearestYGridline(gridPosition.getY());
+				
+				if(Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > MIN_DISTANCE_FROM_INTERSECTION){
+					gridPosition.setY(nearestYGridline(odometerY));
+					odometer.setY(odometerY + distanceY);
+
+					sawYGridlineRight = true;
+					newYGridlineRight = true;
+					lastYGridlineRight = gridPosition;
+				}
+				else if(Math.abs(distanceX) < Math.abs(distanceY) && Math.abs(distanceY) > MIN_DISTANCE_FROM_INTERSECTION){
+					gridPosition.setX(nearestXGridline(odometerX));
+					odometer.setX(odometerX + distanceX);
+
+					sawXGridlineRight = true;
+					newXGridlineRight = true;
+					lastXGridlineRight = gridPosition;
+				}
 			}
-			
+		}
+	}
+	
+	/**
+	 * Try to correct position or heading, if it has read new grid lines.
+	 */
+	private void checkForCorrection(){
+		// Position correction is already done inside checkForNewGridline***()
+		
+		checkForXCorrection();
+		checkForYCorrection();
+	}
+	
+	/**
+	 * Correct the heading if the robot recently completely passed over an
+	 * x grid line.
+	 */
+	private void checkForXCorrection(){
+		// Check that both sensor have seen at least one line.
+		if(sawXGridlineLeft && sawXGridlineRight){
+			if(newXGridlineLeft){
+				// Check that the two x grid lines are from the same line.
+				double xDifference = Vector.substract(lastXGridlineLeft, lastXGridlineRight).getX();
+				
+				if(xDifference < ERROR){
+					Vector firstPos = Vector.add(lastXGridlineRight, rightCSPosition);
+					Vector secondPos = Vector.add(lastXGridlineLeft, leftCSPosition);
+					Vector delta = Vector.substract(secondPos, firstPos);
+					double distance = delta.length();
+					
+					double clockwiseFrom90 = Math.atan(BTSendController.WHEELBASE_WIDTH / distance) * (180.0 / Math.PI);
+					double angle = 90 - clockwiseFrom90;
+					angle = Odometer.fixDegAngle(angle);
+					
+					// The robot could have crossed the line with this angle, or
+					// the opposite angle.
+					double angleAwayFromHeading = odometer.getTheta() - angle;
+					angleAwayFromHeading = Odometer.fixDegAngle(angleAwayFromHeading);
+					if(angleAwayFromHeading > 180.0){
+						angleAwayFromHeading -= 180.0;
+					}
+					
+					if(angleAwayFromHeading < 90.0){
+						odometer.setTheta(angle);
+					}
+					else{
+						odometer.setTheta(angle + 180.0);
+					}
+				}
+				
+				newXGridlineLeft = false;
+				newXGridlineRight = false;
+			}
+			else if(newXGridlineRight){
+				// Check that the two x grid lines are from the same line.
+				double xDifference = Vector.substract(lastXGridlineLeft, lastXGridlineRight).getX();
+				
+				if(xDifference < ERROR){
+					Vector firstPos = Vector.add(lastXGridlineRight, rightCSPosition);
+					Vector secondPos = Vector.add(lastXGridlineLeft, leftCSPosition);
+					Vector delta = Vector.substract(secondPos, firstPos);
+					double distance = delta.length();
+					
+					double counterclockwiseFrom270 = Math.atan(BTSendController.WHEELBASE_WIDTH / distance) * (180.0 / Math.PI);
+					double angle = 90 - counterclockwiseFrom270;
+					angle = Odometer.fixDegAngle(angle);
+					
+					// The robot could have crossed the line with this angle, or
+					// the opposite angle.
+					double angleAwayFromHeading = odometer.getTheta() - angle;
+					angleAwayFromHeading = Odometer.fixDegAngle(angleAwayFromHeading);
+					if(angleAwayFromHeading > 180.0){
+						angleAwayFromHeading -= 180.0;
+					}
+					
+					if(angleAwayFromHeading < 90.0){
+						odometer.setTheta(angle);
+					}
+					else{
+						odometer.setTheta(angle + 180.0);
+					}
+				}
+				
+				newXGridlineLeft = false;
+				newXGridlineRight = false;
+			}
+		}
+	}
+	
+	private void checkForYCorrection(){
+		// Check that both sensor have seen at least one line.
+		if(sawYGridlineLeft && sawYGridlineRight){
+			if(newYGridlineLeft){
+				// Check that the two x grid lines are from the same line.
+				double yDifference = Vector.substract(lastYGridlineLeft, lastYGridlineRight).getY();
+				
+				if(yDifference < ERROR){
+					Vector firstPos = Vector.add(lastYGridlineRight, rightCSPosition);
+					Vector secondPos = Vector.add(lastYGridlineLeft, leftCSPosition);
+					Vector delta = Vector.substract(secondPos, firstPos);
+					double distance = delta.length();
+					
+					double clockwiseFrom90 = Math.atan(BTSendController.WHEELBASE_WIDTH / distance) * (180.0 / Math.PI);
+					double angle = 90 - clockwiseFrom90;
+					angle = Odometer.fixDegAngle(angle);
+					
+					// The robot could have crossed the line with this angle, or
+					// the opposite angle.
+					double angleAwayFromHeading = odometer.getTheta() - angle;
+					angleAwayFromHeading = Odometer.fixDegAngle(angleAwayFromHeading);
+					if(angleAwayFromHeading > 180.0){
+						angleAwayFromHeading -= 180.0;
+					}
+					
+					if(angleAwayFromHeading < 90.0){
+						odometer.setTheta(angle);
+					}
+					else{
+						odometer.setTheta(angle + 180.0);
+					}
+				}
+				
+				newYGridlineLeft = false;
+				newYGridlineRight = false;
+			}
+			else if(newYGridlineRight){
+				// Check that the two x grid lines are from the same line.
+				double yDifference = Vector.substract(lastYGridlineLeft, lastYGridlineRight).getY();
+				
+				if(yDifference < ERROR){
+					Vector firstPos = Vector.add(lastYGridlineRight, rightCSPosition);
+					Vector secondPos = Vector.add(lastYGridlineLeft, leftCSPosition);
+					Vector delta = Vector.substract(secondPos, firstPos);
+					double distance = delta.length();
+					
+					double counterclockwiseFrom270 = Math.atan(BTSendController.WHEELBASE_WIDTH / distance) * (180.0 / Math.PI);
+					double angle = 90 - counterclockwiseFrom270;
+					angle = Odometer.fixDegAngle(angle);
+					
+					// The robot could have crossed the line with this angle, or
+					// the opposite angle.
+					double angleAwayFromHeading = odometer.getTheta() - angle;
+					angleAwayFromHeading = Odometer.fixDegAngle(angleAwayFromHeading);
+					if(angleAwayFromHeading > 180.0){
+						angleAwayFromHeading -= 180.0;
+					}
+					
+					if(angleAwayFromHeading < 90.0){
+						odometer.setTheta(angle);
+					}
+					else{
+						odometer.setTheta(angle + 180.0);
+					}
+				}
+				
+				newYGridlineLeft = false;
+				newYGridlineRight = false;
+			}
+		}
+	}
+	
+	/**
+	 * Change mode of operation.
+	 * 
+	 * Basically whether it is trying to correct or not.
+	 * 
+	 * @param newMode The new mode of operation.
+	 */
+	public void setMode(Mode newMode){
+		if(currentMode != newMode){
+			if(newMode == Mode.WAITING){
+				resetState();
+			}
 		}
 		
+		currentMode = newMode;
+	}
+	
+	/**
+	 * Check whether the CS sees a black line.
+	 * 
+	 * @param cs The color sensor
+	 * 
+	 * @return True if the CS sees a black line, false otherwise.
+	 */
+	private Boolean seesLine(ColorSensor cs){
+		return cs.getNormalizedLightValue() < LIGHT_THRESHOLD;
+	}
+	
+	/**
+	 * Check if the line read by the CS is the same as a previous line.
+	 * 
+	 * @param lastTime The Last time a line was read.
+	 * 
+	 * @return True if it's the same line, false otherwise.
+	 */
+	private Boolean sameLine(long firstTime){
+		return System.currentTimeMillis() - firstTime < TIME_THRESHOLD;
+	}
+	
+	/**
+	 * Reset the state of the odometry correction.
+	 * 
+	 * It will forget about any grid lines it passed.
+	 */
+	private void resetState(){
+		lastXGridlineLeft.set(0.0, 0.0, 0.0);
+		lastYGridlineLeft.set(0.0, 0.0, 0.0);
+		lastXGridlineRight.set(0.0, 0.0, 0.0);
+		lastYGridlineRight.set(0.0, 0.0, 0.0);
+		
+		sawXGridlineLeft = false;
+		sawYGridlineLeft = false;
+		sawXGridlineRight = false;
+		sawYGridlineRight = false;
+
+		newXGridlineLeft = false;
+		newYGridlineLeft = false;
+		newXGridlineRight = false;
+		newYGridlineRight = false;
+
+		lastTimeGridlineLeft = 0;
+		lastTimeGridlineRight = 0;
+	}
+	
+	/**
+	 * Find the nearest x grid line.
+	 * 
+	 * @param x The x coordinate.
+	 * 
+	 * @return The x coordinate of the nearest x grid line.
+	 */
+	private double nearestXGridline(double x){
+		return Math.floor((x + 15.0) / 30.0) * 30.0;
 	}
 
-	/**
-	 * Compares the average of a list of values with a new value
-	 * @param array The list of values that the average will be calculated from
-	 * @param sens	The sensor whose reading will be compared to the list of values
-	 * @return True if the comparison implies that a line has been read
-	 */
-	public Boolean compareAverageWithCurrent(int[] array, ColorSensor sens){
-		
-		double avg = average(array);
-		
-		int s1 = sens.getNormalizedLightValue();
-		int s2 = sens.getNormalizedLightValue();
-		
-		double lightValues = (double)(s1 + s2)/ 2.0;
-		
-		if (Math.abs(lightValues - avg) > LIGHT_THRESH){
-			Sound.beep();
-			return true;
-		}
-		
-		return false;
-	}
-	
-	public Boolean checkInterrupt(){
-		return interrupt;
-	}
 	
 	/**
-	 * Fills the base light value arrays with wood-colored readings
-	 * @return void
+	 * Find the nearest y grid line.
+	 * 
+	 * @param x The y coordinate.
+	 * 
+	 * @return The y coordinate of the nearest y grid line.
 	 */
-	/*public void fillWindows(){
-		for(int i=0; i < 10; i++){
-			values[i] = sens.getNormalizedLightValue();
-		}
+	private double nearestYGridline(double y){
+		return Math.floor((y + 15.0) / 30.0) * 30.0;
 	}
-	
-	public void updateWindow(){
-		for(int i=0; i < 9; i++){
-			values[i] = values[i+1];
-		}
-		values[9] = sens.getNormalizedLightValue();
-	}
-	
-	/**
-	 * Computes the average of an array
-	 * @param arr The array to be computed
-	 * @return double - The average of the input array
-	 */
-	public double average(int[] arr){
-		int sum=0;
-		for(int i=0; i< arr.length; i++){
-			sum += arr[i];
-		}
-		return (double)(sum/arr.length);
-	}
-	
-	public void setInterruptAcknowledge(Boolean set){
-		interruptAck = set;
-	}
-	
 
 	
+	/**
+	 * Find the distance to the nearest x grid line.
+	 * 
+	 * You just need to add this correction to your x to get the grid line.
+	 * 
+	 * @param x The x coordinate.
+	 * 
+	 * @return The x coordinate of the nearest x grid line.
+	 */
+	private double distanceToNearestXGridline(double x){
+		return nearestXGridline(x) - x;
+	}
+
+	
+	/**
+	 * Find the distance to the nearest y grid line.
+	 * 
+	 * You just need to add this correction to your y to get the grid line.
+	 * 
+	 * @param y The y coordinate.
+	 * 
+	 * @return The y coordinate of the nearest y grid line.
+	 */
+	private double distanceToNearestYGridline(double y){
+		return nearestYGridline(y) - y;
+	}
 }
