@@ -38,12 +38,23 @@ public class Navigation extends Thread {
 	//public Boolean isFinished = false;
 	public Boolean hasBlock = false;		//true once a block is read and grabbed
 	public Boolean resetPath = false;		//true once a new path needs to be implemented
+	public Boolean recentlyAvoided = false;
 	
 	private double theta;
 	private double gx0;			//green zone left x component
 	private double gx1;			//green zone right x component
 	private double gy0;			//green zone lower y component
 	private double gy1;			//green zone upper y component
+	
+	private double rx0;			//red zone left x component
+	private double rx1;			//red zone right x component
+	private double ry0;			//red zone lower y component
+	private double ry1;			//red zone upper y component
+	
+	private double wx0 = -30.0;			//left wall
+	private double wx1 = 330.0;			//right wall
+	private double wy0 = -30.0;			//lower wall
+	private double wy1 = 330.0;			//upper wall
 	
 	private double[] xPath = new double[40];	//the path of x coordinates to travel to
 	private double[] yPath = new double[40];	//the path of y coordinate to travel to, should always be synched with xPath
@@ -93,16 +104,16 @@ public class Navigation extends Thread {
 		//turnTo(90.0, true, true);
 		
 		travelTo(0, 60.0);
-		travelTo(60, 60);
+		/*travelTo(60, 60);
 		travelTo(60, 0);
 		travelTo(0,0);
-		turnTo(90, true, false);
+		turnTo(90, true, false);*/
 		
 		//generate linear path to the green zone
 		//generatePath();
 		
 		//180 degree scan for objects
-		scan();
+		//scan();
 		
 		//for loop starts at 1 since first elements are current position
 		/*for(int i=1; i < xPath.length; i++){
@@ -131,12 +142,191 @@ public class Navigation extends Thread {
 				break;	//only for demo, will need to be handled for final demo
 			}
 		}*/
-		travelTo(gx0 + 15, gy0 - 15);
-		scan();
-		
-		travelTo(gx0 - 15, gy0 + 15);
-		scan();
-		//travelTo(0.0,30.0);
+		/*
+		while(true){
+		int pathChoice = checkCurrentPath();
+		if(pathChoice == 1){
+			//continue straight, travel 30cm. If no obstacle in way, scan, otherwise, 
+			//the robot will have turned 90 degrees and next iteration of while loop should check current
+			//position with new heading
+			if(Math.abs(odometer.getTheta()) < ANGLE_THRESH)){
+				travelTo(odometer.getX()+30.0, odometer.getY());
+				if(!recentlyAvoided){
+					scan();
+				}else{
+					recentlyAvoided = false;
+					continue;	
+				}
+			}else if(Math.abs(odometer.getTheta() - 90) < ANGLE_THRESH){
+				travelTo(odometer.getX(), odometer.getY() + 30.0);
+				if(!recentlyAvoided){
+					scan();
+				}else{
+					recentlyAvoided = false;
+					continue;	
+				}
+			}else if(Math.abs(odometer.getTheta() - 180) < ANGLE_THRESH){
+				travelTo(odometer.getX() - 30.0, odometer.getY());
+				if(!recentlyAvoided){
+					scan();
+				}else{
+					recentlyAvoided = false;
+					continue;	
+				}
+			}else{
+				travelTo(odometer.getX(), odometer.getY() - 30.0);
+				if(!recentlyAvoided){
+					scan();
+				}else{
+					recentlyAvoided = false;
+					continue;	
+				}
+			}
+		}else if(pathChoice == 2){
+			if(Math.abs(odometer.getTheta()) < ANGLE_THRESH){
+				travelTo(wx1-45.0, odometer.getY());	//will update recently avoided
+				if(!recentlyAvoided){
+					if(!scan()){
+						//nothing was found, calculate new path and continue
+						calculateNewPath();//turn left or right, stops once turned
+					}else{
+						//iteration ends, next iteration will check position facing new direction
+						continue;
+					}
+
+				}else{
+					recentlyAvoided = false;
+					continue;	
+				}
+			}else if(Math.abs(odometer.getTheta() - 90) < ANGLE_THRESH){
+				travelTo(odometer.getX(), wy1 - 45.0);
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}else if(Math.abs(odometer.getTheta() - 180) < ANGLE_THRESH){
+				travelTo(wx0 + 45.0, odometer.getY());
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}else{
+				travelTo(odometer.getX(), wy0 + 45.0);
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}
+		}else if(pathChoice == 3){
+			if(Math.abs(odometer.getTheta()) < ANGLE_THRESH){
+				travelTo(rx0 - 45.0, odometer.getY());	//will update recently avoided
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}else if(Math.abs(odometer.getTheta() - 90) < ANGLE_THRESH){
+				travelTo(odometer.getX(), ry0 - 45.0);
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}else if(Math.abs(odometer.getTheta() - 180) < ANGLE_THRESH){
+				travelTo(rx1 + 45.0, odometer.getY());
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}else{
+				travelTo(odometer.getX(), ry1 + 45.0);
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}
+		}else if (pathChoice == 4){
+			if(Math.abs(odometer.getTheta()) < ANGLE_THRESH){
+				travelTo(gx0 - 45.0, odometer.getY());
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}else if(Math.abs(odometer.getTheta() - 90) < ANGLE_THRESH){
+				travelTo(odometer.getX(), gy0 - 45.0);
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}else if(Math.abs(odometer.getTheta() - 180) < ANGLE_THRESH){
+				travelTo(gx1 + 45.0, odometer.getY());
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}else{
+				travelTo(odometer.getX(), gy1 + 45.0);
+				if(!recentlyAvoided){
+					if(!scan()){
+						calculateNewPath();
+					}else{
+						continue;
+				}else{
+					recentlyAvoided = false;
+					continue;
+				}
+			}
+		}
+		}//end of while
+		*/
 		
 	}
 	
@@ -168,10 +358,8 @@ public class Navigation extends Thread {
 	  
 			 //object detected immediately in front of robot
 			 if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
-				 rightMotor.stop();
-				 leftMotor.stop();
-
-				 
+				 this.setSpeeds(0,0);
+				 recentlyAvoided = true;
 				 //begin inspection/avoidance, robot is busy
 				 isBusy = true;
 				 
@@ -181,7 +369,12 @@ public class Navigation extends Thread {
 					 capture();		
 				 }else{
 					 //avoid is recursive, input tells which iteration of recursion
-					 avoid(1);
+					// if(hasBlock){
+						 avoid();
+					 //}else{
+						 //calculateNewPath();
+						 //return;
+					 //}
 				 }
 				 //both capture and avoid will move the robot past it's next destination, break this travelTo call
 				 return;
@@ -273,9 +466,10 @@ public class Navigation extends Thread {
 	/**
 	 * Will stop and scan 180 degrees in an attempt to detect objects
 	 * 
-	 * @return void
+	 * @return true If a blue block was found
+	 * @return false If no blue block was found
 	 */
-	public void scan() {
+	public Boolean scan() {
 		double endAngle = odometer.getTheta() - 90.0;	//set end angle of scan
 		turnTo(odometer.getTheta() + 90.0, true, true);	//turn to start angle of scan
 		
@@ -361,17 +555,17 @@ public class Navigation extends Thread {
 			
 			//checking for bad distance readings
 			if (travelDist > 0) {
-				if (!hasBlock){
-					//if no block found, check each object
-					colorSens.setFloodlight(Color.RED);
-					inspect(travelAng, travelDist);
-				}else{
-					//ignore other objects once block is found
-					return;
+
+				colorSens.setFloodlight(Color.RED);
+				boolean found = inspect(travelAng, travelDist);
+				if(found){
+					return true;
 				}
+
 
 			}
 		}
+		return false;
 	}
 	
 	/**
@@ -379,7 +573,7 @@ public class Navigation extends Thread {
 	 * @param angle The angle to drive at
 	 * @param distance The distance the object was sensed at
 	 */
-	public void inspect(double angle, int distance) {
+	public Boolean inspect(double angle, int distance) {
 		double x = odometer.getX();
 		double y = odometer.getY();
 		double distTraveled = 0;
@@ -410,7 +604,8 @@ public class Navigation extends Thread {
 		if(recog.checkColor()){
 			Sound.beep();
 			hasBlock = true;
-			capture();		
+			capture();	
+			return true;
 		}else{
 			rotateSensorsRight(15);
 			
@@ -422,6 +617,7 @@ public class Navigation extends Thread {
 				Sound.beep();
 				hasBlock = true;
 				capture();	
+				return true;
 			}else{
 				//first two sensor checks read wood blocks, rotate light sensor 30 degrees to the 
 				//left (15 degrees from starting orientation)
@@ -435,6 +631,7 @@ public class Navigation extends Thread {
 					Sound.beep();
 					hasBlock = true;
 					capture();
+					return true;
 				}else{
 					//all checks read object as wood block, return sensor to starting position
 					rotateSensorsRight(15);
@@ -444,6 +641,7 @@ public class Navigation extends Thread {
 					rightMotor.rotate(-convertDistance(RW_RADIUS, distTraveled), false);
 					leftMotor.stop();
 					rightMotor.stop();
+					return false;
 				}
 			}
 		}
@@ -753,7 +951,7 @@ public class Navigation extends Thread {
 	 * Recursive obstacle avoidance that returns once the robot is successfully around the obstacle
 	 * @param i The iteration of recursion
 	 */
-	public void avoid(double i) {
+	public void avoid() {
 		//values for p-type wall following
 		int BAND_CENTER = 20;
 		int error = 0;
@@ -782,77 +980,9 @@ public class Navigation extends Thread {
 
 		if (dist > 30){
 			//no object within 30cm to the left, avoid this direction
-			
 			rotateSensorsRight(40);
-			
-			//start driving
-			leftMotor.setSpeed(FAST);
-			rightMotor.setSpeed(FAST);
-			leftMotor.forward();
-			rightMotor.forward();
-			
-			//if this is a recursive iteration, drive until a wall is sensed
-			if(i != 1){
-				turnTo(initAngle + 75, true, true);
-				
-				//drive until a wall is read, then continue wall following
-				/*while(dist > BAND_CENTER){
-					dist = getFilteredDistance();
-					leftMotor.setSpeed(FAST);
-					rightMotor.setSpeed(FAST);
-					leftMotor.forward();
-					rightMotor.forward();
-				}*/
-				leftMotor.forward();
-				rightMotor.forward();
-				leftMotor.setSpeed(FAST);
-				rightMotor.setSpeed(FAST);
-				leftMotor.rotate(convertDistance(LW_RADIUS, 25.0), true);
-				rightMotor.rotate(convertDistance(RW_RADIUS, 25.0), false);
-				leftMotor.forward();
-				rightMotor.forward();
-
-			}
-			
-
-			//actual wall follow
-			while(true){
-				dist = getFilteredDistance();
-				error = BAND_CENTER - dist;
-				
-				//cap the error so the speed doesn't go crazy
-				if(error > 100){
-					error = 50;
-				}else if (error < -100){
-					error = -50;
-				}
-				
-				if(error < -2){
-					//too far away, need to turn right
-					leftMotor.setSpeed(FAST + 75);
-					rightMotor.setSpeed(FAST + 50 + (error*2));	//error is negative, right move slower
-				}else if (error > 2){
-					//too close, need to turn left
-					leftMotor.setSpeed(FAST + 75);
-					rightMotor.setSpeed(FAST + 50 + (error * 2));	//error is positive, right moves faster
-				}else{
-					leftMotor.setSpeed(FAST + 100);
-					rightMotor.setSpeed(FAST + 100);
-				}
-				
-				//if the robot's orientation reaches its initial angle - 20 degrees, wall is assumed to be passed
-				if (Math.abs(odometer.getTheta() - (initAngle - 20)) < ANGLE_THRESH){
-					Sound.buzz();
-					leftMotor.setSpeed(JOG);
-					rightMotor.setSpeed(JOG);
-					break;
-				}
-			}
-			
+			wallFollowLeft(initAngle);
 			rotateSensorsLeft(40);
-			
-			//drive straight for 1.5s to get sufficiently apst the block
-			try {Thread.sleep(2500*(long)i);} catch (InterruptedException e) {}
 
 		}else{
 			//turn to the right
@@ -862,88 +992,23 @@ public class Navigation extends Thread {
 			//check the distance to the right
 			if(dist > 30){
 				//nothing within 30cm, avoid to the right
-				Sound.beep();
-				
 				rotateSensorsLeft(40);
-				
+				wallFollowRight(initAngle);
+				rotateSensorsRight(40);
+
+			}else{
+				//turn to initial angle and reverse 30cm backward
+				turnTo(initAngle-180, true, true);
+				rotateSensorsRight(40);
 				leftMotor.setSpeed(FAST);
 				rightMotor.setSpeed(FAST);
 				leftMotor.forward();
 				rightMotor.forward();
+
 				
-				//recursive handling
-				if(i != 1){
-					turnTo(initAngle - 75, true, true);
-					//drive until a distance is set
-					/*while(dist > BAND_CENTER){
-						dist = getFilteredDistance();
-						leftMotor.setSpeed(FAST);
-						rightMotor.setSpeed(FAST);
-						leftMotor.forward();
-						rightMotor.forward();
-					}*/
-					leftMotor.forward();
-					rightMotor.forward();
-					leftMotor.setSpeed(FAST);
-					rightMotor.setSpeed(FAST);
-					leftMotor.rotate(convertDistance(LW_RADIUS, 25.0), true);
-					rightMotor.rotate(convertDistance(RW_RADIUS, 25.0), false);
-					leftMotor.forward();
-					rightMotor.forward();
-				}
-				
-				//actual wall following
-				while(true){
-					dist = getFilteredDistance();
-					error = BAND_CENTER - dist;
-					
-					if(error > 100){
-						error = 50;
-					}else if (error < -100){
-						error = -50;
-					}
-					//if robot gets to starting x orientation, it has successfully avoided the block
-					
-					if(error < -2){
-						//too far away, need to turn left
-						leftMotor.setSpeed(FAST + 50 + (error*2));	//error is negative, left moves slower
-						rightMotor.setSpeed(FAST + 75);	
-					}else if (error > 2){
-						//too close, need to turn right
-						leftMotor.setSpeed(FAST + 50 + (error*2));	//error is positive, left moves faster
-						rightMotor.setSpeed(FAST + 75);
-					}else{
-						//within band, go straight
-						leftMotor.setSpeed(FAST + 50);
-						rightMotor.setSpeed(FAST + 50);
-					}
-					
-					//if it reaches int's initial angle + 20 degrees, assumed avoided object
-					if (Math.abs(odometer.getTheta() - (initAngle + 20)) < ANGLE_THRESH){
-						Sound.buzz();
-						leftMotor.setSpeed(JOG);
-						rightMotor.setSpeed(JOG);
-						break;
-					}
-					
-				}
-				rotateSensorsRight(40);
-				
-				//drive forward to get past block
-				try {Thread.sleep(2500*(long)i);} catch (InterruptedException e) {}
-				
-				
-				
-			}else{
-				//turn to initial angle and reverse 30cm backward
-				turnTo(initAngle, true, true);
-				leftMotor.setSpeed(FAST);
-				rightMotor.setSpeed(FAST);
-				leftMotor.rotate(-convertDistance(LW_RADIUS, 25.0), true);
-				rightMotor.rotate(-convertDistance(RW_RADIUS, 25.0), false);
-				
-				//recursive avoid, will turn and travel until a wall is sensed, then will wall follow
-				avoid(i+1);
+				wallFollowLeft(initAngle);
+				rotateSensorsLeft(40);
+				try {Thread.sleep(1000);} catch (InterruptedException e) {}
 			}
 		}
 
@@ -956,6 +1021,110 @@ public class Navigation extends Thread {
 			finishLine();
 		}
 
+	}
+	
+	public void wallFollowLeft(double initAngle){
+
+		//start driving
+		leftMotor.setSpeed(FAST);
+		rightMotor.setSpeed(FAST);
+		leftMotor.forward();
+		rightMotor.forward();
+		
+
+		int BAND_CENTER = 20;
+		int BAND_WIDTH = 2;
+		int dist;
+		int error;
+		while(true){
+			dist = getFilteredDistance();
+			error = BAND_CENTER - dist;
+			
+			//cap the error so the speed doesn't go crazy
+			if(error > 100){
+				error = 50;
+			}else if (error < -100){
+				error = -50;
+			}
+			
+			if(error < -BAND_WIDTH){
+				//too far away, need to turn right
+				leftMotor.setSpeed(FAST + 75);
+				rightMotor.setSpeed(FAST + 50 + (error*2));	//error is negative, right move slower
+			}else if (error > BAND_WIDTH){
+				//too close, need to turn left
+				leftMotor.setSpeed(FAST + 75);
+				rightMotor.setSpeed(FAST + 50 + (error * 2));	//error is positive, right moves faster
+			}else{
+				leftMotor.setSpeed(FAST + 100);
+				rightMotor.setSpeed(FAST + 100);
+			}
+			
+			//if the robot's orientation reaches its initial angle - 20 degrees, wall is assumed to be passed
+			if (Math.abs(odometer.getTheta() - (initAngle - 20)) < ANGLE_THRESH){
+				Sound.buzz();
+				leftMotor.setSpeed(JOG);
+				rightMotor.setSpeed(JOG);
+				break;
+			}
+		}
+		
+		
+		//drive straight for 1.5s to get sufficiently apst the block
+		try {Thread.sleep(2500);} catch (InterruptedException e) {}
+	}
+	
+	public void wallFollowRight(double initAngle){
+		
+		leftMotor.setSpeed(FAST);
+		rightMotor.setSpeed(FAST);
+		leftMotor.forward();
+		rightMotor.forward();
+		
+		int BAND_CENTER = 20;
+		int BAND_WIDTH = 2;
+		int dist;
+		int error;
+		//actual wall following
+		while(true){
+			dist = getFilteredDistance();
+			error = BAND_CENTER - dist;
+			
+			if(error > 100){
+				error = 50;
+			}else if (error < -100){
+				error = -50;
+			}
+			//if robot gets to starting x orientation, it has successfully avoided the block
+			
+			if(error < -BAND_WIDTH){
+				//too far away, need to turn left
+				leftMotor.setSpeed(FAST + 50 + (error*2));	//error is negative, left moves slower
+				rightMotor.setSpeed(FAST + 75);	
+			}else if (error > BAND_WIDTH){
+				//too close, need to turn right
+				leftMotor.setSpeed(FAST + 50 + (error*2));	//error is positive, left moves faster
+				rightMotor.setSpeed(FAST + 75);
+			}else{
+				//within band, go straight
+				leftMotor.setSpeed(FAST + 50);
+				rightMotor.setSpeed(FAST + 50);
+			}
+			
+			//if it reaches int's initial angle + 20 degrees, assumed avoided object
+			if (Math.abs(odometer.getTheta() - (initAngle + 20)) < ANGLE_THRESH){
+				Sound.buzz();
+				leftMotor.setSpeed(JOG);
+				rightMotor.setSpeed(JOG);
+				break;
+			}
+			
+		}
+
+		//drive forward to get past block
+		try {Thread.sleep(2500);} catch (InterruptedException e) {}
+		
+		
 	}
 
 
@@ -972,6 +1141,20 @@ public class Navigation extends Thread {
 		}
 		distance = bottomUs.getDistance();
 		return distance;
+	}
+	
+	public int determineAvoidDirection(){
+		
+		if(Math.abs(odometer.getTheta()) < ANGLE_THRESH){
+			if(odometer.getY() < ry1 && odometer.getY() > ry0){
+				//robot is in between y values of red zone
+				if(odometer.getX() > rx1){
+					//on the right side of the red zone
+				}
+			}
+		}
+		
+		return 0;
 	}
 	
 	/**
