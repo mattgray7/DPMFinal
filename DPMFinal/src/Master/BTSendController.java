@@ -81,7 +81,7 @@ public class BTSendController {
 		// Start sensor threads
 		lcdInfo.start();
 		odo.start();
-		nav.start();
+		//nav.start();
 		// Do localization
 		//localization.doLocalization();
 		//nav.travelTo(0, 0);
