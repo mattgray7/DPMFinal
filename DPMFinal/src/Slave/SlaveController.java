@@ -9,25 +9,25 @@ import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 
 public class SlaveController {
+	private static final NXTRegulatedMotor armMotor = Motor.A;
+	private static final NXTRegulatedMotor clampMotor = Motor.B;
+	private Lift lift;
+	private BTConnection connection;
 	
-	public static ColorSensor colorSens= new ColorSensor(SensorPort.S1);
-	private static NXTRegulatedMotor armMotor = Motor.A;
-	private static NXTRegulatedMotor clampMotor = Motor.B;
-	private static Lift lift = new Lift(armMotor, clampMotor);
-	static BTConnection connection;
+	private static final int MAX = 400;
+	private static final int ONE_BLOCK_BELOW = 230;
+	private static final int TWO_BLOCKS_BELOW = 170;
+	
 	
 	/**
 	 * Constructor
 	 */
 	public SlaveController(){
-		
+		connection = new BTConnection(0);
+		lift = new Lift(armMotor, clampMotor);
 	}
 	
-	/**
-	 * Waits for connection to be sent from master brick
-	 * @return void
-	 */
-	public static void main(String[] args){
+	public void execute(){
 		LCD.clear();
 		LCD.drawString("Receiver wait...", 0, 0);
 		LCD.refresh();
@@ -35,64 +35,103 @@ public class SlaveController {
 		try
 		{
 			connection = Bluetooth.waitForConnection();
-			if (connection == null)
+			if (connection == null){
 				throw new IOException("Connect fail");
-			DataOutputStream output = connection.openDataOutputStream();
+			}
+			/*DataOutputStream output = connection.openDataOutputStream();
 			
 			output.writeInt(1);
 			output.flush();
-			output.close();
+			output.close();*/
 			
 			waitForSignal();
 
 		}
-		catch(Exception ioe)
-		{
+		catch(Exception ioe){
+			/* Do nothing */
 		}
+	}
 	
-		
+	/**
+	 * Waits for connection to be sent from master brick
+	 * @return void
+	 */
+	public static void main(String[] args){
+		SlaveController slaveController = new SlaveController();
+		slaveController.execute();
 	}
 	
 	/**
 	 * After connection is made, slave brick will wait for signal from master brick
 	 * @return void
 	 */
-	public static void waitForSignal(){
-		LCD.drawString("WAIT", 0, 4, false);
+	public void waitForSignal(){
+		LCD.drawString("WAITING", 0, 4, false);
 		DataInputStream input = connection.openDataInputStream();
 		int command = 0;
-		try {
-			command = input.readInt();
-		} catch (IOException e) {}	//blocking
+		try {command = input.readInt();} catch (IOException e) {Sound.buzz();}	//blocking
 		
-		//test command
-		if(command == 2){
+		//lower arms all the way
+		if(command == 1){
+			lift.lowerArms(MAX);
+			lift.release();
 			Sound.beep();
-			lift.lowerArms(450);
-			Sound.beep();
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
 		}
 		
-		try {input.close();} catch (IOException e) {}
+		//clamp and raise arms all the way
+		if(command == 2){
+			Sound.beep();
+			lift.clamp();
+			lift.raiseArms(MAX);
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		//clamp only
+		if(command == 3){
+			lift.clamp();
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		//raise arms
+		if(command == 4){
+			lift.raiseArms(MAX);
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		//lower to height above 1 block tower
+		if(command == 10){
+			lift.lowerArms(ONE_BLOCK_BELOW);
+			lift.release();
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		if(command == -10){
+			lift.clamp();
+			lift.raiseArms(MAX - ONE_BLOCK_BELOW);
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		//lift to height above 2 block tower
+		if(command == 11){
+			lift.lowerArms(TWO_BLOCKS_BELOW);
+			lift.release();
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		if(command == -11){
+			lift.clamp();
+			lift.raiseArms(MAX - TWO_BLOCKS_BELOW);
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
 		connection.close();
-		
-		
-	}
-	
-	/**
-	 * Slave brick is in control, will control execution from here
-	 * @param signal The signal sent from the master brick indicating which operation the slave should perform
-	 * @return void
-	 */
-	public void hasControl(int signal){
-		
-	}
-	
-	/**
-	 * Sends a confirmation or failure signal back to the master brick indicating that the slave process has completed
-	 * @param signal The confirmation or failure signal
-	 * @return void
-	 */
-	public void replySignal(int signal){
-		
 	}
 }

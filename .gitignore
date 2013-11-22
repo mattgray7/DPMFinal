@@ -1,11 +1,8 @@
-# This is the .gitignore file.
-# All the files mentioned here will be ignored when making a commit
-
-
 # Folders
 /bin
 
+
 # Files
 *.class
-*.nxd
 *.nxj
+*.nxd

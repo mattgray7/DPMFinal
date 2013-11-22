@@ -1,12 +1,19 @@
-
-
 package Slave;
 import lejos.nxt.*;
 
+/**
+ * Class for operating the lifting arms.
+ * 
+ * @author Matt ?
+ *
+ */
 public class Lift {
+	private static final int LOWERING_SPEED = 200;
+	private static final int RAISING_SPEED = 450;
+	private static final int CLAMPING_SPEED = 150;
+	
 	private static NXTRegulatedMotor armMotor = Motor.A;
 	private static NXTRegulatedMotor clampMotor = Motor.B;
-
 	
 	/**
 	 * Constructor
@@ -14,10 +21,10 @@ public class Lift {
 	 * @param clamp The clamp motor that controls the claws
 	 */
 	public Lift(NXTRegulatedMotor arm, NXTRegulatedMotor clamp){
-		armMotor = arm;
-		clampMotor = clamp;
+		//armMotor = Motor.A;//arm;
+		//clampMotor = Motor.B;//clamp;
 	}
-	
+
 	
 	/**
 	 * Lowers the mechanical arms by an input angle
@@ -25,12 +32,11 @@ public class Lift {
 	 * @return void
 	 */
 	public static void lowerArms(int angle){
-		armMotor.setSpeed(200);
+		armMotor.setSpeed(LOWERING_SPEED);
 		armMotor.backward();
 		armMotor.rotate(-angle, false);
 		armMotor.stop();
 	}
-	
 	
 	/**
 	 * Raises the mechanical arms by an input angle
@@ -38,9 +44,9 @@ public class Lift {
 	 * @return void
 	 */
 	public static void raiseArms(int angle){
-		armMotor.setSpeed(300);
+		armMotor.setSpeed(RAISING_SPEED);
 		armMotor.forward();
-		armMotor.rotate(angle, false);
+		armMotor.rotate(angle, false);//maybe true?
 		armMotor.stop();
 		
 		
@@ -52,9 +58,10 @@ public class Lift {
 	 * @return void
 	 */
 	public static void clamp(){
-		clampMotor.setSpeed(100);
+		clampMotor.setSpeed(CLAMPING_SPEED);
 		clampMotor.backward();
-		clampMotor.rotate(-95, false);
+		clampMotor.rotate(-90, false);
+		clampMotor.flt();
 	}
 	
 	
@@ -63,11 +70,10 @@ public class Lift {
 	 * @return void
 	 */
 	public static void release(){
-		/*clampMotor.setSpeed(100);
+		clampMotor.setSpeed(100);
 		clampMotor.forward();
-		
-		try { Thread.sleep(200); }catch (InterruptedException e) {}
-		clampMotor.stop();*/
+		clampMotor.rotate(95, false);
+		clampMotor.stop();
 	}
 	
 	
@@ -87,22 +93,5 @@ public class Lift {
 	public void destroyTower(){
 		
 	}
-	
-	/*
-	 * These methods are commented as I don't they will be included in the final system. They involve sending
-	 * messages back and forth with the master brick to reposition the robot to be in a better position to lift the brick.
-	 * If our clamps grab it well enough at any orientation adn the robot can be positioned well before
-	 * the control is switched over, these methods should be unnecessary.
-	 */
-	/*
-	//will send signal to master to better position the robot
-	public void positionRobot(){
-		
-	}
-	
-	//will rotate(?) sensor to get orientation of block, may lead to repositioning the robot to grab block
-	//currently our mechanical design clamps rather well regardless of the blocks orientation
-	public void getBlockOrientation(){
-		
-	}*/
+
 }

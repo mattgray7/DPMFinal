@@ -6,6 +6,8 @@ import java.io.IOException;
 
 import javax.bluetooth.RemoteDevice;
 
+import bluetooth.BluetoothConnection;
+import bluetooth.Transmission;
 import lejos.nxt.LCD;
 import lejos.nxt.Sound;
 import lejos.nxt.comm.BTConnection;
@@ -23,16 +25,11 @@ public class BTSend {
 	 */
 	public void sendSignal(int signal) throws IOException{
 		DataOutputStream output = connection.openDataOutputStream();
-		DataInputStream input = connection.openDataInputStream();
 		try
 		{
 			output.writeInt(signal);
 			output.flush();
-			int reply = input.readInt();	//blocking, will wait for reply signal (hopefully)
-			input.close();
 			output.close();
-			//Sound.buzz();
-			
 			
 		}
 		catch(Exception ioe)
@@ -40,13 +37,11 @@ public class BTSend {
 			Sound.beep();
 			LCD.drawString("Could not send signal", 0, 0, false);
 		}
-		output.close();
 	}
 	
 	/**
-	 * Sets up BlueTooth connection immediately
-	 * @return True once the connection has been made
-	 * @return False if connection exception detected
+	 * Sets up BlueTooth connection between master and slave brick
+	 * @return void
 	 */
 	public void establishConnection(){
 		String name = "slave2";		//friendly name of other brick
@@ -75,5 +70,4 @@ public class BTSend {
 		}
 		
 	}
-	
 }

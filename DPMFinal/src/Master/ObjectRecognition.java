@@ -1,4 +1,4 @@
-package Slave;
+package Master;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,7 @@ import lejos.nxt.SensorPort;
 import lejos.robotics.Color;
 
 /**
- * Class to recognize whether a block is a blue block or not
+ * Class to recognize whether a block is a blue block or not.
  * 
  * First, you should calibrate the blue block's color by calling the
  * calibrateBlueBlock() method. If you don't, then it won't consider anything
@@ -23,7 +23,7 @@ import lejos.robotics.Color;
  * @author Nick
  *
  */
-public class ObjectRecog {
+public class ObjectRecognition {
 	private final double COS_THETA_MARGIN = 0.005;
 	private final double LENGTH_THRESHOLD = 10.0;
 	
@@ -31,11 +31,14 @@ public class ObjectRecog {
 	private Vector calibratedBlueColor;
 	
 	
-	/*
-	public static void main (String args[]){
+	/**
+	 * Call this function if you want to quickly setup the object
+	 * recognition and test it.
+	 */
+	public static void sampleMain (){
 		ColorSensor cs = new ColorSensor(SensorPort.S1);
 		cs.setFloodlight(true);
-		ObjectRecog or = new ObjectRecog(cs);
+		ObjectRecognition or = new ObjectRecognition(cs);
 		
 		or.calibrateBlueBlock();
 
@@ -52,30 +55,38 @@ public class ObjectRecog {
 			LCD.drawString("Is blue: " + isBlueBlock, 0, 3);
 		}
 	}
-	*/
 	
 	/**
 	 * Constructor
+	 * 
 	 * @param cs The color sensor located on the claw
 	 */
-	public ObjectRecog(ColorSensor cs){
+	public ObjectRecognition(ColorSensor cs){
 		colorSensor = cs;
 		calibratedBlueColor = new Vector(0.0, 0.0, 0.0);
 	}
 	
 	
 	/**
-	 * Check the distance from the sensor to the object, may lead to signal being sent
-	 * back to master to reposition robot in front of the block
+	 * Check the distance to an object, using the color sensor.
+	 * 
 	 * @return The distance from the sensor to the object
 	 */
 	public int checkDistance(){
-		return 0;
+		Color c = colorSensor.getColor();
+		Vector v = new Vector(c.getRed(), c.getGreen(), c.getBlue());
+
+		// Experimental formula
+		double lightIntensity = v.length();
+		double distance = Math.pow(350.0 / lightIntensity, 1 / 1.2);
+		
+		return (int)distance;
 	}
 	
 	
 	/**
 	 * Checks the color of the object
+	 * 
 	 * @return True if the object is a blue block, false otherwise
 	 */
 	public Boolean checkColor(){
@@ -143,8 +154,9 @@ public class ObjectRecog {
 	 */
 	private void printCalibrationMessage(){
 		LCD.clear();
-		LCD.drawString("Calibration:", 0, 0);
-		LCD.drawString("Press to calibr.", 0, 2);
-		LCD.drawString("Escape to stop", 0, 3);
+		LCD.drawString("Calibration", 0, 0);
+		LCD.drawString("(Blue block)", 0, 1);
+		LCD.drawString("Press to calibr.", 0, 3);
+		LCD.drawString("Escape to stop", 0, 4);
 	}
 }

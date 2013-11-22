@@ -1,4 +1,4 @@
-import Slave.Vector;
+import Master.Vector;
 import static org.junit.Assert.*;
 import org.junit.Test;
 

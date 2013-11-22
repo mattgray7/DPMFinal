@@ -4,47 +4,54 @@ import lejos.nxt.LCD;
 import lejos.util.Timer;
 import lejos.util.TimerListener;
 
+/**
+ * Class to continuously display the odometer's state.
+ * 
+ * Calling the constructor will start an internal timer. It will then
+ * print out the odometer's state continuously.
+ * 
+ * @author Matt
+ *
+ */
 public class LCDInfo implements TimerListener{
 	public static final int LCD_REFRESH = 100;
 	private Odometer odo;
-	private Timer lcdTimer;
-	
-	// arrays for displaying data
-	private double [] pos;
+	private Timer timer;
 	
 	/**
-	 * Constructor
-	 * @param odo The shared odometer amongst classes
+	 * Constructor.
+	 * 
+	 * @param odo The shared odometer amongst classes.
 	 */
 	public LCDInfo(Odometer odo) {
 		this.odo = odo;
-		this.lcdTimer = new Timer(LCD_REFRESH, this);
-		
-		// initialise the arrays for displaying data
-		pos = new double [3];
-		
-		// start the timer
-		lcdTimer.start();
+		this.timer = new Timer(LCD_REFRESH, this);
 	}
 	
 	/**
-	 * Display the odometer's position every clock tick
+	 * Start displaying odometry indformation
+	 */
+	public void start(){
+		timer.start();
+	}
+	
+	/**
+	 * Stop displaying odometry information
+	 */
+	public void stop(){
+		timer.stop();
+	}
+	
+	/**
+	 * Display the odometer's position every clock tick.
+	 * 
 	 * @return void
 	 */
 	public void timedOut() { 
-		//odo.getPosition(pos);
 		LCD.clear();
-		LCD.drawString("X: ", 0, 0);
-		LCD.drawString("Y: ", 0, 1);
-		LCD.drawString("H: ", 0, 2);
-		//LCD.drawInt((int)(pos[0] * 10), 3, 0);
-		//LCD.drawInt((int)(pos[1] * 10), 3, 1);
-		//LCD.drawInt((int)pos[2], 3, 2);
-		LCD.drawInt((int)odo.getX(), 3, 0);
-		LCD.drawInt((int)odo.getY(), 3, 1);
-		LCD.drawString(Double.toString(odo.getTheta()%360), 3, 2, false);
-	
-	
+		LCD.drawString("X: " + (int)odo.getX(), 0, 0);
+		LCD.drawString("Y: " + (int)odo.getY(), 0, 1);
+		LCD.drawString("H: " + (int)odo.getTheta(), 0, 2);
 	}
 }
 
