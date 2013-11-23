@@ -22,6 +22,7 @@ public class Navigation extends Thread {
 	private final double CLAW_DISTANCE = 17.0;		//the distance the robot must reverse to safely bring down claw
 	private final int COLOR_THRESH = 330;			//threshold for colour sensor, >COLOR_THRESH implies object is directly ahead
 	
+
 	
 	private final int FAST = 200;		//motor speeds
 	private final int JOG = 150;
@@ -42,10 +43,13 @@ public class Navigation extends Thread {
 	public Boolean recentlyAvoided = false;
 	
 	private double theta;
-	private double gx0;			//green zone left x component
-	private double gx1;			//green zone right x component
-	private double gy0;			//green zone lower y component
-	private double gy1;			//green zone upper y component
+	private double gx0=30;			//green zone left x component
+	private double gx1=60;			//green zone right x component
+	private double gy0=30;			//green zone lower y component
+	private double gy1=60;			//green zone upper y component
+	
+	private double xDeposit = gx0 + 15.0;
+	private double yDeposit = gy0;
 	
 	private double rx0;			//red zone left x component
 	private double rx1;			//red zone right x component
@@ -101,23 +105,13 @@ public class Navigation extends Thread {
 	 * @return void
 	 */
 	public void run() {
-		rx0 = 30;
+		//calculateDepositPoint();
+		/*rx0 = 30;
 		rx1 = 60;
 		ry0 = 30;
 		ry1 = 60;
-		randomPathFinder();
+		randomPathFinder();*/
 		
-		//hardcoded for demo, move away from surrounding walls so they aren't picked up during scan
-		//travelTo(30.0, 30.0);
-		//turnTo(90.0, true, true);
-		//travelTo(30.0, 30.0);
-		//turnTo(90.0, true, true);
-		
-		//travelTo(0, 60.0);
-		/*travelTo(60, 60);
-		travelTo(60, 0);
-		travelTo(0,0);
-		turnTo(90, true, false);*/
 		
 		//generate linear path to the green zone
 		//generatePath();
@@ -152,191 +146,32 @@ public class Navigation extends Thread {
 				break;	//only for demo, will need to be handled for final demo
 			}
 		}*/
-		/*
-		while(true){
-		int pathChoice = checkCurrentPath();
-		if(pathChoice == 1){
-			//continue straight, travel 30cm. If no obstacle in way, scan, otherwise, 
-			//the robot will have turned 90 degrees and next iteration of while loop should check current
-			//position with new heading
-			if(Math.abs(odometer.getTheta()) < ANGLE_THRESH)){
-				travelTo(odometer.getX()+30.0, odometer.getY());
-				if(!recentlyAvoided){
-					scan();
-				}else{
-					recentlyAvoided = false;
-					continue;	
-				}
-			}else if(Math.abs(odometer.getTheta() - 90) < ANGLE_THRESH){
-				travelTo(odometer.getX(), odometer.getY() + 30.0);
-				if(!recentlyAvoided){
-					scan();
-				}else{
-					recentlyAvoided = false;
-					continue;	
-				}
-			}else if(Math.abs(odometer.getTheta() - 180) < ANGLE_THRESH){
-				travelTo(odometer.getX() - 30.0, odometer.getY());
-				if(!recentlyAvoided){
-					scan();
-				}else{
-					recentlyAvoided = false;
-					continue;	
-				}
-			}else{
-				travelTo(odometer.getX(), odometer.getY() - 30.0);
-				if(!recentlyAvoided){
-					scan();
-				}else{
-					recentlyAvoided = false;
-					continue;	
-				}
-			}
-		}else if(pathChoice == 2){
-			if(Math.abs(odometer.getTheta()) < ANGLE_THRESH){
-				travelTo(wx1-45.0, odometer.getY());	//will update recently avoided
-				if(!recentlyAvoided){
-					if(!scan()){
-						//nothing was found, calculate new path and continue
-						calculateNewPath();//turn left or right, stops once turned
-					}else{
-						//iteration ends, next iteration will check position facing new direction
-						continue;
-					}
-
-				}else{
-					recentlyAvoided = false;
-					continue;	
-				}
-			}else if(Math.abs(odometer.getTheta() - 90) < ANGLE_THRESH){
-				travelTo(odometer.getX(), wy1 - 45.0);
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}else if(Math.abs(odometer.getTheta() - 180) < ANGLE_THRESH){
-				travelTo(wx0 + 45.0, odometer.getY());
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}else{
-				travelTo(odometer.getX(), wy0 + 45.0);
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}
-		}else if(pathChoice == 3){
-			if(Math.abs(odometer.getTheta()) < ANGLE_THRESH){
-				travelTo(rx0 - 45.0, odometer.getY());	//will update recently avoided
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}else if(Math.abs(odometer.getTheta() - 90) < ANGLE_THRESH){
-				travelTo(odometer.getX(), ry0 - 45.0);
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}else if(Math.abs(odometer.getTheta() - 180) < ANGLE_THRESH){
-				travelTo(rx1 + 45.0, odometer.getY());
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}else{
-				travelTo(odometer.getX(), ry1 + 45.0);
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}
-		}else if (pathChoice == 4){
-			if(Math.abs(odometer.getTheta()) < ANGLE_THRESH){
-				travelTo(gx0 - 45.0, odometer.getY());
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}else if(Math.abs(odometer.getTheta() - 90) < ANGLE_THRESH){
-				travelTo(odometer.getX(), gy0 - 45.0);
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}else if(Math.abs(odometer.getTheta() - 180) < ANGLE_THRESH){
-				travelTo(gx1 + 45.0, odometer.getY());
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}else{
-				travelTo(odometer.getX(), gy1 + 45.0);
-				if(!recentlyAvoided){
-					if(!scan()){
-						calculateNewPath();
-					}else{
-						continue;
-				}else{
-					recentlyAvoided = false;
-					continue;
-				}
-			}
-		}
-		}//end of while
-		*/
+		
+		boolean garb = scan();
+		turnTo(odometer.getTheta() - 180, true, true);
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.forward();
+		rightMotor.forward();
+		leftMotor.rotate(convertDistance(LW_RADIUS, 10), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 10), false);
+		boolean garb2 = scan();
+		turnTo(odometer.getTheta() - 180, true, true);
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.forward();
+		rightMotor.forward();
+		leftMotor.rotate(convertDistance(LW_RADIUS, 10), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 10), false);
+		boolean garb3 = scan();
+		turnTo(odometer.getTheta() - 180, true, true);
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.forward();
+		rightMotor.forward();
+		leftMotor.rotate(convertDistance(LW_RADIUS, 10), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 10), false);
+		boolean garb4 = scan();
 		
 	}
 	
@@ -480,7 +315,7 @@ public class Navigation extends Thread {
 	 * @return false If no blue block was found
 	 */
 	public Boolean scan() {
-		double endAngle = odometer.getTheta() - 90.0;	//set end angle of scan
+		double endAngle = odometer.getTheta() - 89.0;	//set end angle of scan
 		turnTo(odometer.getTheta() + 90.0, true, true);	//turn to start angle of scan
 		
 		try {Thread.sleep(500);} catch (InterruptedException e) {}		//wait for half a second so ultrasonic sesnor can stabilize
@@ -498,7 +333,7 @@ public class Navigation extends Thread {
 		int[][] objects = new int[4][20];	//assuming 20 is the max objects the robot can distinguish in one square
 		int objIndex = 0;					//synchronizes the object distance and angle in the 2D array
 
-		while (odometer.getTheta() > endAngle) {
+		while ((odometer.getTheta() - endAngle) > 2) {
 			dist = getFilteredDistance();		//update the distance
 
 			//if the reading is within a 32cm radius
@@ -515,7 +350,7 @@ public class Navigation extends Thread {
 					objDist = dist;
 				}
 			}
-			
+			LCD.drawString("HEREEE:" + endAngle, 0, 5, false);
 			//if there is a difference >9cm between the previously read distance and the new distance, it is the end of an object
 			if ((Math.abs(objDist - dist) > 9) && (object == true)) {
 				//end of object, all data known for that object
@@ -526,7 +361,7 @@ public class Navigation extends Thread {
 				Sound.beep();
 			}
 		}
-
+		this.setSpeeds(0,0);
 		leftMotor.stop();
 		rightMotor.stop();
 
@@ -662,7 +497,7 @@ public class Navigation extends Thread {
 	 * Assumes a blue block is in front of the robot, will reverse, lower claw, and grab and lift the block
 	 */
 	public void capture(){
-		double distance = 18.0;
+		double distance = 20.0;
 		
 		//reverse far enough to lower claw
 		leftMotor.rotate(-convertDistance(LW_RADIUS, distance), true);
@@ -683,18 +518,18 @@ public class Navigation extends Thread {
 		leftMotor.rotate(convertDistance(LW_RADIUS, distance+4), true);
 		rightMotor.rotate(convertDistance(RW_RADIUS, distance+4), false);
 		
-		/*//Lifting sometimes fails for blocks at an angle, following code "wiggles" the claw with the blue
+		//Lifting sometimes fails for blocks at an angle, following code "wiggles" the claw with the blue
 		//block in it in an attempt to straighten out the block for lifting.
 		//rotate right
-		leftMotor.setSpeed(FAST);
-		rightMotor.setSpeed(FAST);
+		leftMotor.setSpeed(JOG);
+		rightMotor.setSpeed(JOG);
 		leftMotor.forward();
 		rightMotor.backward();
 		try {Thread.sleep(700);} catch (InterruptedException e1) {}
 		
 		//rotate left
-		leftMotor.setSpeed(FAST);
-		rightMotor.setSpeed(FAST);
+		leftMotor.setSpeed(JOG);
+		rightMotor.setSpeed(JOG);
 		leftMotor.backward();
 		rightMotor.forward();
 		try {Thread.sleep(700);} catch (InterruptedException e1) {}
@@ -704,9 +539,9 @@ public class Navigation extends Thread {
 		leftMotor.setSpeed(JOG);
 		rightMotor.setSpeed(JOG);
 		leftMotor.rotate(convertDistance(LW_RADIUS, 5), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);*/
+		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);
 		
-		leftMotor.setSpeed(JOG+100);
+		/*leftMotor.setSpeed(JOG+100);
 		rightMotor.setSpeed(JOG);
 		leftMotor.forward();
 		rightMotor.forward();
@@ -724,7 +559,7 @@ public class Navigation extends Thread {
 		leftMotor.setSpeed(JOG);
 		rightMotor.setSpeed(JOG);
 		leftMotor.rotate(convertDistance(LW_RADIUS, 5), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 5), false);*/
 		
 		leftMotor.stop();
 		rightMotor.stop();
@@ -785,14 +620,14 @@ public class Navigation extends Thread {
 		}*/
 		
 		if(towerHeight == 0){
-			travelTo(gx0, gy0);
-			turnTo(45.0, true, true);
+			travelTo(xDeposit, yDeposit);
+			turnTo(90.0, true, true);
 		}else if(towerHeight == 1){
-			travelTo(gx0 - 5.6, gy0 - 5.6);
-			turnTo(45.0, true, true);
+			travelTo(xDeposit, yDeposit - 5.6);
+			turnTo(90.0, true, true);
 		}else if (towerHeight == 2){
-			travelTo(gx0 - 7, gy0 - 7);
-			turnTo(25.0, true, true);
+			travelTo(xDeposit, yDeposit - 7);
+			turnTo(90.0, true, true);
 		}
 		
 		//rotate sensors away from claw
@@ -807,8 +642,8 @@ public class Navigation extends Thread {
 			rightMotor.setSpeed(SLOW);
 			leftMotor.backward();
 			rightMotor.backward();
-			leftMotor.rotate(-convertDistance(LW_RADIUS, 12), true);
-			rightMotor.rotate(-convertDistance(RW_RADIUS, 12), false);
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 20), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 20), false);
 			
 			
 			try {bts.sendSignal(2);} catch (IOException e) {}	//raise arms to max
@@ -823,8 +658,8 @@ public class Navigation extends Thread {
 			rightMotor.setSpeed(SLOW);
 			leftMotor.backward();
 			rightMotor.backward();
-			leftMotor.rotate(-convertDistance(LW_RADIUS, 10), true);
-			rightMotor.rotate(-convertDistance(RW_RADIUS, 10), false);
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 15), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 15), false);
 			
 			try {bts.sendSignal(-10);} catch (IOException e) {}
 			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
@@ -837,11 +672,18 @@ public class Navigation extends Thread {
 			rightMotor.setSpeed(SLOW);
 			leftMotor.backward();
 			rightMotor.backward();
-			leftMotor.rotate(-convertDistance(LW_RADIUS, 10), true);
-			rightMotor.rotate(-convertDistance(RW_RADIUS, 10), false);
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 15), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 15), false);
 			
 			try {bts.sendSignal(-11);} catch (IOException e) {}
 			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+			
+			leftMotor.setSpeed(SLOW);
+			rightMotor.setSpeed(SLOW);
+			leftMotor.forward();
+			rightMotor.forward();
+			leftMotor.rotate(convertDistance(LW_RADIUS, 30), true);
+			rightMotor.rotate(convertDistance(RW_RADIUS, 30), false);
 			
 		}
 		towerHeight++;
@@ -1324,6 +1166,26 @@ public class Navigation extends Thread {
 		     return false;
 		   }
 		   return true;
-		   }
+		}
+	
+	  public void calculateDepositPoint(){
+		    if ((gx1 - gx0) == 30.0){
+		      xDeposit = (gx1 + gx0)/2.0;
+		      if(gy0 >= (wy1/2.0)){
+		        yDeposit = gy0;
+		      }else{
+		        yDeposit = gy1;
+		      }
+		    }else{
+		      yDeposit = (gy1 + gy0)/2.0;
+		      
+		      if(gx0 >= (wx1/2.0)){
+		        xDeposit = gx0;
+		      }else{
+		        xDeposit = gx1;
+		      }
+
+		    } 
+		  }
 	}
 

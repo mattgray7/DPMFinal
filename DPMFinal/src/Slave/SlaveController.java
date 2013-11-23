@@ -14,7 +14,7 @@ public class SlaveController {
 	private Lift lift;
 	private BTConnection connection;
 	
-	private static final int MAX = 400;
+	private static final int MAX = 380;
 	private static final int ONE_BLOCK_BELOW = 230;
 	private static final int TWO_BLOCKS_BELOW = 170;
 	
@@ -127,8 +127,8 @@ public class SlaveController {
 		}
 		
 		if(command == -11){
-			lift.clamp();
-			lift.raiseArms(MAX - TWO_BLOCKS_BELOW);
+			//lift.clamp();
+			lift.lowerArms(MAX - TWO_BLOCKS_BELOW);
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}
