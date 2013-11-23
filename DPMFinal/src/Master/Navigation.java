@@ -1273,8 +1273,8 @@ public class Navigation extends Thread {
 		boolean goodPath;
 		Random x = new Random();
 		for (int i = 0; i< 100000000; i++) {
-			randX = x.nextInt(75);
-			randY = x.nextInt(75);
+			randX = x.nextInt(120);
+			randY = x.nextInt(120);
 			//If destination coordinate is in red zone, generate another point
 			if (randX >= rx0 && randX <= rx1 && randY >= ry0 && randY <= ry1) {
 				randX = x.nextInt(75);
@@ -1288,33 +1288,42 @@ public class Navigation extends Thread {
 		} 
 	}
 	public boolean checkPath(int x, int y) {
+		double BORDER_DIST = 10.0;
 		double currentX = odometer.getX();
+		double startX = currentX;
 		double currentY = odometer.getY();
+		double startY = currentY;
 		double heading = Math.atan2(y - odometer.getY(), x - odometer.getX()) * (180.0/ Math.PI);
-		double testY;
+		//double testY;
 		//Check if any point along path intersects the red zone
-		if (x - currentX > 0) {
-			while (currentX <= x) {
-				testY = currentX * Math.tan(heading * Math.PI/180);
-				if (currentX >= rx0-25 && currentX <= rx1 + 25 && testY >= ry0 - 25 && testY <= ry1 + 25) {
-					return false;
-				}
-				else {
-					currentX++;
-				}
+
+		   
+		if((x - currentX) > 0){
+			while(currentX <= x){
+		       currentY = (currentX - startX) * Math.tan(heading * Math.PI/180) + startY;
+		       if (currentX >= rx0-BORDER_DIST && currentX <= rx1 + BORDER_DIST && currentY >= ry0 - BORDER_DIST && currentY <= ry1 + BORDER_DIST) {
+		    	   return false;
+		       }else{
+		    	  // System.out.println("(" + currentX + ", " + currentY + ")");
+		    	   currentX++;
+		       }
 			}
-		}
-		else {
-			while (x <= currentX) {
-				testY = currentX * Math.tan((180 - heading) * Math.PI/180);
-				if (currentX >= rx0-25 && currentX <= rx1 + 25 && testY >= ry0 - 25 && testY <= ry1 + 25) {
-					return false;
-				}
-				else {
-					currentX--;
-				}
-			}
-		}
-		return true;
+		}else if ((x - currentX) < 0){
+		    // System.out.println("here");
+		     while(currentX >= x){
+		       currentY = (startX - currentX) * Math.tan((180.0 - heading) * Math.PI/180) + startY;
+		       if (currentX >= rx0-BORDER_DIST && currentX <= rx1 + BORDER_DIST && currentY >= ry0 - BORDER_DIST && currentY <= ry1 + BORDER_DIST) {
+		        return false;
+		       }else{
+		        //System.out.println("(" + currentX + ", " + currentY + ")");
+		        currentX--;
+		       }
+		     }
+		     
+		   }else{
+		     return false;
+		   }
+		   return true;
+		   }
 	}
-}
+
