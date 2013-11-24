@@ -9,7 +9,7 @@ import lejos.nxt.*;
  */
 public class Lift {
 	private static final int LOWERING_SPEED = 200;
-	private static final int RAISING_SPEED = 450;
+	private static final int RAISING_SPEED = 400;
 	private static final int CLAMPING_SPEED = 150;
 	
 	private static NXTRegulatedMotor armMotor = Motor.A;
@@ -61,7 +61,7 @@ public class Lift {
 		clampMotor.setSpeed(CLAMPING_SPEED);
 		clampMotor.backward();
 		clampMotor.rotate(-90, false);
-		clampMotor.flt();
+		clampMotor.lock(30);
 	}
 	
 	

@@ -14,7 +14,7 @@ public class SlaveController {
 	private Lift lift;
 	private BTConnection connection;
 	
-	private static final int MAX = 380;
+	private static final int MAX = 340;
 	private static final int ONE_BLOCK_BELOW = 230;
 	private static final int TWO_BLOCKS_BELOW = 170;
 	
@@ -83,7 +83,7 @@ public class SlaveController {
 		//clamp and raise arms all the way
 		if(command == 2){
 			Sound.beep();
-			lift.clamp();
+			lift.clamp(); 
 			lift.raiseArms(MAX);
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
@@ -99,6 +99,12 @@ public class SlaveController {
 		//raise arms
 		if(command == 4){
 			lift.raiseArms(MAX);
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		if(command == 5){
+			lift.release();
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}

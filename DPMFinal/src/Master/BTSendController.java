@@ -32,6 +32,7 @@ public class BTSendController {
 	public OdometryCorrection odometryCorrection;
 	public LCDInfo lcdInfo;
 	public Localization localization;
+	public PathGenerator pathGenerator;
 	
 	
 	/**
@@ -59,10 +60,13 @@ public class BTSendController {
 		odo = new Odometer(LEFT_WHEEL_RADIUS, RIGHT_WHEEL_RADIUS, WHEELBASE_WIDTH);
 		bts = new BTSend();
 		objectRecognition = new ObjectRecognition(csFront);
-		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition);
+		//pathGenerator = new PathGenerator(odo);
+		pathGenerator = new PathGenerator(odo);
+		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition, pathGenerator);
 		odometryCorrection = new OdometryCorrection(nav, odo, csOdoLeft, csOdoRight);
 		lcdInfo = new LCDInfo(odo);
 		localization = new Localization(odo, bottomUs, nav, csOdoRight);
+
 	}
 	
 	public void execute(){
