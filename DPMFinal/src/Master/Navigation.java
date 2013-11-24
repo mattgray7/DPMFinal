@@ -143,8 +143,10 @@ public class Navigation extends Thread {
 		 //rotateSensorsLeft(11, true);
 		 
 		 while (Math.abs(x - odometer.getX()) > POINT_THRESH || Math.abs(y - odometer.getY()) > POINT_THRESH) {
-	  
+			 
 			 minAng = (Math.atan2(y - odometer.getY(), x - odometer.getX())) * (180.0/ Math.PI); 	//update minimum angle
+			 if (minAng < 0) minAng += 360.0;
+			 
 			 distance = Math.sqrt(Math.pow(Math.abs(x - odometer.getX()),2) + Math.pow(Math.abs(y - odometer.getY()), 2));	//update distance traveled
 
 			 //object detected immediately in front of robot
@@ -180,8 +182,6 @@ public class Navigation extends Thread {
 				 //both capture and avoid will move the robot past it's next destination, break this travelTo call
 				 return;
 			 }
-			 
-			 if (minAng < 0) minAng += 360.0;
 	  
 			 //Only turn with a small threshold for the first iteration, otherwise the robot is too oscillatory
 			 if (first){ 
@@ -190,18 +190,22 @@ public class Navigation extends Thread {
 				 first = false;
 			 }
 	  
-			 //after halfway through distance, correct angle 
-			 if(Math.abs((masterDist / distance) - 2) < POINT_THRESH){ 
-				 this.turnTo(minAng, true, false);
+			 //Find error in heading
+			 double angleError = minAng - odometer.getTheta();
+			 if(angleError > 180.0){
+				 angleError = angleError - 360.0;
+			 }
+			 else if(angleError < -180.0){
+				 angleError = angleError + 360.0;
+			 }
+			 
+			 if(Math.abs(angleError) > 5){ 
+				 this.turnTo(minAng,true, false);
+			 }
+			 else{
+				 this.setSpeeds(FAST - (int)(2.0 * angleError), FAST + (int)(2.0 * angleError));
 			 }
 	  
-			 //if angle difference is too large, need to correct
-			 if(Math.abs(minAng - odometer.getTheta()) > 10){ 
-				 this.turnTo(minAng,true, false); 
-			 }
-	  
-			 this.setSpeeds(FAST, FAST);
-			 //this.setSpeeds(SLOW,  SLOW); // For testing
 		 } 
 		 this.setSpeeds(0,0); 
 		 turnTo(masterAng, true, true);
