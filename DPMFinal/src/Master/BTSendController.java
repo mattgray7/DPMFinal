@@ -80,12 +80,12 @@ public class BTSendController {
 		
 		// Set up bluetooth connections
 		//getTransmission();;
-		//bts.establishConnection();
+		bts.establishConnection();
 		
 		// Start sensor threads
-		//lcdInfo.start();
+		lcdInfo.start();
 		odo.start();
-		//nav.start();
+		nav.start();
 		// Do localization
 		//localization.doLocalization();
 		//nav.travelTo(0, 0);
@@ -93,7 +93,7 @@ public class BTSendController {
 		//localization.doLightLocalization();
 
 		// Start main operation
-		odometryCorrection.start();
+		//odometryCorrection.start();
 		
 		/*odometryCorrection.setMode(Mode.WAITING);
 		nav.turnTo(7.6, true, true);

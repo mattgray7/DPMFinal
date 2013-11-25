@@ -48,7 +48,7 @@ public class Navigation extends Thread {
 
 	private double gx0=60;			//green zone left x component
 	private double gx1=90;			//green zone right x component
-	private double gy0=60;			//green zone lower y component
+	private double gy0=30;			//green zone lower y component
 	private double gy1=90;			//green zone upper y component
 	
 	
@@ -156,31 +156,28 @@ public class Navigation extends Thread {
 				 isBusy = true;
 				 
 				 //check the color
-				 if(checkBlockColor()){
-					//capture the block
-					 hasBlock = true;
-					 capture();	
-					 return;
-				 }else{
-					 //avoid is recursive, input tells which iteration of recursion
-					if(hasBlock){
-					 	obstacleInWay = true;
-					 	avoid();
+				 if(!hasBlock){
+					 if(checkBlockColor()){
+						 //capture the block
+						 capture();	
+						 return;
 					 }else{
-						obstacleInWay = true;
-						leftMotor.backward();
-						rightMotor.backward();
-						leftMotor.setSpeed(SLOW);
-						rightMotor.setSpeed(SLOW);
-						leftMotor.rotate(-convertDistance(LW_RADIUS, 8.0), true);
-						rightMotor.rotate(-convertDistance(RW_RADIUS, 8.0), false);
-						leftMotor.stop();
-						rightMotor.stop();
-						return;
+							obstacleInWay = true;
+							leftMotor.backward();
+							rightMotor.backward();
+							leftMotor.setSpeed(SLOW);
+							rightMotor.setSpeed(SLOW);
+							leftMotor.rotate(-convertDistance(LW_RADIUS, 8.0), true);
+							rightMotor.rotate(-convertDistance(RW_RADIUS, 8.0), false);
+							leftMotor.stop();
+							rightMotor.stop();
+							return;
 					 }
+				 }else{
+					 avoid();
+					 //both capture and avoid will move the robot past it's next destination, break this travelTo call
+					 return;
 				 }
-				 //both capture and avoid will move the robot past it's next destination, break this travelTo call
-				 return;
 			 }
 	  
 			 //Only turn with a small threshold for the first iteration, otherwise the robot is too oscillatory
@@ -442,7 +439,6 @@ public class Navigation extends Thread {
 			rightMotor.stop();
 			return false;
 		}else{
-			hasBlock = true;
 			capture();
 			return true;
 		}
@@ -511,7 +507,7 @@ public class Navigation extends Thread {
 	 * Will take the robot from it's current position directly to the bottom left corner of the green zone
 	 */
 	public void finishLine(){
-		
+		hasBlock = true;
 		//rotate sensors away from claw
 		
 		
@@ -582,8 +578,8 @@ public class Navigation extends Thread {
 		
 		turnTo(odometer.getTheta() + 180.0, true, true);
 		
-		leftMotor.setSpeed(SLOW);
-		rightMotor.setSpeed(SLOW);
+		leftMotor.setSpeed(FAST);
+		rightMotor.setSpeed(FAST);
 		leftMotor.forward();
 		rightMotor.forward();
 		leftMotor.rotate(convertDistance(LW_RADIUS, 10), true);
@@ -592,7 +588,7 @@ public class Navigation extends Thread {
 		
 		//will not scan and will generate a new point behind the green zone
 		hasBlock = false;
-		obstacleInWay = true;
+		//obstacleInWay = true;
 	}
 	
 	public void travelToDepositPoint(){
@@ -616,14 +612,16 @@ public class Navigation extends Thread {
 		}else if(towerHeight == 1){
 			borderPoint = pathGenerator.calculateBorderPoint();
 			if(!pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1])){
-				squarePath = pathGenerator.generateSquarePath(borderPoint[0], borderPoint[1], depositAngle);
+				/*squarePath = pathGenerator.generateSquarePath(borderPoint[0], borderPoint[1], depositAngle);
 				travelTo(squarePath[0], squarePath[1]);
-				travelTo(squarePath[2], squarePath[3]);
+				travelTo(squarePath[2], squarePath[3]);*/
+				travelTo(borderPoint[0], borderPoint[1]);
 			}else{
 				travelTo(borderPoint[0], borderPoint[1]);
 			}
 			circleGreenZone(xDeposit2, yDeposit2);
 			turnTo(depositAngle, true, true);
+
 		}else if (towerHeight == 2){
 			borderPoint = pathGenerator.calculateBorderPoint();
 			if(!pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1])){
@@ -644,15 +642,19 @@ public class Navigation extends Thread {
 		
 		if(heading <= 90.0 && heading > 0.0){
 			travelTo(odometer.getX(), yDest+10);
+			travelTo(xDest, yDest + 10);
 			travelTo(xDest, yDest);
 		}else if (heading <= 180.0 && heading > 90){
 			travelTo(xDest-10, odometer.getY());
+			travelTo(xDest-10, yDest);
 			travelTo(xDest, yDest);
 		}else if (heading <= 270.0 && heading > 180.0){
 			travelTo(odometer.getX(), yDest-10);
+			travelTo(xDest, yDest-10);
 			travelTo(xDest, yDest);
 		}else{
 			travelTo(xDest+10, odometer.getY());
+			travelTo(xDest+10, yDest);
 			travelTo(xDest, yDest);
 		}
 		
@@ -1062,13 +1064,13 @@ public class Navigation extends Thread {
 			xDeposit3 = xDeposit;
 		    if(gy0 >= (wy1/2.0)){
 		    	yDeposit = gy0;
-		    	yDeposit2 = gy0 - 5.6;
-		    	yDeposit3 = gy0 - 7.0;
+		    	yDeposit2 = yDeposit - 5.6;
+		    	yDeposit3 = yDeposit - 7.0;
 		    	depositAngle = 90.0;
 		    }else{
 		        yDeposit = gy1;
-		    	yDeposit2 = gy0 + 5.6;
-		    	yDeposit3 = gy0 + 7.0;
+		    	yDeposit2 = yDeposit + 5.6;
+		    	yDeposit3 = yDeposit + 7.0;
 		        depositAngle = 270.0;
 		    }
 		}else{

@@ -9,7 +9,7 @@ public class PathGenerator {
 	
 	private double gx0=60;			//green zone left x component
 	private double gx1=90;			//green zone right x component
-	private double gy0=60;			//green zone lower y component
+	private double gy0=40;			//green zone lower y component
 	private double gy1=90;			//green zone upper y component
 	
 	private double rx0=600;			//red zone left x component
