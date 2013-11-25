@@ -575,7 +575,7 @@ public class Navigation extends Thread {
 			numTowers++;
 		}
 		rotateSensorsLeft(80, false);
-		
+		hasBlock = false;
 		turnTo(odometer.getTheta() + 180.0, true, true);
 		
 		leftMotor.setSpeed(FAST);
@@ -587,7 +587,7 @@ public class Navigation extends Thread {
 		
 		
 		//will not scan and will generate a new point behind the green zone
-		hasBlock = false;
+		
 		//obstacleInWay = true;
 	}
 	
