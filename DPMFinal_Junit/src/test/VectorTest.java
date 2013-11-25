@@ -1,6 +1,10 @@
-import Master.Vector;
+package test;
+
 import static org.junit.Assert.*;
 import org.junit.Test;
+
+import Master.Vector;
+
 
 public class VectorTest {
 	
