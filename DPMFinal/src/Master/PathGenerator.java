@@ -47,6 +47,7 @@ public class PathGenerator {
 		}
 		return point;
 	}
+
 	public double[][] findClosestCorner() {
 		double[] corner = new double [2];
 		double [][] corners = new double [4][2];
@@ -106,23 +107,116 @@ public class PathGenerator {
 		}
 		return corners;
 	} 
+
+	
+	public double[] closestRedCorner(double x0, double y0){
+		double[] point  = new double[2];
+		
+		double d0 = Math.sqrt( (Math.pow( Math.abs(rx0 - BORDER_DIST - x0),2 )) + (Math.pow(Math.abs(ry0 - BORDER_DIST - y0),2))); 
+		double d1 = Math.sqrt( (Math.pow( Math.abs(rx1 + BORDER_DIST - x0),2 )) + (Math.pow(Math.abs(ry0 - BORDER_DIST - y0),2))); 
+		double d2 = Math.sqrt( (Math.pow( Math.abs(rx0 - BORDER_DIST - x0),2 )) + (Math.pow(Math.abs(ry1 + BORDER_DIST - y0),2))); 
+		double d3 = Math.sqrt( (Math.pow( Math.abs(rx1 + BORDER_DIST - x0),2 )) + (Math.pow(Math.abs(ry1 + BORDER_DIST - y0),2))); 
+
+		if(d0 < 10){
+			//too close to this point, assumed already here
+			if (d1 <= d2 && d1 <= d3){
+				point[0] = rx1 + BORDER_DIST;
+				point[1] = ry0 - BORDER_DIST;
+			}else if (d2 <= d1 && d2 <= d3){
+				point[0] = rx0 - BORDER_DIST;
+				point[1] = ry1 + BORDER_DIST;
+			}else{
+				point[0] = rx1 + BORDER_DIST;
+				point[1] = ry1 + BORDER_DIST;
+			}
+		}else if (d1 < 10){
+			if (d0 <= d2 && d0 <= d3){
+				point[0] = rx0 - BORDER_DIST;
+				point[1] = ry0 - BORDER_DIST;
+			}else if (d2 <= d0 && d2 <= d3){
+				point[0] = rx0 - BORDER_DIST;
+				point[1] = ry1 + BORDER_DIST;
+			}else{
+				point[0] = rx1 + BORDER_DIST;
+				point[1] = ry1 + BORDER_DIST;
+			}
+		}else if (d2 < 10){
+			if (d0 <= d1 && d0 <= d3){
+				point[0] = rx0 - BORDER_DIST;
+				point[1] = ry0 - BORDER_DIST;
+			}else if (d1 <= d0 && d1 <= d3){
+				point[0] = rx1 + BORDER_DIST;
+				point[1] = ry0 - BORDER_DIST;
+			}else{
+				point[0] = rx1 + BORDER_DIST;
+				point[1] = ry1 + BORDER_DIST;
+			}
+		}else if (d3 < 10){
+			if (d0 <= d1 && d0 <= d2){
+				point[0] = rx0 - BORDER_DIST;
+				point[1] = ry0 - BORDER_DIST;
+			}else if (d1 <= d0 && d1 <= d2){
+				point[0] = rx1 + BORDER_DIST;
+				point[1] = ry0 - BORDER_DIST;
+			}else{
+				point[0] = rx0 - BORDER_DIST;
+				point[1] = ry1 + BORDER_DIST;
+			}
+		}else{
+			if (d0 <= d1 && d0 <= d2 && d0 <= d3){
+				point[0] = rx0 - BORDER_DIST;
+				point[1] = ry0 - BORDER_DIST;
+			}else if (d1 <= d0 && d1 <= d2 && d1 <= d3){
+				point[0] = rx1 + BORDER_DIST;
+				point[1] = ry0 - BORDER_DIST;
+			}else if (d2 <= d0 && d2 <= d1 && d2 <= d3){
+				point[0] = rx0 - BORDER_DIST;
+				point[1] = ry1 + BORDER_DIST;
+			}else{
+				point[0] = rx1 + BORDER_DIST;
+				point[1] = ry1 + BORDER_DIST;
+			}
+		}
+		return point;
+
+	}
 	public double[] generateSquarePath(double x, double y, double depositAngle){
-		double[] path = new double[4];	//[x1, y1, x2, y2]
+		double[] path = new double[6];	//[x1, y1, x2, y2]
+		double[] tempPoint = new double[2];
 		double borderX;
 		double borderY;
-
-		if(checkPointsInPath(odometer.getX(), odometer.getY(), odometer.getX(), y) 
-				&& (checkPointsInPath(odometer.getX(), y, x, y))){
-			path[0] = odometer.getX();
-			path[1] = y;
-			path[2] = x;
-			path[3] = y;
-		}else if (checkPointsInPath(odometer.getX(), odometer.getY(), x, odometer.getY()) 
-				&& (checkPointsInPath(x, odometer.getY(), x, y))){
+		
+		//initialized to invalid point
+		for(int i=0; i < 6; i++){
+			path[i] = -100;
+		}
+		
+		if(checkPointsInPath(odometer.getX(), odometer.getY(), x, y)){
 			path[0] = x;
-			path[1] = odometer.getY();
-			path[2] = x;
-			path[3] = y;
+			path[1] = y;
+		}else{
+			tempPoint = closestRedCorner(odometer.getX(), odometer.getY());
+			path[0] = tempPoint[0];
+			path[1] = tempPoint[1];
+			
+			if(checkPointsInPath(path[0], path[1], x, y)){
+				path[2] = x;
+				path[3] = y;
+			}else{
+				tempPoint = closestRedCorner(path[0], path[1]);
+				path[2] = tempPoint[0];
+				path[3] = tempPoint[1];
+				
+				if(checkPointsInPath(path[2], path[3], x, y)){
+					path[4] = x;
+					path[5] = y;
+				}else{
+					tempPoint = closestRedCorner(path[2], path[3]);
+					path[4] = tempPoint[0];
+					path[5] = tempPoint[1];
+				}
+				
+			}
 		}
 		
 		return path;
@@ -141,9 +235,9 @@ public class PathGenerator {
 	
 	public boolean checkPointsInPath(double x0, double y0, double x1, double y1) {
 		
-		double currentX = odometer.getX();
+		double currentX = x0;
 		double startX = currentX;
-		double currentY = odometer.getY();
+		double currentY = y0;
 		double startY = currentY;
 		double heading = Math.atan2(y1 - y0, x1 - x0) * (180.0/ Math.PI);
 
@@ -192,107 +286,6 @@ public class PathGenerator {
 
 	
 	
-	/**
-	 * Will generate a path of points that lead from current location
-	 * to the green zone.
-	 * @return void
-	 */
-	//dont think this method will be used
-	public void generatePathToGreen(){
-		//method will need to be changed to handle walls and green zone, not going to comment until algorithm is complete
-	    double x = odometer.getX();
-	    double y = odometer.getY();
-	    
-	    double x0 = gx0;
-	    double y0 = gy0;
-	    double x1 = gx1;
-	    double y1 = gy1;
-	    
-	    double xDest = (x0 + x1)/2.0;
-	    double yDest = (y0 + y1)/2.0;
-	    
-	    double[] xpath = new double[40];
-	    double[] ypath = new double[40];
-	    double length = xpath.length;
-	    
-	    //should include x+3-, y+30, but currently does not
-	    
-	    xpath[0] = x;     //first point manually chosen
-	    ypath[0] = y;
-
-	    
-	    for(int i=0; i< xpath.length - 1; i++){
-	        
-	        //left and below green zone
-	        
-	        if(xpath[i] <= x0){
-	          if ((xDest - xpath[i]) > 30.0){
-	            xpath[i+1] = xpath[i] + 30.0;
-	            ypath[i+1] = ypath[i];
-	          }else{
-	            xpath[i+1] = xDest;
-	            ypath[i+1] = ypath[i];
-	            
-	            if(ypath[i+1] == yDest && xpath[i+1] == xDest){
-	            	  length = i+1;
-	            	  break;
-	            }
-	            
-	          }
-	        }else if (xpath[i] >= x1){
-	          if ((xpath[i] - xDest) > 30.0){
-	            xpath[i+1] = xpath[i] - 30.0;
-	            ypath[i+1] = ypath[i];
-	          }else{
-	            xpath[i+1] = xDest;
-	            ypath[i+1] = ypath[i];
-	            
-	            if(ypath[i+1] == yDest && xpath[i+1] == xDest){
-	            	  length = i+1;
-	            	  break;
-	            }
-	            
-	          }
-	        }else if (ypath[i] <= y0){
-	          if ((yDest - ypath[i]) > 30.0){
-	            ypath[i+1] = ypath[i] + 30.0;
-	            xpath[i+1] = xpath[i];
-	          }else{
-	            ypath[i+1] = yDest;
-	            xpath[i+1] = xpath[i];
-	            
-	            if(ypath[i+1] == yDest && xpath[i+1] == xDest){
-	            	  length = i+1;
-	            	  break;
-	            }
-	            
-	          }
-	        }else{
-	          if ((ypath[i] - yDest) >= 30.0){
-	            ypath[i+1] = ypath[i] - 30.0;
-	            xpath[i+1] = xpath[i];
-	          }else{
-	            ypath[i+1] = yDest;
-	            xpath[i+1] = xpath[i];
-	            
-	            if(ypath[i+1] == yDest && xpath[i+1] == xDest){
-	            	  length = i+1;
-	            	  break;
-	            }
-	            
-	          }
-	        }
-	      }
-	    
-	    /*
-	    xDestination = xDest;
-	    yDestination = yDest;
-	    
-	    for(int i=0; i < length; i++){
-	    	xPath[i] = xpath[i];
-	    	yPath[i] = ypath[i];
-	    }*/
-	 }
 
 	public boolean checkPoint(double x, double y, double border) {
 	    //check if next point is within a wall
@@ -315,6 +308,27 @@ public class PathGenerator {
 	    return true;
 	}
 
+	public double minimumOfFour(double a, double b, double c, double d){
+		if(a < b && a < c && a < d){
+			return a;
+		}else if (b < a && b < c && b < d){
+			return b;
+		}else if (c < a && c < b && c < d){
+			return c;
+		}else{
+			return d;
+		}
+	}
+	
+	public double minimumOfThree(double a, double b, double c){
+		if(a <= b && a <= c){
+			return a;
+		}else if (b <= a && b <= c ){
+			return b;
+		}else{
+			return c;
+		}
+	}
 
 	
 }

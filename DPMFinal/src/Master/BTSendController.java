@@ -3,6 +3,7 @@ package Master;
 import bluetooth.BluetoothConnection;
 import bluetooth.Transmission;
 import lejos.nxt.*;
+import lejos.nxt.comm.RConsole;
 import Master.Odometer;
 import Master.OdometryCorrection.Mode;
 
@@ -80,12 +81,19 @@ public class BTSendController {
 		
 		// Set up bluetooth connections
 		//getTransmission();;
-		bts.establishConnection();
+		//bts.establishConnection();
+		
+		/* Test to see if RConsole works
+		openRConsole();
+		RConsole.println("This is an RConsole test.");
+		closeRConsole();
+		*/
 		
 		// Start sensor threads
-		lcdInfo.start();
-		odo.start();
-		nav.start();
+		//lcdInfo.start();
+		//odo.start();
+		//nav.start();
+		
 		// Do localization
 		//localization.doLocalization();
 		//nav.travelTo(0, 0);
@@ -94,10 +102,6 @@ public class BTSendController {
 
 		// Start main operation
 		//odometryCorrection.start();
-		
-		/*odometryCorrection.setMode(Mode.WAITING);
-		nav.turnTo(7.6, true, true);
-		odometryCorrection.setMode(Mode.CORRECTING);*/
 		
 		//nav.travelTo(0.0, 90.0);
 		//nav.travelTo(60.0, 0.0);
@@ -139,5 +143,38 @@ public class BTSendController {
 		nav.setGY0(greenZone[1]*30);
 		nav.setGX1(greenZone[2]*30);
 		nav.setGY1(greenZone[3]*30);
+	}
+	
+	/**
+	 * Setup an RConsole connection with a PC.
+	 * <p>
+	 * Nick thinks this should only be used for debugging, and probably not
+	 * alongside another bluetooth connection (ex. with the slave brick).
+	 * 
+	 */
+	public void openRConsole(){
+		LCD.clear();
+		LCD.drawString("< Left | Right >", 0, 0);
+		LCD.drawString("       |        ", 0, 1);
+		LCD.drawString(" BT    | No BT  ", 0, 2);
+		int buttonChoice = Button.waitForAnyPress();
+		if(buttonChoice == Button.ID_LEFT){
+			// Try to open a connection to a pc
+			RConsole.openBluetooth(10000);	// Wait for connection (max 10 sec)
+		}
+		else{
+			// Don't connect to a pc
+		}
+		LCD.clear();
+	}
+	
+	/**
+	 * Close the RConsole connection
+	 * 
+	 */
+	public void closeRConsole(){
+		if(RConsole.isOpen()){
+			RConsole.close();
+		}
 	}
 }

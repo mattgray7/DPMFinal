@@ -58,6 +58,18 @@ public class Filter {
 	}
 	
 	/**
+	 * Get the current raw value.
+	 * 
+	 * @return The current raw value.
+	 */
+	public int getRawValue(){
+		if(numberOfSamples == 0){
+			return 0;
+		}
+		else return raw[windowSize - 1];
+	}
+	
+	/**
 	 * Add a new sample.
 	 * <p>
 	 * This will erase the oldest sample if the group of samples is already
