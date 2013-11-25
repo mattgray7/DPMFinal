@@ -594,44 +594,79 @@ public class Navigation extends Thread {
 	public void travelToDepositPoint(){
 		double x = odometer.getX();
 		double y = odometer.getY();
-		double[] squarePath = new double[4];
+		double [][] corners = new double [4][2];
 		double[] borderPoint = new double[2];
+		boolean clearGreen;
 		
 		
 		if(towerHeight == 0){
 			borderPoint = pathGenerator.calculateBorderPoint();
-			if(!pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1])){
-				squarePath = pathGenerator.generateSquarePath(borderPoint[0], borderPoint[1], depositAngle);
-				travelTo(squarePath[0], squarePath[1]);
-				travelTo(squarePath[2], squarePath[3]);
-			}else{
+			clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
+			if (!clearGreen) {
+				for (int i = 0; i < corners.length; i++) {
+					for (int j = 0; j < corners[0].length - 1; j++) {
+						travelTo(corners[i][j], corners[i][j+1]);
+						clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
+						if (clearGreen) {
+							i = 100;
+							j = 100;
+							travelTo(borderPoint[0], borderPoint[1]);
+						}
+					}
+				}
+			}
+			else {
 				travelTo(borderPoint[0], borderPoint[1]);
 			}
+			
 			circleGreenZone(xDeposit, yDeposit);
 			turnTo(depositAngle, true, true);
-		}else if(towerHeight == 1){
+		}
+		else if(towerHeight == 1){
 			borderPoint = pathGenerator.calculateBorderPoint();
-			if(!pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1])){
-				/*squarePath = pathGenerator.generateSquarePath(borderPoint[0], borderPoint[1], depositAngle);
-				travelTo(squarePath[0], squarePath[1]);
-				travelTo(squarePath[2], squarePath[3]);*/
-				travelTo(borderPoint[0], borderPoint[1]);
-			}else{
+			clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
+			if (!clearGreen) {
+				for (int i = 0; i < corners.length; i++) {
+					for (int j = 0; j < corners[0].length - 1; j++) {
+						travelTo(corners[i][j], corners[i][j+1]);
+						clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
+						if (clearGreen) {
+							i = 100;
+							j = 100;
+							travelTo(borderPoint[0], borderPoint[1]);
+						}
+					}
+				}
+			}
+			else {
 				travelTo(borderPoint[0], borderPoint[1]);
 			}
-			circleGreenZone(xDeposit2, yDeposit2);
+			
+			circleGreenZone(xDeposit, yDeposit);
 			turnTo(depositAngle, true, true);
 
-		}else if (towerHeight == 2){
+		}
+		else if (towerHeight == 2){
 			borderPoint = pathGenerator.calculateBorderPoint();
-			if(!pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1])){
-				squarePath = pathGenerator.generateSquarePath(borderPoint[0], borderPoint[1], depositAngle);
-				travelTo(squarePath[0], squarePath[1]);
-				travelTo(squarePath[2], squarePath[3]);
-			}else{
+			clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
+			if (!clearGreen) {
+				for (int i = 0; i < corners.length; i++) {
+					for (int j = 0; j < corners[0].length - 1; j++) {
+						travelTo(corners[i][j], corners[i][j+1]);
+						clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
+						if (clearGreen) {
+							i = 100;
+							j = 100;
+							travelTo(borderPoint[0], borderPoint[1]);
+						}
+					}
+				}
+			}
+			else {
 				travelTo(borderPoint[0], borderPoint[1]);
 			}
-			circleGreenZone(xDeposit3, yDeposit3);
+			
+			circleGreenZone(xDeposit, yDeposit);
 			turnTo(depositAngle, true, true);
 		}
 	}

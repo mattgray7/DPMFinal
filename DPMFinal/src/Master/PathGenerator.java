@@ -32,13 +32,13 @@ public class PathGenerator {
 		double x = odometer.getX();
 		double y = odometer.getY();
 		double[] point = new double[2];
-		if(x <= rx0 && y <= ry0){
+		if(x <= gx0 && y <= gy0){
 			point[0] = gx0 - GREEN_BORDER_DIST;
 			point[1] = gy0 - GREEN_BORDER_DIST;
-		}else if (x <= gx0 && y >= ry0){
+		}else if (x <= gx0 && y >= gy0){
 			point[0] = gx0 - GREEN_BORDER_DIST;
 			point[1] = gy1 + GREEN_BORDER_DIST;
-		}else if (x >= gx0 && y <= ry0){
+		}else if (x >= gx0 && y <= gy0){
 			point[0] = gx1 + GREEN_BORDER_DIST;
 			point[1] = gy0 - GREEN_BORDER_DIST;
 		}else{
@@ -47,7 +47,65 @@ public class PathGenerator {
 		}
 		return point;
 	}
-	
+	public double[][] findClosestCorner() {
+		double[] corner = new double [2];
+		double [][] corners = new double [4][2];
+		if(Math.abs(rx1 - odometer.getX()) < Math.abs(rx0 - odometer.getX())) {
+			corner[0] = rx1;
+		}
+		else {
+			corner[0] = rx0;
+		}
+		
+		if(Math.abs(ry1 - odometer.getY()) < Math.abs(ry0 - odometer.getY())) {
+			corner[1] = ry1;
+		}
+		else {
+			corner[1] = ry0;
+		}
+		//Check which corner is closest and then assign route for visiting each corner
+		if (corner[0] == rx0 && corner[1] == ry0) {
+			corners[0][0] = rx0;
+			corners[0][1] = ry0;
+			corners[1][0] = rx1;
+			corners[1][1] = ry0;
+			corners[2][0] = rx1; 
+			corners[2][1] = ry1;
+			corners[3][0] = rx0;
+			corners[3][1] = ry1;
+		}
+		else if (corner[0] == rx1 && corner[1] == ry0) {
+			corners[0][0] = rx1;
+			corners[0][1] = ry0;
+			corners[1][0] = rx1;
+			corners[1][1] = ry1;
+			corners[2][0] = rx0; 
+			corners[2][1] = ry1;
+			corners[3][0] = rx0;
+			corners[3][1] = ry0;
+		}
+		else if (corner[0] == rx1 && corner[1] == ry1) {
+			corners[0][0] = rx1;
+			corners[0][1] = ry1;
+			corners[1][0] = rx0;
+			corners[1][1] = ry1;
+			corners[2][0] = rx0; 
+			corners[2][1] = ry0;
+			corners[3][0] = rx1;
+			corners[3][1] = ry0;
+		} 
+		else {
+			corners[0][0] = rx0;
+			corners[0][1] = ry1;
+			corners[1][0] = rx0;
+			corners[1][1] = ry0;
+			corners[2][0] = rx1; 
+			corners[2][1] = ry0;
+			corners[3][0] = rx1;
+			corners[3][1] = ry1;
+		}
+		return corners;
+	} 
 	public double[] generateSquarePath(double x, double y, double depositAngle){
 		double[] path = new double[4];	//[x1, y1, x2, y2]
 		double borderX;
