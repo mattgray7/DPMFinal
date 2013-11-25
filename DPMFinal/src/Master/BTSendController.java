@@ -43,10 +43,11 @@ public class BTSendController {
 	 */
 	public static void main(String[] args){
 		BTSendController controller = new BTSendController();
-
-		controller.openRConsole();
+		
+		// Un-comment to setup the RConsole connection
+		//controller.openRConsole();
 		controller.execute();
-		controller.closeRConsole();
+		//controller.closeRConsole();
 		
 		System.exit(0);
 	}
@@ -68,7 +69,7 @@ public class BTSendController {
 		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition, pathGenerator);
 		odometryCorrection = new OdometryCorrection(nav, odo, csOdoLeft, csOdoRight);
 		lcdInfo = new LCDInfo(odo);
-		localization = new Localization(odo, bottomUs, nav, csOdoRight);
+		localization = new Localization(odo, bottomUs, nav, csOdoLeft);
 
 	}
 	
@@ -91,15 +92,15 @@ public class BTSendController {
 		//nav.start();
 		
 		// Do localization
-		//localization.doLocalization();
-		//nav.travelTo(0, 0);
-		//nav.turnTo(90, true, true);
-		//localization.doLightLocalization();
+		localization.doLocalization();
+		nav.travelTo(0, 0);
+		localization.doLightLocalization();
+		nav.turnTo(90, true, true);
 
 		// Start main operation
-		odometryCorrection.start();
+		//odometryCorrection.start();
 		
-		nav.travelTo(0.0, 90.0);
+		//nav.travelTo(0.0, 90.0);
 		//nav.travelTo(60.0, 0.0);
 
 		
