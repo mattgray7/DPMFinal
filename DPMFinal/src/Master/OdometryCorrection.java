@@ -20,7 +20,7 @@ public class OdometryCorrection extends Thread{
 	private final Vector leftCSPosition = new Vector(-8.7, -10.5, 0.0);
 	private final Vector rightCSPosition = new Vector(9.3, -10.5, 0.0);
 	private final long CORRECTION_INTERVAL = 20;
-	private final int LIGHT_THRESHOLD = 450;
+	private final int BLACK_LINE_FILTER_SLOPE = -50;
 	private final long TIME_THRESHOLD = 500;
 	private final double MIN_DISTANCE_FROM_INTERSECTION = 3;
 	private final double ERROR = 0.001;	// General double precision error
@@ -30,6 +30,9 @@ public class OdometryCorrection extends Thread{
 	private Odometer odometer;
 	private ColorSensor csLeft;
 	private ColorSensor csRight;
+	
+	private SmoothDifferenceFilter filterLeft;
+	private SmoothDifferenceFilter filterRight;
 	
 	private Boolean running;
 	private Mode currentMode;
@@ -71,6 +74,9 @@ public class OdometryCorrection extends Thread{
 		this.odometer = odometer;
 		this.csLeft = csLeft;
 		this.csRight = csRight;
+		
+		filterLeft = new SmoothDifferenceFilter(4);
+		filterRight = new SmoothDifferenceFilter(4);
 		
 		running = false;
 		
@@ -129,7 +135,13 @@ public class OdometryCorrection extends Thread{
 			setMode(Mode.CORRECTING);
 		}
 		
-		checkForNewGridlines();
+		filterLeft.add(csLeft.getNormalizedLightValue());
+		filterRight.add(csRight.getNormalizedLightValue());
+		
+		LCD.drawString("L-filt " + filterLeft.getFilteredValue(), 0, 0);
+		LCD.drawString("R-filt " + filterRight.getFilteredValue(), 0, 1);
+		
+		//checkForNewGridlines();
 		//checkForCorrection();
 	}
 	
@@ -147,7 +159,7 @@ public class OdometryCorrection extends Thread{
 	private void checkForNewGridlineLeft(){
 		//LCD.drawString("see L :" + seesLine(csLeft), 0, 3);
 		//LCD.drawString("same L :" + sameLine(lastTimeGridlineLeft), 0, 4);
-		if(seesLine(csLeft)){
+		if(seesLine(filterLeft)){
 			if(!sameLine(lastTimeGridlineLeft)){
 				numLeftLines++;
 				Sound.beep();
@@ -187,7 +199,7 @@ public class OdometryCorrection extends Thread{
 	 * Check if the right CS passed over a new grid line.
 	 */
 	private void checkForNewGridlineRight(){
-		if(seesLine(csRight)){
+		if(seesLine(filterRight)){
 			if(!sameLine(lastTimeGridlineRight)){
 				numRightLines++;
 				Sound.beep();
@@ -405,8 +417,8 @@ public class OdometryCorrection extends Thread{
 	 * 
 	 * @return True if the CS sees a black line, false otherwise.
 	 */
-	private Boolean seesLine(ColorSensor cs){
-		return cs.getNormalizedLightValue() < LIGHT_THRESHOLD;
+	private Boolean seesLine(SmoothDifferenceFilter filter){
+		return filter.getFilteredValue() < BLACK_LINE_FILTER_SLOPE;
 	}
 	
 	/**

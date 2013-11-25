@@ -83,7 +83,7 @@ public class BTSendController {
 		//bts.establishConnection();
 		
 		// Start sensor threads
-		lcdInfo.start();
+		//lcdInfo.start();
 		odo.start();
 		//nav.start();
 		// Do localization
@@ -93,14 +93,14 @@ public class BTSendController {
 		//localization.doLightLocalization();
 
 		// Start main operation
-		//odometryCorrection.start();
+		odometryCorrection.start();
 		
 		/*odometryCorrection.setMode(Mode.WAITING);
 		nav.turnTo(7.6, true, true);
 		odometryCorrection.setMode(Mode.CORRECTING);*/
 		
-		nav.travelTo(0.0, 90.0);
-		nav.travelTo(60.0, 0.0);
+		//nav.travelTo(0.0, 90.0);
+		//nav.travelTo(60.0, 0.0);
 
 		
 		Button.waitForAnyPress();
