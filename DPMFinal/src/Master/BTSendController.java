@@ -43,8 +43,10 @@ public class BTSendController {
 	 */
 	public static void main(String[] args){
 		BTSendController controller = new BTSendController();
-		
+
+		controller.openRConsole();
 		controller.execute();
+		controller.closeRConsole();
 		
 		System.exit(0);
 	}
@@ -83,15 +85,9 @@ public class BTSendController {
 		//getTransmission();;
 		//bts.establishConnection();
 		
-		/* Test to see if RConsole works
-		openRConsole();
-		RConsole.println("This is an RConsole test.");
-		closeRConsole();
-		*/
-		
 		// Start sensor threads
 		//lcdInfo.start();
-		//odo.start();
+		odo.start();
 		//nav.start();
 		
 		// Do localization
@@ -101,9 +97,9 @@ public class BTSendController {
 		//localization.doLightLocalization();
 
 		// Start main operation
-		//odometryCorrection.start();
+		odometryCorrection.start();
 		
-		//nav.travelTo(0.0, 90.0);
+		nav.travelTo(0.0, 90.0);
 		//nav.travelTo(60.0, 0.0);
 
 		

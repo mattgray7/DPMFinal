@@ -1,6 +1,7 @@
 package Master;
 
 import lejos.nxt.ColorSensor.*;
+import lejos.nxt.comm.RConsole;
 import lejos.nxt.*;
 //import lejos.nxt.ColorSensor.Color;
 import lejos.util.Timer;
@@ -138,8 +139,9 @@ public class OdometryCorrection extends Thread{
 		filterLeft.add(csLeft.getNormalizedLightValue());
 		filterRight.add(csRight.getNormalizedLightValue());
 		
-		LCD.drawString("L-filt " + filterLeft.getFilteredValue(), 0, 0);
-		LCD.drawString("R-filt " + filterRight.getFilteredValue(), 0, 1);
+		//LCD.drawString("L-filt " + filterLeft.getFilteredValue(), 0, 0);
+		//LCD.drawString("R-filt " + filterRight.getFilteredValue(), 0, 1);
+		RConsole.println("L " + filterLeft.getRawValue() + " " + filterLeft.getFilteredValue() + " R " + filterRight.getRawValue() + " " + filterRight.getFilteredValue());
 		
 		//checkForNewGridlines();
 		//checkForCorrection();
