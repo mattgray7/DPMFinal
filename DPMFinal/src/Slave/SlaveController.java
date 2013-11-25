@@ -83,7 +83,7 @@ public class SlaveController {
 		//clamp and raise arms all the way
 		if(command == 2){
 			Sound.beep();
-			lift.clamp(); 
+			//lift.clamp(); 
 			lift.raiseArms(MAX);
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
@@ -135,6 +135,7 @@ public class SlaveController {
 		if(command == -11){
 			//lift.clamp();
 			lift.lowerArms(MAX - TWO_BLOCKS_BELOW);
+			lift.clamp();
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}

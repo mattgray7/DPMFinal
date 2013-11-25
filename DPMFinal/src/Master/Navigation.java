@@ -46,13 +46,19 @@ public class Navigation extends Thread {
 	public Boolean obstacleInWay = false;
 	
 
-	private double gx0=30;			//green zone left x component
-	private double gx1=60;			//green zone right x component
-	private double gy0=30;			//green zone lower y component
-	private double gy1=60;			//green zone upper y component
+	private double gx0=60;			//green zone left x component
+	private double gx1=90;			//green zone right x component
+	private double gy0=60;			//green zone lower y component
+	private double gy1=90;			//green zone upper y component
+	
 	
 	private double xDeposit = gx0 + 15.0;
+	private double xDeposit2 = xDeposit;
+	private double xDeposit3 = xDeposit;
 	private double yDeposit = gy0;
+	private double yDeposit2 = yDeposit;
+	private double yDeposit3 = yDeposit;
+	private double depositAngle = 90.0;
 	
 	private double rx0;			//red zone left x component
 	private double rx1;			//red zone right x component
@@ -112,33 +118,6 @@ public class Navigation extends Thread {
 		randomPathFinder();
 		//scan();
 		
-		
-		/*boolean garb = scan();
-		turnTo(odometer.getTheta() - 180, true, true);
-		leftMotor.setSpeed(SLOW);
-		rightMotor.setSpeed(SLOW);
-		leftMotor.forward();
-		rightMotor.forward();
-		leftMotor.rotate(convertDistance(LW_RADIUS, 10), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, 10), false);
-		boolean garb2 = scan();
-		turnTo(odometer.getTheta() - 180, true, true);
-		leftMotor.setSpeed(SLOW);
-		rightMotor.setSpeed(SLOW);
-		leftMotor.forward();
-		rightMotor.forward();
-		leftMotor.rotate(convertDistance(LW_RADIUS, 10), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, 10), false);
-		boolean garb3 = scan();
-		turnTo(odometer.getTheta() - 180, true, true);
-		leftMotor.setSpeed(SLOW);
-		rightMotor.setSpeed(SLOW);
-		leftMotor.forward();
-		rightMotor.forward();
-		leftMotor.rotate(convertDistance(LW_RADIUS, 10), true);
-		rightMotor.rotate(convertDistance(RW_RADIUS, 10), false);
-		boolean garb4 = scan();*/
-		
 	}
 	
 
@@ -183,7 +162,7 @@ public class Navigation extends Thread {
 				 }else{
 					 //avoid is recursive, input tells which iteration of recursion
 					if(hasBlock){
-					 	//obstacleInWay = true;
+					 	obstacleInWay = true;
 					 	avoid();
 					 }else{
 						obstacleInWay = true;
@@ -293,6 +272,7 @@ public class Navigation extends Thread {
 	 */
 	public Boolean scan() {
 		double endAngle = odometer.getTheta() - 89.0;	//set end angle of scan
+		colorSens.setFloodlight(Color.RED);
 		if(endAngle < 0){
 			endAngle += 360;
 		}
@@ -317,6 +297,7 @@ public class Navigation extends Thread {
 		while (Math.abs(odometer.getTheta() - endAngle) > 2) {
 			dist = getFilteredDistance();		//update the distance
 
+			
 			//if the reading is within a 32cm radius
 			if (dist < 32) {
 				if (object == false) {
@@ -341,6 +322,22 @@ public class Navigation extends Thread {
 				object = false;
 				Sound.beep();
 			}
+			
+			if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
+				leftMotor.stop();
+				rightMotor.stop();
+				if(checkBlockColor()){
+					capture();
+					return true;
+				}else{
+					leftMotor.setSpeed(SLOW);
+					rightMotor.setSpeed(SLOW);
+					leftMotor.forward();
+					rightMotor.backward();
+				}
+			}
+			
+			
 		}
 		this.setSpeeds(0,0);
 		leftMotor.stop();
@@ -376,19 +373,22 @@ public class Navigation extends Thread {
 				ANGLE_OFFSET = -0.5;
 			}
 			
+			//handle odometer rollover from 0 to 359
+			if((objects[1][i] <= 90.0) && (objects[3][i] >= 270)){
+				objects[3][i] -= 360.0;
+			}
+			
 			//angle to travel at
 			travelAng = ((objects[1][i] + objects[3][i]) / 2.0 + ANGLE_OFFSET); 
 			
 			//checking for bad distance readings
-			if (travelDist > 0) {
+			if ((travelDist > 0) && (pathGenerator.checkPointAhead(travelAng, travelDist))){
 
 				colorSens.setFloodlight(Color.RED);
 				boolean found = inspect(travelAng, travelDist);
 				if(found){
 					return true;
 				}
-
-
 			}
 		}
 		return false;
@@ -429,7 +429,7 @@ public class Navigation extends Thread {
 		//check the color
 		if(!checkBlockColor()){
 			//all checks read object as wood block, return sensor to starting position
-			rotateSensorsRight(15, false);
+			
 					
 			//reverse robot to starting position of inspection
 			leftMotor.rotate(-convertDistance(LW_RADIUS, distTraveled), true);
@@ -490,28 +490,11 @@ public class Navigation extends Thread {
 		leftMotor.stop();
 		rightMotor.stop();
 		
-		
-		//Send signal to clamp and lift the object
-		try {bts.sendSignal(5);} catch (IOException e) {Sound.buzz();}	//5 for release
-		try {Thread.sleep(700);} catch (InterruptedException e1) {}
-		
 		try {bts.sendSignal(2);} catch (IOException e) {Sound.buzz();}	//2 for raise arms
 		//try {bts.sendSignal(3);} catch (IOException e) {Sound.buzz();}	//3 for clamping only
 		
 		//wait for lift and clamp
 		try {Thread.sleep(1700);} catch (InterruptedException e1) {}
-		
-		//reverse far enough to lower claw
-		/*leftMotor.setSpeed(SLOW);
-		rightMotor.setSpeed(SLOW);
-		leftMotor.backward();
-		rightMotor.backward();
-		leftMotor.rotate(-convertDistance(LW_RADIUS, distance), true);
-		rightMotor.rotate(-convertDistance(RW_RADIUS, distance), false);*/
-		
-		//try {bts.sendSignal(4);} catch (IOException e) {Sound.buzz();}	//4 for raising arms
-		
-		//try {Thread.sleep(1700);} catch (InterruptedException e1) {}
 		
 		//return sensors to original orientation
 		rotateSensorsLeft(80, false);
@@ -524,27 +507,16 @@ public class Navigation extends Thread {
 	 * Will take the robot from it's current position directly to the bottom left corner of the green zone
 	 */
 	public void finishLine(){
-		hasBlock = false;
-		double x = odometer.getX();
-		double y = odometer.getY();
-		
-		
-		if(towerHeight == 0){
-			travelTo(xDeposit, yDeposit);
-			turnTo(90.0, true, true);
-		}else if(towerHeight == 1){
-			travelTo(xDeposit, yDeposit - 5.6);
-			turnTo(90.0, true, true);
-		}else if (towerHeight == 2){
-			travelTo(xDeposit, yDeposit - 7);
-			turnTo(90.0, true, true);
-		}
 		
 		//rotate sensors away from claw
+		
+		
+		travelToDepositPoint();
 		rotateSensorsRight(80, false);
 		
 		//send signal to lower arms all the way and open claw - MAY NEED TO BE CHANGED FOR TOWER BUILDING
 		if(towerHeight == 0){
+			
 			try {bts.sendSignal(1);} catch (IOException e) {}
 			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
 			
@@ -555,7 +527,8 @@ public class Navigation extends Thread {
 			leftMotor.rotate(-convertDistance(LW_RADIUS, 20), true);
 			rightMotor.rotate(-convertDistance(RW_RADIUS, 20), false);
 			
-			
+			try {bts.sendSignal(3);} catch (IOException e) {}	//clamp claw - claw must be clamped to be lifted
+			try {Thread.sleep(500);} catch (InterruptedException e1) {}
 			try {bts.sendSignal(2);} catch (IOException e) {}	//raise arms to max
 			try {Thread.sleep(2000);} catch (InterruptedException e1) {}
 			
@@ -602,6 +575,83 @@ public class Navigation extends Thread {
 			numTowers++;
 		}
 		rotateSensorsLeft(80, false);
+		
+		turnTo(odometer.getTheta() + 180.0, true, true);
+		
+		leftMotor.setSpeed(SLOW);
+		rightMotor.setSpeed(SLOW);
+		leftMotor.forward();
+		rightMotor.forward();
+		leftMotor.rotate(convertDistance(LW_RADIUS, 10), true);
+		rightMotor.rotate(convertDistance(RW_RADIUS, 10), false);
+		
+		
+		//will not scan and will generate a new point behind the green zone
+		hasBlock = false;
+		obstacleInWay = true;
+	}
+	
+	public void travelToDepositPoint(){
+		double x = odometer.getX();
+		double y = odometer.getY();
+		double[] squarePath = new double[4];
+		double[] borderPoint = new double[2];
+		
+		
+		if(towerHeight == 0){
+			borderPoint = pathGenerator.calculateBorderPoint();
+			if(!pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1])){
+				squarePath = pathGenerator.generateSquarePath(borderPoint[0], borderPoint[1], depositAngle);
+				travelTo(squarePath[0], squarePath[1]);
+				travelTo(squarePath[2], squarePath[3]);
+			}else{
+				travelTo(borderPoint[0], borderPoint[1]);
+			}
+			circleGreenZone(xDeposit, yDeposit);
+			turnTo(depositAngle, true, true);
+		}else if(towerHeight == 1){
+			borderPoint = pathGenerator.calculateBorderPoint();
+			if(!pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1])){
+				squarePath = pathGenerator.generateSquarePath(borderPoint[0], borderPoint[1], depositAngle);
+				travelTo(squarePath[0], squarePath[1]);
+				travelTo(squarePath[2], squarePath[3]);
+			}else{
+				travelTo(borderPoint[0], borderPoint[1]);
+			}
+			circleGreenZone(xDeposit2, yDeposit2);
+			turnTo(depositAngle, true, true);
+		}else if (towerHeight == 2){
+			borderPoint = pathGenerator.calculateBorderPoint();
+			if(!pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1])){
+				squarePath = pathGenerator.generateSquarePath(borderPoint[0], borderPoint[1], depositAngle);
+				travelTo(squarePath[0], squarePath[1]);
+				travelTo(squarePath[2], squarePath[3]);
+			}else{
+				travelTo(borderPoint[0], borderPoint[1]);
+			}
+			circleGreenZone(xDeposit3, yDeposit3);
+			turnTo(depositAngle, true, true);
+		}
+	}
+	
+	//once at a border point, drives straight at 0, 90, 180, or 270 around the green zone to get to the deposit point
+	public void circleGreenZone(double xDest, double yDest){
+		double heading = Math.atan2(yDest - odometer.getY(), xDest - odometer.getX()) * (180.0/ Math.PI);
+		
+		if(heading <= 90.0 && heading > 0.0){
+			travelTo(odometer.getX(), yDest+10);
+			travelTo(xDest, yDest);
+		}else if (heading <= 180.0 && heading > 90){
+			travelTo(xDest-10, odometer.getY());
+			travelTo(xDest, yDest);
+		}else if (heading <= 270.0 && heading > 180.0){
+			travelTo(odometer.getX(), yDest-10);
+			travelTo(xDest, yDest);
+		}else{
+			travelTo(xDest+10, odometer.getY());
+			travelTo(xDest, yDest);
+		}
+		
 	}
 
 	 
@@ -639,20 +689,21 @@ public class Navigation extends Thread {
 
 		if (dist > 30){
 			//no object within 30cm to the left, avoid this direction
-			rotateSensorsRight(40, false);
-			wallFollowLeft(initAngle);
-			rotateSensorsLeft(40, false);
+
+			if(wallFollowLeft(initAngle)){
+				leftAvoidFail = false;
+			}else{
+				leftAvoidFail = true;
+			}
+
 			
-			if(leftAvoidFail){
+			/*if(leftAvoidFail){
 				turnTo(odometer.getTheta() - 180.0, true, true);
-				
-				rotateSensorsLeft(40, false);
 				wallFollowRight(initAngle);
 				if(!rightAvoidFail){
 					leftAvoidFail = false;
 				}
-				rotateSensorsRight(40, false);
-			}
+			}*/
 
 		}else{
 			//turn to the right
@@ -662,11 +713,13 @@ public class Navigation extends Thread {
 			//check the distance to the right
 			if(dist > 30){
 				//nothing within 30cm, avoid to the right
-				rotateSensorsLeft(40, false);
-				wallFollowRight(initAngle);
-				rotateSensorsRight(40, false);
+				if(wallFollowRight(initAngle)){
+					rightAvoidFail = false;
+				}else{
+					rightAvoidFail = true;
+				}
 				
-				if(rightAvoidFail){
+				/*if(rightAvoidFail){
 					turnTo(odometer.getTheta() - 180.0, true, true);
 					
 					rotateSensorsRight(40, false);
@@ -675,20 +728,21 @@ public class Navigation extends Thread {
 						rightAvoidFail = false;
 					}
 					rotateSensorsLeft(40, false);
-				}
+				}*/
 
 			}else{
 				//turn to initial angle and reverse 30cm backward
 				turnTo(initAngle-180, true, true);
-				rotateSensorsRight(40, false);
 				leftMotor.setSpeed(FAST);
 				rightMotor.setSpeed(FAST);
 				leftMotor.forward();
 				rightMotor.forward();
 
-				
-				wallFollowLeft(initAngle);
-				rotateSensorsLeft(40, false);
+				if(wallFollowLeft(initAngle)){
+					leftAvoidFail = false;
+				}else{
+					leftAvoidFail = true;
+				}
 				try {Thread.sleep(1000);} catch (InterruptedException e) {}
 			}
 		}
@@ -697,6 +751,12 @@ public class Navigation extends Thread {
 			leftMotor.stop();
 			rightMotor.stop();
 			//need to do something here
+		}else if (leftAvoidFail){
+			turnTo(odometer.getTheta() - 180.0, true, true);
+			wallFollowRight(initAngle);
+		}else if (rightAvoidFail){
+			turnTo(odometer.getTheta() + 180.0, true, true);
+			wallFollowLeft(initAngle);
 		}
 
 		//if not carrying a block, regenerate path to green zone
@@ -706,8 +766,9 @@ public class Navigation extends Thread {
 
 	}
 	
-	public void wallFollowLeft(double initAngle){
-
+	public Boolean wallFollowLeft(double initAngle){
+		rotateSensorsRight(40, false);
+		
 		//start driving
 		leftMotor.setSpeed(FAST);
 		rightMotor.setSpeed(FAST);
@@ -723,9 +784,10 @@ public class Navigation extends Thread {
 			dist = getFilteredDistance();
 			error = BAND_CENTER - dist;
 			
-			if (!pathGenerator.checkPointAhead(10)){
+			if (!pathGenerator.checkPointAhead(odometer.getTheta(), 10)){
 				leftAvoidFail = true;
-				return;
+				rotateSensorsLeft(40, false);
+				return false;
 			}
 			
 			
@@ -758,12 +820,17 @@ public class Navigation extends Thread {
 			}
 		}
 		
+		rotateSensorsLeft(40, false);
 		
 		//drive straight for 1.5s to get sufficiently apst the block
 		try {Thread.sleep(2500);} catch (InterruptedException e) {}
+		
+		return true;
 	}
 	
-	public void wallFollowRight(double initAngle){
+	public Boolean wallFollowRight(double initAngle){
+		
+		rotateSensorsLeft(40, false);
 		
 		leftMotor.setSpeed(FAST);
 		rightMotor.setSpeed(FAST);
@@ -779,9 +846,10 @@ public class Navigation extends Thread {
 			dist = getFilteredDistance();
 			error = BAND_CENTER - dist;
 			
-			if (!pathGenerator.checkPointAhead(10)){
+			if (!pathGenerator.checkPointAhead(odometer.getTheta(), 10)){
+				rotateSensorsRight(40, false);
 				rightAvoidFail = true;
-				return;
+				return false;
 			}
 			
 			if(error > 100){
@@ -814,10 +882,13 @@ public class Navigation extends Thread {
 			}
 			
 		}
+		
+		rotateSensorsRight(40, false);
 
 		//drive forward to get past block
 		try {Thread.sleep(2500);} catch (InterruptedException e) {}
 		
+		return true;
 		
 	}
 
@@ -944,13 +1015,18 @@ public class Navigation extends Thread {
 		boolean goodPath;
 		Random x = new Random();
 		while(true){
-			randX = x.nextInt(80);
-			randY = x.nextInt(80);
+			randX = x.nextInt(120);
+			randY = x.nextInt(120);
+			
+			if(hasBlock){
+				finishLine();
+				continue;
+			}
 			
 			//no obstacle avoidance necessary, get new point "behind" the robot
 			if(obstacleInWay){
 				double heading = Math.atan2(randY - odometer.getY(), randX - odometer.getX()) * (180.0/ Math.PI);
-				if(Math.abs(heading - odometer.getTheta()) <= 90){
+				if(Math.abs(heading - odometer.getTheta()) <= 120){
 					continue;
 				}else{
 					//accept these values, no longer obstacle in way
@@ -964,7 +1040,7 @@ public class Navigation extends Thread {
 				continue;
 			}
 
-			goodPath = pathGenerator.checkPointsInPath(randX, randY);
+			goodPath = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), randX, randY);
 			if (goodPath) {
 				travelTo(randX, randY);
 				if(!obstacleInWay){
@@ -978,18 +1054,34 @@ public class Navigation extends Thread {
 	public void calculateDepositPoint(){
 		if ((gx1 - gx0) == 30.0){
 			xDeposit = (gx1 + gx0)/2.0;
+			xDeposit2 = xDeposit;
+			xDeposit3 = xDeposit;
 		    if(gy0 >= (wy1/2.0)){
 		    	yDeposit = gy0;
+		    	yDeposit2 = gy0 - 5.6;
+		    	yDeposit3 = gy0 - 7.0;
+		    	depositAngle = 90.0;
 		    }else{
 		        yDeposit = gy1;
+		    	yDeposit2 = gy0 + 5.6;
+		    	yDeposit3 = gy0 + 7.0;
+		        depositAngle = 270.0;
 		    }
 		}else{
 		    yDeposit = (gy1 + gy0)/2.0;
+		    yDeposit2 = yDeposit;
+		    yDeposit3 = yDeposit;
 		      
 		    if(gx0 >= (wx1/2.0)){
 		    	xDeposit = gx0;
+		    	xDeposit2 = xDeposit - 5.6;
+		    	xDeposit3 = xDeposit - 7.0;
+		    	depositAngle = 0.0;
 		    }else{
 		        xDeposit = gx1;
+		        xDeposit2 = xDeposit + 5.6;
+		        xDeposit3 = xDeposit + 7.0;
+		        depositAngle = 180.0;
 		    }
 
 		} 
@@ -1016,6 +1108,7 @@ public class Navigation extends Thread {
 				}
 			}
 		}
+		rotateSensorsRight(15, false);
 		return false;
 	}
 	

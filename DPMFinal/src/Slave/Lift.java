@@ -60,8 +60,8 @@ public class Lift {
 	public static void clamp(){
 		clampMotor.setSpeed(CLAMPING_SPEED);
 		clampMotor.backward();
-		clampMotor.rotate(-90, false);
-		clampMotor.lock(30);
+		clampMotor.rotate(-100, false);
+		clampMotor.lock(100);
 	}
 	
 	
