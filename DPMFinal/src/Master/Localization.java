@@ -209,25 +209,47 @@ public class Localization {
 				}
 			}
 		}
+
+		leftMotor.setSpeed(0);
+		rightMotor.setSpeed(0);
 		
-		// Calculate angle difference when detecting each line on x and y axis
-		thetaY = Math.abs(angles[0] - angles[2]);
-		thetaY = Odometer.fixDegAngle(thetaY);
+		// Find angle correction
+		double positiveXAxis = MyMath.averageAngle(angles[0], angles[2]);
+		double positiveYAxis = MyMath.averageAngle(angles[1], angles[3]);
+
+		double correctionXAxis;
+		double correctionYAxis;
 		
-		thetaX = Math.abs(angles[1] - angles[3]);
+		if(positiveXAxis < 180.0 || positiveXAxis > 270.0){
+			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 0.0);
+		}
+		else{
+			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 180.0);
+		}
+
+		if(positiveXAxis > 0.0 || positiveXAxis < 180.0){
+			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 90.0);
+		}
+		else{
+			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 270.0);
+		}
+		
+		double averageCorrection = (correctionXAxis + correctionYAxis) / 2.0;
+		double odoTheta = odo.getTheta();
+		
+		odo.setTheta(odoTheta + averageCorrection);
 		
 		
 		// NOTE: odometry correction should also take care of fixing the
 		// position. So this part is not necessary
+		// I BROKE IT SINCE I TOOK thetaY AND thetaX OUT.
+		// It can be fixed, but not enough time.
 		
 		// Reset odometer's position
-		x = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaY / 2.0));
-		y = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaX / 2.0));
-		odo.setX(x);
-		odo.setY(y);
-		
-		leftMotor.setSpeed(0);
-		rightMotor.setSpeed(0);
+		//x = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaY / 2.0));
+		//y = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaX / 2.0));
+		//odo.setX(x);
+		//odo.setY(y);
 		
 		cs.setFloodlight(false);
 	}

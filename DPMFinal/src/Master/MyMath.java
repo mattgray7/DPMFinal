@@ -68,6 +68,24 @@ public class MyMath {
 	}
 	
 	/**
+	 * Find the angle halfway through A and B.
+	 * 
+	 * @param angleA
+	 * @param angleB
+	 * 
+	 * @return The average angle.
+	 */
+	public static double averageAngle(double angleA, double angleB){
+		double average = (angleA + angleB) / 2.0;
+		
+		if(Math.abs(angleA - angleB) > 180.0){
+			return fixAngleDeg(average - 180.0);
+		}
+		
+		return average;
+	}
+	
+	/**
 	 * The distance between the points (x1, y1) and (x2, y2).
 	 * 
 	 * @return The distance.
