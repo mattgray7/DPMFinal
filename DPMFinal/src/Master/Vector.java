@@ -67,6 +67,14 @@ public class Vector {
 	}
 	
 	/**
+	 * Get the angle of the vector, when it is projected onto the xy-plane.
+	 * @return
+	 */
+	public double xyAngleDeg(){
+		return Math.atan2(y, x) * 180.0 / Math.PI;
+	}
+	
+	/**
 	 * @return The length of the vector.
 	 */
 	public double length(){

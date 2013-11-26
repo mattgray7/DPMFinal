@@ -29,6 +29,8 @@ public class Odometer extends Thread {
 	private double y;
 	private double theta;
 	
+	private double masterDistance = 0;
+	
 	private NXTRegulatedMotor leftMotor;
 	private NXTRegulatedMotor rightMotor;
 	
@@ -87,6 +89,7 @@ public class Odometer extends Thread {
 			
 			// Distance traveled by the robot's center
 			double distance = (deltaTachoLeft * leftWheelRadius + deltaTachoRight * rightWheelRadius) / 2.0;
+			masterDistance += distance;
 			double dx = distance * Math.cos((theta + deltaTheta / 2.0) * Math.PI / 180.0);
 			double dy = distance * Math.sin((theta + deltaTheta / 2.0) * Math.PI / 180.0);
 			
@@ -278,5 +281,9 @@ public class Odometer extends Thread {
 	 */
 	public double getWheelBase(){
 		return this.wheelBaseWidth;
+	}
+	
+	public double getMasterDistance(){
+		return this.masterDistance;
 	}
 }

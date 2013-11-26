@@ -44,9 +44,11 @@ public class MedianFilter extends Filter {
 		}
 		
 		if(length % 2 == 0){
-			return (sorted[length / 2] + sorted[length + 1]) / 2;
+			// Return average of two middle values
+			return (sorted[length / 2] + sorted[(length / 2) + 1]) / 2;
 		}
 		else{
+			// Return middle value
 			return sorted[length / 2];
 		}
 	}

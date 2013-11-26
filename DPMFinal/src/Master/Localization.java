@@ -1,12 +1,13 @@
 package Master;
 
 import lejos.nxt.*;
+import lejos.nxt.comm.RConsole;
 
 public class Localization {
-	private static final int SPIN_SPEED = 100;
+	private static final int SPIN_SPEED = 300;
 	private static final int WALL_DISTANCE = 55;
-	private static final double CS_DISTANCE = 10.5;
-	private static final int BLACK_LINE_THRESHOLD = 485;
+	private static final Vector CS_POSITION = new Vector(-8.7, -10.5, 0.0);	// Back-left CS
+	private static final int BLACK_LINE_SLOPE_THRESHOLD = -8;	// By looking at graph of filtered values during light localization
 
 	private NXTRegulatedMotor leftMotor = Motor.B;
 	private NXTRegulatedMotor rightMotor = Motor.C;
@@ -16,18 +17,24 @@ public class Localization {
 	private ColorSensor cs;
 	private Navigation nav;
 	
+	private MedianFilter usFilter;
+	private SmoothDifferenceFilter csFilter;
+	
 	/**
 	 * Constructor
 	 * @param odo The shared Odometer
 	 * @param us Ultrasonic sensor used for ultrasonic localization
-	 * @param navi	Main navigation class to turn and drive to origin
-	 * @param colsens	Color sensor used for light localization
+	 * @param nav	Main navigation class to turn and drive to origin
+	 * @param cs	Color sensor used for light localization
 	 */
-	public Localization(Odometer odo, UltrasonicSensor us, Navigation navi, ColorSensor colsens) {
+	public Localization(Odometer odo, UltrasonicSensor us, Navigation nav, ColorSensor cs) {
 		this.odo = odo;
 		this.cs = cs;
 		this.nav = nav;
 		this.us = us;
+		
+		this.usFilter = new MedianFilter(5);
+		this.csFilter = new SmoothDifferenceFilter(4);
 		
 		us.off();
 	}
@@ -68,13 +75,16 @@ public class Localization {
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
-		long spinTime = 500;
+		long spinTime = 1500;
 		Sound.beep();
 		spinRight();
 		while(System.currentTimeMillis() - startTime < spinTime){
 			// Wait
 		}
 		Sound.beep();
+		// Empty the contents of the filter so that it is not influenced by the
+		// values it read before sleeping.
+		csFilter.empty();
 		
 		// Rotate right until you see a wall
 		LCD.drawString("See wall...", 0, 3);
@@ -112,13 +122,16 @@ public class Localization {
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
-		long spinTime = 500;
+		long spinTime = 1500;
 		Sound.beep();
 		spinRight();
 		while(System.currentTimeMillis() - startTime < spinTime){
 			// Wait
 		}
 		Sound.beep();
+		// Empty the contents of the filter so that it is not influenced by the
+		// values it read before sleeping.
+		csFilter.empty();
 		
 		// Rotate right until you don't see a wall
 		LCD.drawString("Wall...", 0, 3);
@@ -151,18 +164,32 @@ public class Localization {
 		double[] angles = new double[4];
 		
 		cs.setFloodlight(true);
+		csFilter.empty();
+		
+		// Because the color sensor is to in the back-left, you are always
+		// going to record the first y-line first.
+		nav.turnTo(90, false, true);
 		
 		//Spin and clock angles at which black lines are detected
 		spinLeft();
+		//nav.setSpeeds(0,  0);
 		for (int i=0; i<4; i++) {
 			hasSeenLine = false;
 			
 			while (!hasSeenLine) {
+				csFilter.add(cs.getNormalizedLightValue());
+
 				LCD.clear();
-				LCD.drawInt(cs.getNormalizedLightValue(), 0, 7);
+				LCD.drawString("FCS " + csFilter.getFilteredValue(), 0, 1);
+				LCD.drawString("FCS " + csFilter.getRawValue(), 0, 2);
+				RConsole.println("FCS " + csFilter.getRawValue() + " " + csFilter.getFilteredValue());
 				
-				if (cs.getNormalizedLightValue() < BLACK_LINE_THRESHOLD) {
-					angles[i] = odo.getTheta();	
+				if (csFilter.getFilteredValue() < BLACK_LINE_SLOPE_THRESHOLD) {
+					double odoAngle = odo.getTheta();
+					double csAngle = CS_POSITION.xyAngleDeg();
+					double lineAngle = Odometer.fixDegAngle(odoAngle + csAngle);
+					
+					angles[i] = lineAngle;	
 					Sound.beep();
 					hasSeenLine = true;
 					
@@ -170,25 +197,59 @@ public class Localization {
 					long startTime = System.currentTimeMillis();
 					while(System.currentTimeMillis() - startTime < 250){
 						// Wait
+						csFilter.add(cs.getNormalizedLightValue());
+						LCD.drawString("WAIT", 0, 0);
 					}
+					
+					/* Nick doesn't think this is necessary (filtered value will become positive?
+					// Empty the filter of it's contents, so that it does not
+					// read a line right after coming out of its sleep.
+					//csFilter.empty();
+					*/
 				}
 			}
 		}
-		
-		// Calculate angle difference when detecting each line on x and y axis
-		thetaY = Math.abs(angles[0] - angles[2]);
-		thetaX = Math.abs(angles[1] - angles[3]);
-		
-		// Calculate coordinates
-		x = -CS_DISTANCE * Math.cos(Math.toRadians(thetaY / 2.0));
-		y = -CS_DISTANCE * Math.cos(Math.toRadians(thetaX / 2.0));
-		
-		// Update coordinates in odometer, theta is not updated
-		odo.setX(x);
-		odo.setY(y);
-		
+
 		leftMotor.setSpeed(0);
 		rightMotor.setSpeed(0);
+		
+		// Find angle correction
+		double positiveXAxis = MyMath.averageAngle(angles[0], angles[2]);
+		double positiveYAxis = MyMath.averageAngle(angles[1], angles[3]);
+
+		double correctionXAxis;
+		double correctionYAxis;
+		
+		if(positiveXAxis < 180.0 || positiveXAxis > 270.0){
+			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 0.0);
+		}
+		else{
+			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 180.0);
+		}
+
+		if(positiveXAxis > 0.0 || positiveXAxis < 180.0){
+			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 90.0);
+		}
+		else{
+			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 270.0);
+		}
+		
+		double averageCorrection = (correctionXAxis + correctionYAxis) / 2.0;
+		double odoTheta = odo.getTheta();
+		
+		odo.setTheta(odoTheta + averageCorrection);
+		
+		
+		// NOTE: odometry correction should also take care of fixing the
+		// position. So this part is not necessary
+		// I BROKE IT SINCE I TOOK thetaY AND thetaX OUT.
+		// It can be fixed, but not enough time.
+		
+		// Reset odometer's position
+		//x = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaY / 2.0));
+		//y = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaX / 2.0));
+		//odo.setX(x);
+		//odo.setY(y);
 		
 		cs.setFloodlight(false);
 	}
@@ -273,7 +334,7 @@ public class Localization {
 			
 			// In short, the US sees larger distances (than in real life),
 			// so we need to return a smaller distance.
-			return triangleOppositeSide / 1.3;	// Tweaked value
+			return triangleOppositeSide / 1.7;	// Tweaked value
 		}
 	}
 	
@@ -283,7 +344,7 @@ public class Localization {
 	 * @return True is there is a wall.
 	 */
 	public boolean wallInSight(){
-		if (getFilteredData() <= WALL_DISTANCE){
+		if (getFilteredDistance() <= WALL_DISTANCE){
 			return true;
 		}else{
 			return false;
@@ -298,9 +359,7 @@ public class Localization {
 	 * 
 	 * @return The distance (in cm).
 	 */
-	private int getFilteredData() {
-		int distance;
-		
+	private int getFilteredDistance() {
 		// This is done in another thread. You need to wait for the ping to
 		// complete. This takes > 20 ms.
 		us.ping();
@@ -308,14 +367,9 @@ public class Localization {
 		// Wait for the ping to complete
 		try { Thread.sleep(50); } catch (InterruptedException e) {}
 		
-		distance = us.getDistance();
-		
-		// Snap large distances to 200
-		if (distance > 100){
-			distance = 200;
-		}
+		csFilter.add(us.getDistance());
 				
-		return distance;
+		return csFilter.getFilteredValue();
 	}
 	
 	/**

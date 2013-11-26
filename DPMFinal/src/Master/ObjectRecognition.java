@@ -24,7 +24,8 @@ import lejos.robotics.Color;
  *
  */
 public class ObjectRecognition {
-	private final double COS_THETA_MARGIN = 0.005;
+	private final double COS_THETA_MARGIN_BIG = 0.01;
+	private final double COS_THETA_MARGIN_SMALL = 0.001;
 	private final double LENGTH_THRESHOLD = 10.0;
 	
 	private ColorSensor colorSensor;
@@ -95,7 +96,9 @@ public class ObjectRecognition {
 		Vector currentColor = new Vector(c.getRed(), c.getGreen(), c.getBlue());
 		double cosTheta = Vector.cosTheta(currentColor, calibratedBlueColor);
 		
-		boolean isBlueBlock = (Math.abs(1.0 - cosTheta) < COS_THETA_MARGIN) &&
+		double adjustedCosThetaMargin = getAdjustedCosThetaMargin(currentColor.length());
+		
+		boolean isBlueBlock = (Math.abs(1.0 - cosTheta) < adjustedCosThetaMargin) &&
 				              currentColor.length() > LENGTH_THRESHOLD;
 		
 		/*
@@ -107,10 +110,24 @@ public class ObjectRecognition {
 		// CosTheta
 		LCD.drawString("$ " + cosTheta, 0, 6);
 		// Theta
-		LCD.drawString("% " + Math.acos(cosTheta) * 180.0 / Math.PI, 0, 7);
+		LCD.drawString("% " + adjustedCosThetaMargin, 0, 7);
 		*/
 		
 		return isBlueBlock;
+	}
+	
+	public double getAdjustedCosThetaMargin(double lightIntensity){
+		if(lightIntensity < 10.0){
+			return COS_THETA_MARGIN_BIG;
+		}
+		else if(lightIntensity > 300.0){
+			return COS_THETA_MARGIN_SMALL;
+		}
+		
+		double lightMarginDifference = 300.0 - 10.0;
+		double fraction = lightIntensity / lightMarginDifference;
+		
+		return ((1.0 - fraction) * COS_THETA_MARGIN_BIG + (fraction) * COS_THETA_MARGIN_SMALL);
 	}
 	
 	/**

@@ -46,6 +46,14 @@ public class Filter {
 	}
 	
 	/**
+	 * Empty the group of samples.
+	 * 
+	 */
+	public void empty(){
+		numberOfSamples = 0;
+	}
+	
+	/**
 	 * Get the current filtered value.
 	 * 
 	 * @return The current filtered value.
