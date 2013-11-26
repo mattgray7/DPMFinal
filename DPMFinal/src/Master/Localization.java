@@ -227,7 +227,7 @@ public class Localization {
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 180.0);
 		}
 
-		if(positiveXAxis > 0.0 || positiveXAxis < 180.0){
+		if(positiveYAxis > 0.0 || positiveYAxis < 180.0){
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 90.0);
 		}
 		else{
