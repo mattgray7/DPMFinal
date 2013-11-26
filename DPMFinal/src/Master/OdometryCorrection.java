@@ -143,7 +143,7 @@ public class OdometryCorrection extends Thread{
 		//LCD.drawString("R-filt " + filterRight.getFilteredValue(), 0, 1);
 		//RConsole.println("L " + filterLeft.getRawValue() + " " + filterLeft.getFilteredValue() + " R " + filterRight.getRawValue() + " " + filterRight.getFilteredValue());
 		
-		//checkForNewGridlines();
+		checkForNewGridlines();
 		//checkForCorrection();
 	}
 	
