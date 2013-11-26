@@ -240,6 +240,7 @@ public class Localization {
 		double correctedAngle = odoTheta + averageCorrection + (-0.0);	// Adding (-10), tweaked value.
 		odo.setTheta(correctedAngle);
 		
+		/* For debuggin
 		LCD.drawString("XAxis " + correctionXAxis, 0, 0);
 		LCD.drawString("YAxis " + correctionYAxis, 0, 1);
 		LCD.drawString("ave " + averageCorrection, 0, 2);
@@ -247,7 +248,7 @@ public class Localization {
 		LCD.drawString("1: " + angles[1], 0, 4);
 		LCD.drawString("2: " + angles[2], 0, 5);
 		LCD.drawString("3: " + angles[3], 0, 6);
-		
+		*/
 		
 		// NOTE: odometry correction should also take care of fixing the
 		// position. So this part is not necessary

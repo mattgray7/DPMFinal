@@ -87,7 +87,7 @@ public class BTSendController {
 		//bts.establishConnection();
 		
 		// Start sensor threads
-		//lcdInfo.start();
+		lcdInfo.start();
 		odo.start();
 		odometryCorrection.start();
 		//nav.start();
