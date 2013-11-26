@@ -84,21 +84,21 @@ public class BTSendController {
 		
 		// Set up bluetooth connections
 		//getTransmission();;
-		//bts.establishConnection();
+		bts.establishConnection();
 		
 		// Start sensor threads
-		//lcdInfo.start();
+		lcdInfo.start();
 		odo.start();
-		//nav.start();
+		odometryCorrection.start();
+		nav.start();
 		
 		// Do localization
-		localization.doLocalization();
-		nav.travelTo(0, 0);
-		localization.doLightLocalization();
-		nav.turnTo(90, true, true);
+		//localization.doLocalization();
+		//nav.travelTo(0, 0);
+		//localization.doLightLocalization();
+		//nav.turnTo(90, true, true);
 
-		// Start main operation
-		//odometryCorrection.start();
+
 		
 		//nav.travelTo(0.0, 90.0);
 		//nav.travelTo(60.0, 0.0);
@@ -136,10 +136,16 @@ public class BTSendController {
 		
 		//set the green zone coordinates
 		int greenZone[] = t.greenZone;
-		nav.setGX0(greenZone[0]*30);
-		nav.setGY0(greenZone[1]*30);
-		nav.setGX1(greenZone[2]*30);
-		nav.setGY1(greenZone[3]*30);
+		int redZone[] = t.greenZone;
+		int role = t.role.getId();
+		
+		if(role == 1){
+			//builder
+			nav.setTransmission(greenZone, redZone, role);
+		}else if (role == 2){
+			//collector
+			nav.setTransmission(redZone, greenZone, role);
+		}
 	}
 	
 	/**
