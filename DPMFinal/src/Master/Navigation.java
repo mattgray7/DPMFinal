@@ -604,7 +604,7 @@ public class Navigation extends Thread {
 			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
 			try {bts.sendSignal(12);} catch (IOException e) {}	
 			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
-			travelTo(gx0 - 10.0, gy0 - 10.0, true);
+			
 			//maybe another point than just a corner
 		}
 		
@@ -864,11 +864,11 @@ public class Navigation extends Thread {
 			if(error < -BAND_WIDTH){
 				//too far away, need to turn right
 				leftMotor.setSpeed(FAST + 75);
-				rightMotor.setSpeed(FAST + 75 + (error*2));	//error is negative, right move slower
+				rightMotor.setSpeed(FAST + 60 + (error*2));	//error is negative, right move slower
 			}else if (error > BAND_WIDTH){
 				//too close, need to turn left
 				leftMotor.setSpeed(FAST + 75);
-				rightMotor.setSpeed(FAST + 75 + (error * 2));	//error is positive, right moves faster
+				rightMotor.setSpeed(FAST + 60 + (error * 2));	//error is positive, right moves faster
 			}else{
 				leftMotor.setSpeed(FAST + 100);
 				rightMotor.setSpeed(FAST + 100);
@@ -925,11 +925,11 @@ public class Navigation extends Thread {
 			
 			if(error < -BAND_WIDTH){
 				//too far away, need to turn left
-				leftMotor.setSpeed(FAST + 75 + (error*2));	//error is negative, left moves slower
+				leftMotor.setSpeed(FAST + 60 + (error*2));	//error is negative, left moves slower
 				rightMotor.setSpeed(FAST + 75);	
 			}else if (error > BAND_WIDTH){
 				//too close, need to turn right
-				leftMotor.setSpeed(FAST + 75 + (error*2));	//error is positive, left moves faster
+				leftMotor.setSpeed(FAST + 60 + (error*2));	//error is positive, left moves faster
 				rightMotor.setSpeed(FAST + 75);
 			}else{
 				//within band, go straight
