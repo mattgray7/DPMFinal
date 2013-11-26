@@ -216,28 +216,41 @@ public class Localization {
 		// Find angle correction
 		double positiveXAxis = MyMath.averageAngle(angles[0], angles[2]);
 		double positiveYAxis = MyMath.averageAngle(angles[1], angles[3]);
+		
+		RConsole.println("positiveXAxis before: " + positiveXAxis);
+		RConsole.println("positiveYAxis before: " + positiveYAxis);
 
 		double correctionXAxis;
 		double correctionYAxis;
 		
-		if(positiveXAxis < 90.0 || positiveXAxis > 270.0){
+		if(positiveXAxis < 90.0 && positiveXAxis > 270.0){
+			RConsole.println("AAAA");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 0.0);
 		}
 		else{
+			RConsole.println("BBBB");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 180.0);
 		}
 
-		if(positiveYAxis > 0.0 || positiveYAxis < 180.0){
+		if(positiveYAxis > 0.0 && positiveYAxis < 180.0){
+			RConsole.println("CCCC");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 90.0);
 		}
 		else{
+			RConsole.println("DDDD");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 270.0);
 		}
 		
+		RConsole.println("positiveXAxis after: " + positiveXAxis);
+		RConsole.println("positiveYAxis after: " + positiveYAxis);
+		
 		double averageCorrection = (correctionXAxis + correctionYAxis) / 2.0;
+		
+		RConsole.println("averageCorrection: " + averageCorrection);
 
 		double odoTheta = odo.getTheta();
-		double correctedAngle = odoTheta + averageCorrection + (-0.0);	// Adding (-10), tweaked value.
+		double correctedAngle = MyMath.fixAngleDeg(odoTheta + averageCorrection + (-0.0));	// Adding (-10), tweaked value.
+
 		odo.setTheta(correctedAngle);
 		
 		/* For debuggin
@@ -249,6 +262,14 @@ public class Localization {
 		LCD.drawString("2: " + angles[2], 0, 5);
 		LCD.drawString("3: " + angles[3], 0, 6);
 		*/
+		RConsole.println("XAxis " + correctionXAxis);
+		RConsole.println("YAxis " + correctionYAxis);
+		RConsole.println("ave " + averageCorrection);
+		RConsole.println("0: " + angles[0]);
+		RConsole.println("1: " + angles[1]);
+		RConsole.println("2: " + angles[2]);
+		RConsole.println("3: " + angles[3]);
+		
 		
 		// NOTE: odometry correction should also take care of fixing the
 		// position. So this part is not necessary
