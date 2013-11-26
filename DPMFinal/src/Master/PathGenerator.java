@@ -4,23 +4,23 @@ public class PathGenerator {
 
 	private Odometer odometer;
 	
-	private double BORDER_DIST = 10.0;		//border distance for checking if a point is in an area
-	private double GREEN_BORDER_DIST = 15.0;	//must be larger than BORDER_DIST, for travelling to border point
+	private double BORDER_DIST = 15.0;		//border distance for checking if a point is in an area
+	private double GREEN_BORDER_DIST = 18.0;	//must be larger than BORDER_DIST, for traveling to border point
 	
-	private double gx0=60;			//green zone left x component
-	private double gx1=120;			//green zone right x component
-	private double gy0=60;			//green zone lower y component
-	private double gy1=180;			//green zone upper y component
+	private double gx0=120;			//green zone left x component
+	private double gx1=150;			//green zone right x component
+	private double gy0=90;			//green zone lower y component
+	private double gy1=150;			//green zone upper y component
 	
-	private double rx0=600;			//red zone left x component
-	private double rx1=900;			//red zone right x component
-	private double ry0=600;			//red zone lower y component
-	private double ry1=900;			//red zone upper y component
+	private double rx0=60;			//red zone left x component
+	private double rx1=90;			//red zone right x component
+	private double ry0=60;			//red zone lower y component
+	private double ry1=90;			//red zone upper y component
 	
 	private double wx0 = -30.0;			//left wall
-	private double wx1 = 330.0;			//right wall
+	private double wx1 = 210.0;			//right wall
 	private double wy0 = -30.0;			//lower wall
-	private double wy1 = 330.0;			//upper wall
+	private double wy1 = 210.0;			//upper wall
 	
 
 	
@@ -48,120 +48,69 @@ public class PathGenerator {
 		return point;
 	}
 	
-	public double[] closestRedCorner(double x0, double y0){
-		double[] point  = new double[2];
-		
-		double d0 = Math.sqrt( (Math.pow( Math.abs(rx0 - BORDER_DIST - x0),2 )) + (Math.pow(Math.abs(ry0 - BORDER_DIST - y0),2))); 
-		double d1 = Math.sqrt( (Math.pow( Math.abs(rx1 + BORDER_DIST - x0),2 )) + (Math.pow(Math.abs(ry0 - BORDER_DIST - y0),2))); 
-		double d2 = Math.sqrt( (Math.pow( Math.abs(rx0 - BORDER_DIST - x0),2 )) + (Math.pow(Math.abs(ry1 + BORDER_DIST - y0),2))); 
-		double d3 = Math.sqrt( (Math.pow( Math.abs(rx1 + BORDER_DIST - x0),2 )) + (Math.pow(Math.abs(ry1 + BORDER_DIST - y0),2))); 
-
-		if(d0 < 10){
-			//too close to this point, assumed already here
-			if (d1 <= d2 && d1 <= d3){
-				point[0] = rx1 + BORDER_DIST;
-				point[1] = ry0 - BORDER_DIST;
-			}else if (d2 <= d1 && d2 <= d3){
-				point[0] = rx0 - BORDER_DIST;
-				point[1] = ry1 + BORDER_DIST;
-			}else{
-				point[0] = rx1 + BORDER_DIST;
-				point[1] = ry1 + BORDER_DIST;
-			}
-		}else if (d1 < 10){
-			if (d0 <= d2 && d0 <= d3){
-				point[0] = rx0 - BORDER_DIST;
-				point[1] = ry0 - BORDER_DIST;
-			}else if (d2 <= d0 && d2 <= d3){
-				point[0] = rx0 - BORDER_DIST;
-				point[1] = ry1 + BORDER_DIST;
-			}else{
-				point[0] = rx1 + BORDER_DIST;
-				point[1] = ry1 + BORDER_DIST;
-			}
-		}else if (d2 < 10){
-			if (d0 <= d1 && d0 <= d3){
-				point[0] = rx0 - BORDER_DIST;
-				point[1] = ry0 - BORDER_DIST;
-			}else if (d1 <= d0 && d1 <= d3){
-				point[0] = rx1 + BORDER_DIST;
-				point[1] = ry0 - BORDER_DIST;
-			}else{
-				point[0] = rx1 + BORDER_DIST;
-				point[1] = ry1 + BORDER_DIST;
-			}
-		}else if (d3 < 10){
-			if (d0 <= d1 && d0 <= d2){
-				point[0] = rx0 - BORDER_DIST;
-				point[1] = ry0 - BORDER_DIST;
-			}else if (d1 <= d0 && d1 <= d2){
-				point[0] = rx1 + BORDER_DIST;
-				point[1] = ry0 - BORDER_DIST;
-			}else{
-				point[0] = rx0 - BORDER_DIST;
-				point[1] = ry1 + BORDER_DIST;
-			}
-		}else{
-			if (d0 <= d1 && d0 <= d2 && d0 <= d3){
-				point[0] = rx0 - BORDER_DIST;
-				point[1] = ry0 - BORDER_DIST;
-			}else if (d1 <= d0 && d1 <= d2 && d1 <= d3){
-				point[0] = rx1 + BORDER_DIST;
-				point[1] = ry0 - BORDER_DIST;
-			}else if (d2 <= d0 && d2 <= d1 && d2 <= d3){
-				point[0] = rx0 - BORDER_DIST;
-				point[1] = ry1 + BORDER_DIST;
-			}else{
-				point[0] = rx1 + BORDER_DIST;
-				point[1] = ry1 + BORDER_DIST;
-			}
-		}
-		return point;
-
-	}
 	
-	public double[] generateSquarePath(double x, double y, double depositAngle){
-		double[] path = new double[6];	//[x1, y1, x2, y2]
-		double[] tempPoint = new double[2];
-		double borderX;
-		double borderY;
-		
-		//initialized to invalid point
-		for(int i=0; i < 6; i++){
-			path[i] = -100;
+	public double[][] findClosestCorner() {
+		double[] corner = new double [2];
+		double [][] corners = new double [4][2];
+		BORDER_DIST += 3;
+		if(Math.abs(rx1 + BORDER_DIST - odometer.getX()) < Math.abs(rx0 - BORDER_DIST - odometer.getX())) {
+			corner[0] = rx1 + BORDER_DIST;
+		}
+		else {
+			corner[0] = rx0 - BORDER_DIST;
 		}
 		
-		if(checkPointsInPath(odometer.getX(), odometer.getY(), x, y)){
-			path[0] = x;
-			path[1] = y;
-		}else{
-			tempPoint = closestRedCorner(odometer.getX(), odometer.getY());
-			path[0] = tempPoint[0];
-			path[1] = tempPoint[1];
-			
-			if(checkPointsInPath(path[0], path[1], x, y)){
-				path[2] = x;
-				path[3] = y;
-			}else{
-				tempPoint = closestRedCorner(path[0], path[1]);
-				path[2] = tempPoint[0];
-				path[3] = tempPoint[1];
-				
-				if(checkPointsInPath(path[2], path[3], x, y)){
-					path[4] = x;
-					path[5] = y;
-				}else{
-					tempPoint = closestRedCorner(path[2], path[3]);
-					path[4] = tempPoint[0];
-					path[5] = tempPoint[1];
-				}
-				
-			}
+		if(Math.abs(ry1 + BORDER_DIST- odometer.getY()) < Math.abs(ry0 - BORDER_DIST - odometer.getY())) {
+			corner[1] = ry1 + BORDER_DIST;
 		}
-		
-		return path;
-
-	}
+		else {
+			corner[1] = ry0 - BORDER_DIST;
+		}
+		//Check which corner is closest and then assign route for visiting each corner
+		if (corner[0] == rx0 - BORDER_DIST && corner[1] == ry0 - BORDER_DIST) {
+			corners[0][0] = rx0 - BORDER_DIST;
+			corners[0][1] = ry0 - BORDER_DIST;
+			corners[1][0] = rx1 + BORDER_DIST;
+			corners[1][1] = ry0 - BORDER_DIST;
+			corners[2][0] = rx1 + BORDER_DIST; 
+			corners[2][1] = ry1 + BORDER_DIST;
+			corners[3][0] = rx0 - BORDER_DIST;
+			corners[3][1] = ry1 + BORDER_DIST;
+		}
+		else if (corner[0] == rx1 + BORDER_DIST&& corner[1] == ry0 - BORDER_DIST) {
+			corners[0][0] = rx1 + BORDER_DIST;
+			corners[0][1] = ry0 - BORDER_DIST;
+			corners[1][0] = rx1 + BORDER_DIST;
+			corners[1][1] = ry1 + BORDER_DIST;
+			corners[2][0] = rx0 - BORDER_DIST; 
+			corners[2][1] = ry1 + BORDER_DIST;
+			corners[3][0] = rx0 - BORDER_DIST;
+			corners[3][1] = ry0 - BORDER_DIST;
+		}
+		else if (corner[0] == rx1 + BORDER_DIST&& corner[1] == ry1 + BORDER_DIST) {
+			corners[0][0] = rx1 + BORDER_DIST;
+			corners[0][1] = ry1 + BORDER_DIST;
+			corners[1][0] = rx0 - BORDER_DIST;
+			corners[1][1] = ry1 + BORDER_DIST;
+			corners[2][0] = rx0 - BORDER_DIST; 
+			corners[2][1] = ry0 - BORDER_DIST;
+			corners[3][0] = rx1 + BORDER_DIST;
+			corners[3][1] = ry0 - BORDER_DIST;
+		} 
+		else {
+			corners[0][0] = rx0 - BORDER_DIST;
+			corners[0][1] = ry1 + BORDER_DIST;
+			corners[1][0] = rx0 - BORDER_DIST;
+			corners[1][1] = ry0 - BORDER_DIST;
+			corners[2][0] = rx1 + BORDER_DIST; 
+			corners[2][1] = ry0 - BORDER_DIST;
+			corners[3][0] = rx1 + BORDER_DIST;
+			corners[3][1] = ry1 + BORDER_DIST;
+		}
+		BORDER_DIST -= 3;
+		return corners;
+	} 
+	
 	
 	public Boolean checkPointAhead(double angle, int distance){
 		double nx = 0;
@@ -229,7 +178,7 @@ public class PathGenerator {
 
 	public boolean checkPoint(double x, double y, double border) {
 	    //check if next point is within a wall
-	    if((x <= wx0 + border) || (x >= wx1 - border) || (y <= wy0 + border) || (y >= wy1 - border)){
+	    if((x <= wx0 + 25) || (x >= wx1 - 25) || (y <= wy0 + 25) || (y >= wy1 - 25)){
 	      return false;
 	    }
 	    

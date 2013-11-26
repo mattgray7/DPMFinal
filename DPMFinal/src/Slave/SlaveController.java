@@ -119,7 +119,7 @@ public class SlaveController {
 		
 		if(command == -10){
 			lift.clamp();
-			lift.raiseArms(MAX - ONE_BLOCK_BELOW);
+			lift.raiseArms(ONE_BLOCK_BELOW);
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}
@@ -134,8 +134,15 @@ public class SlaveController {
 		
 		if(command == -11){
 			//lift.clamp();
-			lift.lowerArms(MAX - TWO_BLOCKS_BELOW);
+			lift.lowerArms(TWO_BLOCKS_BELOW);
 			lift.clamp();
+			try {input.close();} catch (IOException e) {Sound.buzz();}
+			waitForSignal();
+		}
+		
+		if(command == 12){
+			lift.clamp();
+			lift.raiseArms(TWO_BLOCKS_BELOW);
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}
