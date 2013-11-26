@@ -8,9 +8,9 @@ public class PathGenerator {
 	private double GREEN_BORDER_DIST = 15.0;	//must be larger than BORDER_DIST, for travelling to border point
 	
 	private double gx0=60;			//green zone left x component
-	private double gx1=90;			//green zone right x component
-	private double gy0=40;			//green zone lower y component
-	private double gy1=90;			//green zone upper y component
+	private double gx1=120;			//green zone right x component
+	private double gy0=60;			//green zone lower y component
+	private double gy1=180;			//green zone upper y component
 	
 	private double rx0=600;			//red zone left x component
 	private double rx1=900;			//red zone right x component
@@ -247,8 +247,22 @@ public class PathGenerator {
 	    
 	    return true;
 	}
+	
+	public void setZones(int[] green, int[] red){
+		this.gx0 = (double)green[0] * 30.0;
+		this.gy0 = (double)green[1] * 30.0;
+		this.gx1 = (double)green[2] * 30.0;
+		this.gy1 = (double)green[3] * 30.0;
+		
+		this.rx0 = (double)red[0] * 30.0;
+		this.ry0 = (double)red[1] * 30.0;
+		this.rx1 = (double)red[2] * 30.0;
+		this.ry1 = (double)red[3] * 30.0;
+	}
+	
+	
 
-	public double minimumOfFour(double a, double b, double c, double d){
+	/*public double minimumOfFour(double a, double b, double c, double d){
 		if(a < b && a < c && a < d){
 			return a;
 		}else if (b < a && b < c && b < d){
@@ -268,7 +282,7 @@ public class PathGenerator {
 		}else{
 			return c;
 		}
-	}
+	}*/
 
 	
 }
