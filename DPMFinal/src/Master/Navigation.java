@@ -34,6 +34,7 @@ public class Navigation extends Thread {
 	private Odometer odometer;
 
 	private int role = 1;                //robots role
+	private int avoidCount = 0;
 	private double safeX = 0.0;
 	private double safeY = 0.0;
 
@@ -80,6 +81,9 @@ public class Navigation extends Thread {
 
 	private double xDestination = 0.0;                //the desired destination at the end of the current path
 	private double yDestination = 0.0;        
+	
+	private double startingX = 0.0;
+	private double startingY = 0.0;
 
 	int randX;
 	int randY;
@@ -182,6 +186,7 @@ public class Navigation extends Thread {
 					}
 				}else{
 					if(!checkBlockColor()){
+						recentlyAvoided = true;
 						avoid();
 						return;
 					}else{
@@ -578,7 +583,13 @@ public class Navigation extends Thread {
 				leftMotor.rotate(-convertDistance(LW_RADIUS, 15), true);
 				rightMotor.rotate(-convertDistance(RW_RADIUS, 15), false);
 
-				try {bts.sendSignal(-11);} catch (IOException e) {}                        //bring claw to floor, clamp, move forward to push tower in
+				try {bts.sendSignal(12);} catch (IOException e) {}        
+				try {Thread.sleep(1500);} catch (InterruptedException e1) {}
+				
+				travelToStartingPoint();
+				
+				//for tower pushing
+				/*try {bts.sendSignal(-11);} catch (IOException e) {}                        //bring claw to floor, clamp, move forward to push tower in
 				try {Thread.sleep(1000);} catch (InterruptedException e1) {}
 
 				leftMotor.setSpeed(SLOW);
@@ -598,18 +609,26 @@ public class Navigation extends Thread {
 
 
 				try {bts.sendSignal(4);} catch (IOException e) {}
-				try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+				try {Thread.sleep(1000);} catch (InterruptedException e1) {}*/
 			}
-			//travelTo(safeX, safeY);
-			//turnTo(depositAngle + 180.0, true, true);
+			
 
 		}else{
-			try {bts.sendSignal(11);} catch (IOException e) {}        
-			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
-			try {bts.sendSignal(12);} catch (IOException e) {}        
+			try {bts.sendSignal(1);} catch (IOException e) {}
 			try {Thread.sleep(2500);} catch (InterruptedException e1) {}
 
-			//maybe another point than just a corner
+			leftMotor.setSpeed(SLOW);
+			rightMotor.setSpeed(SLOW);
+			leftMotor.backward();
+			rightMotor.backward();
+			leftMotor.rotate(-convertDistance(LW_RADIUS, 25), true);
+			rightMotor.rotate(-convertDistance(RW_RADIUS, 25), false);
+
+			try {bts.sendSignal(4);} catch (IOException e) {}
+			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+			
+			travelToStartingPoint();
+			
 		}
 
 		leftMotor.setSpeed(SLOW);
@@ -637,6 +656,50 @@ public class Navigation extends Thread {
 
 		obstacleInWay = true;
 	}
+	
+	public void travelToStartingPoint(){
+		double [][] corners = new double [4][2];
+		corners = pathGenerator.findClosestCorner();
+		boolean clearGreen;
+
+		clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), startingX, startingY);
+		if (!clearGreen) {
+			for (int i = 0; i < corners.length; i++) {
+				travelTo(corners[i][0], corners[i][1], false);
+				while(recentlyAvoided){
+					if(avoidCount == 3){
+						avoidCount = 0;
+						break;
+					}
+					recentlyAvoided = false;
+					avoidCount++;
+					travelTo(corners[i][0], corners[i][1], false);
+				}
+				clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), startingX, startingY);
+				if (clearGreen) {
+					travelTo(startingX, startingY, false);
+					break;
+				}	
+			}
+		}
+		else {
+			travelTo(startingX, startingY, false);
+			while(recentlyAvoided){
+				if(avoidCount == 3){
+					avoidCount = 0;
+					break;
+				}
+				recentlyAvoided = false;
+				avoidCount++;
+				travelTo(startingX, startingY, false);
+			}
+			
+		}
+		
+		while(true){
+			LCD.drawString("DEMO COMPLETE", 0, 4, false);
+		}
+	}
 
 	public void travelToDepositPoint(){
 		double x = odometer.getX();
@@ -653,6 +716,15 @@ public class Navigation extends Thread {
 			if (!clearGreen) {
 				for (int i = 0; i < corners.length; i++) {
 					travelTo(corners[i][0], corners[i][1], false);
+					while(recentlyAvoided){
+						if(avoidCount == 3){
+							avoidCount = 0;
+							break;
+						}
+						recentlyAvoided = false;
+						avoidCount++;
+						travelTo(corners[i][0], corners[i][1], false);
+					}
 					clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
 					if (clearGreen) {
 						travelTo(borderPoint[0], borderPoint[1], false);
@@ -675,6 +747,15 @@ public class Navigation extends Thread {
 			if (!clearGreen) {
 				for (int i = 0; i < corners.length; i++) {	
 					travelTo(corners[i][0], corners[i][1], false);
+					while(recentlyAvoided){
+						if(avoidCount == 3){
+							avoidCount = 0;
+							break;
+						}
+						recentlyAvoided = false;
+						avoidCount++;
+						travelTo(corners[i][0], corners[i][1], false);
+					}
 					clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
 					if (clearGreen) {                                                       
 						travelTo(borderPoint[0], borderPoint[1], false);
@@ -1035,8 +1116,10 @@ public class Navigation extends Thread {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
 
-	public void setTransmission(int[] green, int[] red, int role){
+	public void setTransmission(int[] green, int[] red, int role, double x, double y){
 		pathGenerator.setZones(green, red);
+		startingX = x;
+		startingY = y;
 
 		this.gx0 = (double)green[0] * 30.0;
 		this.gy0 = (double)green[1] * 30.0;

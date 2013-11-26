@@ -211,27 +211,7 @@ public class PathGenerator {
 
 
 
-	/*public double minimumOfFour(double a, double b, double c, double d){
-                if(a < b && a < c && a < d){
-                        return a;
-                }else if (b < a && b < c && b < d){
-                        return b;
-                }else if (c < a && c < b && c < d){
-                        return c;
-                }else{
-                        return d;
-                }
-        }
 
-        public double minimumOfThree(double a, double b, double c){
-                if(a <= b && a <= c){
-                        return a;
-                }else if (b <= a && b <= c ){
-                        return b;
-                }else{
-                        return c;
-                }
-        }*/
 
 
 }
