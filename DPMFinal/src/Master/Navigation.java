@@ -182,14 +182,14 @@ public class Navigation extends Thread {
 						 avoid();
 						 return;
 					 }else{
-						rotateSensorsLeft(80, false);
+						rotateSensorsRight(80, false);
 						leftMotor.backward();
 						rightMotor.backward();
 						leftMotor.setSpeed(FAST);
 						rightMotor.setSpeed(FAST);
 						leftMotor.rotate(convertDistance(LW_RADIUS, 7.0), true);
 						rightMotor.rotate(convertDistance(RW_RADIUS, 7.0), false);
-						rotateSensorsRight(80, false);
+						rotateSensorsLeft(80, false);
 					 }
 					 //both capture and avoid will move the robot past it's next destination, break this travelTo call
 					 //return;
@@ -645,7 +645,6 @@ public class Navigation extends Thread {
 		borderPoint = pathGenerator.calculateBorderPoint();
 		
 		if(role == 1){
-			if(towerHeight == 0){
 				borderPoint = pathGenerator.calculateBorderPoint();
 				clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
 				if (!clearGreen) {
@@ -668,55 +667,7 @@ public class Navigation extends Thread {
 				circleGreenZone(xDeposit, yDeposit);
 				safeX = odometer.getX();
 				safeY = odometer.getY();
-			}
-			else if(towerHeight == 1){
-				borderPoint = pathGenerator.calculateBorderPoint();
-				clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
-				if (!clearGreen) {
-					for (int i = 0; i < corners.length; i++) {
-						for (int j = 0; j < corners[0].length - 1; j++) {
-							travelTo(corners[i][j], corners[i][j+1], false);
-							clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
-							if (clearGreen) {
-								i = 100;
-								j = 100;
-								travelTo(borderPoint[0], borderPoint[1], false);
-							}
-						}
-					}
-				}
-				else {
-					travelTo(borderPoint[0], borderPoint[1], false);
-				}
-				
-				circleGreenZone(xDeposit, yDeposit);
-				safeX = odometer.getX();
-				safeY = odometer.getY();
-			}
-			else if (towerHeight == 2){
-				borderPoint = pathGenerator.calculateBorderPoint();
-				clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
-				if (!clearGreen) {
-					for (int i = 0; i < corners.length; i++) {
-						for (int j = 0; j < corners[0].length - 1; j++) {
-							travelTo(corners[i][j], corners[i][j+1], false);
-							clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
-							if (clearGreen) {
-								i = 100;
-								j = 100;
-								travelTo(borderPoint[0], borderPoint[1], false);
-							}
-						}
-					}
-				}
-				else {
-					travelTo(borderPoint[0], borderPoint[1], false);
-				}
-				
-				circleGreenZone(xDeposit, yDeposit);
-				safeX = odometer.getX();
-				safeY = odometer.getY();
-			}
+			
 		}else{
 			borderPoint = pathGenerator.calculateBorderPoint();
 			clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
@@ -870,9 +821,9 @@ public class Navigation extends Thread {
 		}
 
 		//if not carrying a block, regenerate path to green zone
-		if(hasBlock){
+		/*if(hasBlock){
 			finishLine();
-		}
+		}*/
 
 	}
 	
@@ -914,11 +865,11 @@ public class Navigation extends Thread {
 			if(error < -BAND_WIDTH){
 				//too far away, need to turn right
 				leftMotor.setSpeed(FAST + 75);
-				rightMotor.setSpeed(FAST + 50 + (error*2));	//error is negative, right move slower
+				rightMotor.setSpeed(FAST + 75 + (error*2));	//error is negative, right move slower
 			}else if (error > BAND_WIDTH){
 				//too close, need to turn left
 				leftMotor.setSpeed(FAST + 75);
-				rightMotor.setSpeed(FAST + 50 + (error * 2));	//error is positive, right moves faster
+				rightMotor.setSpeed(FAST + 75 + (error * 2));	//error is positive, right moves faster
 			}else{
 				leftMotor.setSpeed(FAST + 100);
 				rightMotor.setSpeed(FAST + 100);
@@ -975,11 +926,11 @@ public class Navigation extends Thread {
 			
 			if(error < -BAND_WIDTH){
 				//too far away, need to turn left
-				leftMotor.setSpeed(FAST + 50 + (error*2));	//error is negative, left moves slower
+				leftMotor.setSpeed(FAST + 75 + (error*2));	//error is negative, left moves slower
 				rightMotor.setSpeed(FAST + 75);	
 			}else if (error > BAND_WIDTH){
 				//too close, need to turn right
-				leftMotor.setSpeed(FAST + 50 + (error*2));	//error is positive, left moves faster
+				leftMotor.setSpeed(FAST + 75 + (error*2));	//error is positive, left moves faster
 				rightMotor.setSpeed(FAST + 75);
 			}else{
 				//within band, go straight
@@ -1015,8 +966,8 @@ public class Navigation extends Thread {
 	public int getFilteredDistance() {
 		int distance = 0;
 		bottomUs.ping();
-		if (bottomUs.getDistance() > 200) {
-			distance = 200;
+		if (bottomUs.getDistance() > 150) {
+			distance = 150;
 		}
 		distance = bottomUs.getDistance();
 		return distance;
@@ -1165,13 +1116,13 @@ public class Navigation extends Thread {
 				xDeposit3 = xDeposit;
 			    if(gy0 >= (wy1/2.0)){
 			    	yDeposit = gy0;
-			    	yDeposit2 = yDeposit - 5.6;
-			    	yDeposit3 = yDeposit - 7.0;
+			    	yDeposit2 = yDeposit - 7.6;
+			    	yDeposit3 = yDeposit - 9.0;
 			    	depositAngle = 90.0;
 			    }else{
 			        yDeposit = gy1;
-			    	yDeposit2 = yDeposit + 5.6;
-			    	yDeposit3 = yDeposit + 7.0;
+			    	yDeposit2 = yDeposit + 7.6;
+			    	yDeposit3 = yDeposit + 9.0;
 			        depositAngle = 270.0;
 			    }
 			}else{
@@ -1181,13 +1132,13 @@ public class Navigation extends Thread {
 			      
 			    if(gx0 >= (wx1/2.0)){
 			    	xDeposit = gx0;
-			    	xDeposit2 = xDeposit - 5.6;
-			    	xDeposit3 = xDeposit - 7.0;
+			    	xDeposit2 = xDeposit - 7.6;
+			    	xDeposit3 = xDeposit - 9.0;
 			    	depositAngle = 0.0;
 			    }else{
 			        xDeposit = gx1;
-			        xDeposit2 = xDeposit + 5.6;
-			        xDeposit3 = xDeposit + 7.0;
+			        xDeposit2 = xDeposit + 7.6;
+			        xDeposit3 = xDeposit + 9.0;
 			        depositAngle = 180.0;
 			    }
 			} 
