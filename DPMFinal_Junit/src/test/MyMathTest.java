@@ -149,4 +149,44 @@ public class MyMathTest {
 	public void testFixAngleDegJ(){
 		assertTrue(Math.abs(MyMath.fixAngleDeg(325.0) - 325.0) < ERROR);
 	}
+	
+	/////////////////////////////
+	// Test averageAngle()
+	/////////////////////////////
+	@Test
+	public void testAverageAngleA(){
+		assertTrue(Math.abs(MyMath.averageAngle(0.0, 0.0) - 0.0) < ERROR);
+	}
+
+	@Test
+	public void testAverageAngleB(){
+		assertTrue(Math.abs(MyMath.averageAngle(50.0, 0.0) - 25.0) < ERROR);
+	}
+
+	@Test
+	public void testAverageAngleC(){
+		assertTrue(Math.abs(MyMath.averageAngle(180.0, 0.0) - 90.0) < ERROR ||
+				   Math.abs(MyMath.averageAngle(180.0, 0.0) - (270.0)) < ERROR);
+	}
+
+	@Test
+	public void testAverageAngleD(){
+		assertTrue(Math.abs(MyMath.averageAngle(0.0, 180.0) - 90.0) < ERROR ||
+				   Math.abs(MyMath.averageAngle(0.0, 180.0) - (270.0)) < ERROR);
+	}
+
+	@Test
+	public void testAverageAngleE(){
+		assertTrue(Math.abs(MyMath.averageAngle(320.0, 40.0) - 0.0) < ERROR);
+	}
+
+	@Test
+	public void testAverageAngleF(){
+		assertTrue(Math.abs(MyMath.averageAngle(40.0, 320.0) - 0.0) < ERROR);
+	}
+
+	@Test
+	public void testAverageAngleG(){
+		assertTrue(Math.abs(MyMath.averageAngle(260.0, 100.0) - 180.0) < ERROR);
+	}
 }
