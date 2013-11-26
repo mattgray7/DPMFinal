@@ -7,7 +7,7 @@ public class Localization {
 	private static final int SPIN_SPEED = 300;
 	private static final int WALL_DISTANCE = 55;
 	private static final Vector CS_POSITION = new Vector(-8.7, -10.5, 0.0);	// Back-left CS
-	private static final int BLACK_LINE_SLOPE_THRESHOLD = -10;
+	private static final int BLACK_LINE_SLOPE_THRESHOLD = -8;	// By looking at graph of filtered values during light localization
 
 	private NXTRegulatedMotor leftMotor = Motor.B;
 	private NXTRegulatedMotor rightMotor = Motor.C;
@@ -212,17 +212,19 @@ public class Localization {
 		
 		// Calculate angle difference when detecting each line on x and y axis
 		thetaY = Math.abs(angles[0] - angles[2]);
+		thetaY = Odometer.fixDegAngle(thetaY);
+		
 		thetaX = Math.abs(angles[1] - angles[3]);
 		
 		
-		// NOTE: odometry correction should take care of fixing the position
-		// Calculate coordinates
-		//x = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaY / 2.0));
-		//y = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaX / 2.0));
+		// NOTE: odometry correction should also take care of fixing the
+		// position. So this part is not necessary
 		
-		// Update coordinates in odometer, theta is not updated
-		//odo.setX(x);
-		//odo.setY(y);
+		// Reset odometer's position
+		x = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaY / 2.0));
+		y = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaX / 2.0));
+		odo.setX(x);
+		odo.setY(y);
 		
 		leftMotor.setSpeed(0);
 		rightMotor.setSpeed(0);

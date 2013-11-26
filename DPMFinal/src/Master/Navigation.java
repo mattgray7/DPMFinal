@@ -8,15 +8,13 @@ import lejos.nxt.ColorSensor.Color;
 import java.util.Random;
 
 public class Navigation extends Thread {
-
 	private NXTRegulatedMotor sensMotor = Motor.A;
 	private NXTRegulatedMotor leftMotor = Motor.B;
 	private NXTRegulatedMotor rightMotor = Motor.C;
-
-	private UltrasonicSensor bottomUs;
-	private ColorSensor colorSens;
-	private ObjectRecognition recog;
-	private PathGenerator pathGenerator;
+	
+	private final int FAST = 200;
+	private final int JOG = 150;
+	private final int SLOW = 100;
 	
 	private final double POINT_THRESH = 0.5;
 	private final double ANGLE_THRESH = 5.0;		//correcting angle thresh
@@ -24,13 +22,16 @@ public class Navigation extends Thread {
 	private final double CLAW_DISTANCE = 17.0;		//the distance the robot must reverse to safely bring down claw
 	private final int COLOR_THRESH = 330;			//threshold for colour sensor, >COLOR_THRESH implies object is directly ahead
 	
+
+	private UltrasonicSensor bottomUs;
+	private ColorSensor colorSens;
+	private ObjectRecognition recog;
+	private PathGenerator pathGenerator;
+	private Odometer odometer;
+
 	private int role = 1;		//robots role
 	private double safeX = 0.0;
 	private double safeY = 0.0;
-	
-	private final int FAST = 200;		//motor speeds
-	private final int JOG = 150;
-	private final int SLOW = 100;
 	
 	private int towerHeight = 0;
 	private int numTowers = 0;	
@@ -38,7 +39,6 @@ public class Navigation extends Thread {
 	private double RW_RADIUS;
 	private double WHEEL_BASE;
 	
-	private Odometer odometer;
 	public Boolean isBusy = true;			//either inspecting or turning
 	public Boolean hasBlock = false;		//true once a block is read and grabbed
 	public Boolean resetPath = false;		//true once a new path needs to be implemented
@@ -46,13 +46,16 @@ public class Navigation extends Thread {
 	public Boolean leftAvoidFail = false;
 	public Boolean rightAvoidFail = false;
 	public Boolean obstacleInWay = false;
-	
 
 	private double gx0=120;			//green zone left x component
 	private double gx1=150;			//green zone right x component
 	private double gy0=90;			//green zone lower y component
 	private double gy1=150;			//green zone upper y component
 	
+	private double rx0;			//red zone left x component
+	private double rx1;			//red zone right x component
+	private double ry0;			//red zone lower y component
+	private double ry1;			//red zone upper y component
 	
 	private double xDeposit = gx0 + 15.0;
 	private double xDeposit2 = xDeposit;
@@ -61,11 +64,6 @@ public class Navigation extends Thread {
 	private double yDeposit2 = yDeposit;
 	private double yDeposit3 = yDeposit;
 	private double depositAngle = 90.0;
-	
-	private double rx0;			//red zone left x component
-	private double rx1;			//red zone right x component
-	private double ry0;			//red zone lower y component
-	private double ry1;			//red zone upper y component
 	
 	private double wx0 = -30.0;			//left wall
 	private double wx1 = 210.0;			//right wall
@@ -87,6 +85,7 @@ public class Navigation extends Thread {
 	// test
 	private BTSend bts;			//Bluetooth sender class
 
+	
 	/**
 	 * Constructor
 	 * 

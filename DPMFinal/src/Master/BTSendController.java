@@ -98,11 +98,9 @@ public class BTSendController {
 		//localization.doLightLocalization();
 		//nav.turnTo(90, true, true);
 
-
 		
 		//nav.travelTo(0.0, 90.0);
 		//nav.travelTo(60.0, 0.0);
-
 		
 		Button.waitForAnyPress();
 		
