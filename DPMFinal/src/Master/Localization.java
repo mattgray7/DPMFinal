@@ -4,7 +4,7 @@ import lejos.nxt.*;
 import lejos.nxt.comm.RConsole;
 
 public class Localization {
-	private static final int SPIN_SPEED = 250;
+	private static final int SPIN_SPEED = 200;
 	private static final int WALL_DISTANCE = 55;
 	private static final Vector CS_POSITION = new Vector(-8.7, -10.5, 0.0);	// Back-left CS
 	private static final int BLACK_LINE_SLOPE_THRESHOLD = -8;	// By looking at graph of filtered values during light localization
@@ -45,6 +45,7 @@ public class Localization {
 	 * if the sensor initially reads a wall.
 	 */
 	public void doLocalization(){
+		/*
 		if (!wallInSight()){
 			LCD.drawString("FALLING", 0, 0);
 			doUSLocalizationFallingEdge();
@@ -53,10 +54,12 @@ public class Localization {
 			LCD.drawString("RISING", 0, 0);
 			doUSLocalizationRisingEdge();
 		}
-		//while(!wallInSight()){
-			
-		//}
+		*/
+		
 		//doUSLocalizationRisingEdge();
+		us.continuous();
+		doUSLocalizationRisingEdge();
+		us.off();
 	}
 	
 	private void doUSLocalizationFallingEdge(){
@@ -79,12 +82,13 @@ public class Localization {
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
-		long spinTime = 1500;
+		long spinTime = 1000;
 		Sound.beep();
 		spinRight();
 		while(System.currentTimeMillis() - startTime < spinTime){
 			// Wait
 			getFilteredDistance();
+			//RConsole.println("WHILE dist " + usFilter.getFilteredValue() + "\n");
 		}
 		Sound.beep();
 		
@@ -124,12 +128,13 @@ public class Localization {
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
-		long spinTime = 1500;
+		long spinTime = 1000;
 		Sound.beep();
 		spinRight();
 		while(System.currentTimeMillis() - startTime < spinTime){
 			// Wait
 			getFilteredDistance();
+			//RConsole.println("WHILE dist " + usFilter.getFilteredValue() + "\n");
 		}
 		Sound.beep();
 		
@@ -392,14 +397,17 @@ public class Localization {
 	 * @return The distance (in cm).
 	 */
 	private int getFilteredDistance() {
+		/*
 		// This is done in another thread. You need to wait for the ping to
 		// complete. This takes > 20 ms.
 		us.ping();
 		
 		// Wait for the ping to complete
 		try { Thread.sleep(50); } catch (InterruptedException e) {}
+		*/
 		
 		usFilter.add(us.getDistance());
+		RConsole.println("raw-fil " + us.getDistance() + " " + usFilter.getFilteredValue());
 				
 		return usFilter.getFilteredValue();
 	}

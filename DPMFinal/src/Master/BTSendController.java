@@ -50,9 +50,9 @@ public class BTSendController {
 		BTSendController controller = new BTSendController();
 		
 		// Un-comment to setup the RConsole connection
-		//controller.openRConsole();
+		controller.openRConsole();
 		controller.execute();
-		//controller.closeRConsole();
+		controller.closeRConsole();
 		
 		System.exit(0);
 	}
@@ -101,7 +101,7 @@ public class BTSendController {
 		// Do localization
 		localization.doLocalization();
 		nav.travelTo(0.0, 0.0, true);
-		localization.doLightLocalization();
+		//localization.doLightLocalization();
 		nav.turnTo(90, true, true);
 		odometryCorrection.start();
 		
@@ -158,6 +158,7 @@ public class BTSendController {
 		int role = t.role.getId();
 		startingX = t.startingCorner.getX();
 		startingY = t.startingCorner.getY();
+		corner = t.startingCorner.getId();
 		
 		if(role == 1){
 			//builder
