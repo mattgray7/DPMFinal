@@ -53,6 +53,10 @@ public class Localization {
 			LCD.drawString("RISING", 0, 0);
 			doUSLocalizationRisingEdge();
 		}
+		//while(!wallInSight()){
+			
+		//}
+		//doUSLocalizationRisingEdge();
 	}
 	
 	private void doUSLocalizationFallingEdge(){
@@ -60,7 +64,6 @@ public class Localization {
 		// This should already be established, and is not really necessary.
 		LCD.drawString("Init", 0, 3);
 		while(wallInSight()){
-			RConsole.println("wall in sight, " + );
 			spinLeft();
 		}
 		
@@ -183,7 +186,7 @@ public class Localization {
 				LCD.clear();
 				LCD.drawString("FCS " + csFilter.getFilteredValue(), 0, 1);
 				LCD.drawString("FCS " + csFilter.getRawValue(), 0, 2);
-				RConsole.println("FCS " + csFilter.getRawValue() + " " + csFilter.getFilteredValue());
+				//RConsole.println("FCS " + csFilter.getRawValue() + " " + csFilter.getFilteredValue());
 				
 				if (csFilter.getFilteredValue() < BLACK_LINE_SLOPE_THRESHOLD) {
 					double odoAngle = odo.getTheta();
@@ -218,36 +221,36 @@ public class Localization {
 		double positiveXAxis = MyMath.averageAngle(angles[0], angles[2]);
 		double positiveYAxis = MyMath.averageAngle(angles[1], angles[3]);
 		
-		RConsole.println("positiveXAxis before: " + positiveXAxis + "\n");
-		RConsole.println("positiveYAxis before: " + positiveYAxis + "\n");
+		//RConsole.println("positiveXAxis before: " + positiveXAxis + "\n");
+		//RConsole.println("positiveYAxis before: " + positiveYAxis + "\n");
 
 		double correctionXAxis;
 		double correctionYAxis;
 		
 		if(positiveXAxis < 90.0 || positiveXAxis > 270.0){
-			RConsole.println("AAAA" + "\n");
+			//RConsole.println("AAAA" + "\n");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 0.0);
 		}
 		else{
-			RConsole.println("BBBB" + "\n");
+			//RConsole.println("BBBB" + "\n");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 180.0);
 		}
 
 		if(positiveYAxis > 0.0 && positiveYAxis < 180.0){
-			RConsole.println("CCCC" + "\n");
+			//RConsole.println("CCCC" + "\n");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 90.0);
 		}
 		else{
-			RConsole.println("DDDD" + "\n");
+			//RConsole.println("DDDD" + "\n");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 270.0);
 		}
 		
-		RConsole.println("correctionXAxis: " + correctionXAxis + "\n");
-		RConsole.println("correctionYAxis: " + correctionYAxis + "\n");
+		//RConsole.println("correctionXAxis: " + correctionXAxis + "\n");
+		//RConsole.println("correctionYAxis: " + correctionYAxis + "\n");
 		
 		double averageCorrection = (correctionXAxis + correctionYAxis) / 2.0;
 		
-		RConsole.println("averageCorrection: " + averageCorrection + "\n");
+		//RConsole.println("averageCorrection: " + averageCorrection + "\n");
 
 		double odoTheta = odo.getTheta();
 		double correctedAngle = MyMath.fixAngleDeg(odoTheta + averageCorrection + (-0.0));	// Adding (-10), tweaked value.
@@ -262,7 +265,7 @@ public class Localization {
 		LCD.drawString("1: " + angles[1], 0, 4);
 		LCD.drawString("2: " + angles[2], 0, 5);
 		LCD.drawString("3: " + angles[3], 0, 6);
-		*/
+		
 		RConsole.println("XAxis " + correctionXAxis + "\n");
 		RConsole.println("YAxis " + correctionYAxis + "\n");
 		RConsole.println("ave " + averageCorrection + "\n");
@@ -270,7 +273,7 @@ public class Localization {
 		RConsole.println("1: " + angles[1] + "\n");
 		RConsole.println("2: " + angles[2] + "\n");
 		RConsole.println("3: " + angles[3] + "\n");
-		
+		*/
 		
 		// NOTE: odometry correction should also take care of fixing the
 		// position. So this part is not necessary
