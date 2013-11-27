@@ -50,9 +50,9 @@ public class BTSendController {
 		BTSendController controller = new BTSendController();
 		
 		// Un-comment to setup the RConsole connection
-		controller.openRConsole();
+		//controller.openRConsole();
 		controller.execute();
-		controller.closeRConsole();
+		//controller.closeRConsole();
 		
 		System.exit(0);
 	}
