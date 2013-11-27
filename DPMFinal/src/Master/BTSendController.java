@@ -68,6 +68,7 @@ public class BTSendController {
 		
 		odo = new Odometer(LEFT_WHEEL_RADIUS, RIGHT_WHEEL_RADIUS, WHEELBASE_WIDTH);
 		bts = new BTSend();
+		
 		objectRecognition = new ObjectRecognition(csFront);
 		//pathGenerator = new PathGenerator(odo);
 		pathGenerator = new PathGenerator(odo);

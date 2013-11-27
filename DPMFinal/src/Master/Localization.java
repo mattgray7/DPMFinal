@@ -297,7 +297,8 @@ public class Localization {
 	 */
 	private void usLocalizationCorrection(double angleA, double angleB){
 		double angleDelta = getAngleCorrection(angleA, angleB);
-		double distance = getDistanceToWall(angleA, angleB);
+		//double distance = getDistanceToWall(angleA, angleB);
+		double distance = 22;
 		
 		odo.setTheta(odo.getTheta() + angleDelta);
 		odo.setX(distance - 30.0);
