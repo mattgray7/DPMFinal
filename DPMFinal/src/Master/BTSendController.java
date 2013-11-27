@@ -22,6 +22,9 @@ public class BTSendController {
 	private static final SensorPort CS_ODO_LEFT_PORT = SensorPort.S4;
 	private static final SensorPort CS_ODO_RIGHT_PORT = SensorPort.S2;
 	
+	private double startingX = 0.0;
+	private double startingY = 0.0;
+	
 	public UltrasonicSensor bottomUs;
 	public ColorSensor csOdoLeft;
 	public ColorSensor csOdoRight;
@@ -137,13 +140,15 @@ public class BTSendController {
 		int greenZone[] = t.greenZone;
 		int redZone[] = t.greenZone;
 		int role = t.role.getId();
+		startingX = t.startingCorner.getX();
+		startingY = t.startingCorner.getY();
 		
 		if(role == 1){
 			//builder
-			nav.setTransmission(greenZone, redZone, role);
+			nav.setTransmission(greenZone, redZone, role, startingX, startingY);
 		}else if (role == 2){
 			//collector
-			nav.setTransmission(redZone, greenZone, role);
+			nav.setTransmission(redZone, greenZone, role, startingX, startingY);
 		}
 	}
 	

@@ -70,7 +70,7 @@ public class Lift {
 	 * @return void
 	 */
 	public static void release(){
-		clampMotor.setSpeed(100);
+		clampMotor.setSpeed(200);
 		clampMotor.forward();
 		clampMotor.rotate(95, false);
 		clampMotor.stop();
