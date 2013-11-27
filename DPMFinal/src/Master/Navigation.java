@@ -1277,7 +1277,7 @@ public class Navigation extends Thread {
 			}
 
 			double distToPoint = Math.sqrt(Math.pow(Math.abs(odometer.getX() - randX), 2) + Math.pow(Math.abs(odometer.getY() - randY), 2));
-			if((distToPoint > 100) || (distToPoint < 10)){
+			if((distToPoint > 80) || (distToPoint < 10)){
 				continue;
 			}
 

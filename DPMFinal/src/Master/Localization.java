@@ -287,7 +287,7 @@ public class Localization {
 		//odo.setX(x);
 		//odo.setY(y);
 		
-		cs.setFloodlight(false);
+		//cs.setFloodlight(false);
 	}
 	
 	/**

@@ -50,9 +50,9 @@ public class BTSendController {
 		BTSendController controller = new BTSendController();
 		
 		// Un-comment to setup the RConsole connection
-		controller.openRConsole();
+		//controller.openRConsole();
 		controller.execute();
-		controller.closeRConsole();
+		//controller.closeRConsole();
 		
 		System.exit(0);
 	}
@@ -89,7 +89,7 @@ public class BTSendController {
 		csFront.setFloodlight(false);
 		
 		// Set up bluetooth connections
-		//getTransmission();;
+		getTransmission();;
 
 		
 		// Start sensor threads
@@ -101,7 +101,7 @@ public class BTSendController {
 		// Do localization
 		localization.doLocalization();
 		nav.travelTo(0.0, 0.0, true);
-		//localization.doLightLocalization();
+		localization.doLightLocalization();
 		nav.turnTo(90, true, true);
 		odometryCorrection.start();
 		
@@ -120,6 +120,9 @@ public class BTSendController {
 		}
 		
 		bts.establishConnection();
+		
+		//nav.travelTo(0, 0, true);
+		
 		nav.start();
 		
 		Button.waitForAnyPress();
