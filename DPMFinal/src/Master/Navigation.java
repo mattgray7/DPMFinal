@@ -1306,13 +1306,13 @@ public class Navigation extends Thread {
 				xDeposit3 = xDeposit + 4;
 				if(gy0 >= (wy1/2.0)){
 					yDeposit = gy0;
-					yDeposit2 = yDeposit - 6.0;
-					yDeposit3 = yDeposit - 9.0;
+					yDeposit2 = yDeposit - 5.0;
+					yDeposit3 = yDeposit - 5.0;
 					depositAngle = 90.0;
 				}else{
 					yDeposit = gy1;
-					yDeposit2 = yDeposit + 6.0;
-					yDeposit3 = yDeposit + 9.0;
+					yDeposit2 = yDeposit + 5.0;
+					yDeposit3 = yDeposit + 5.0;
 					depositAngle = 270.0;
 				}
 			}else{
@@ -1322,13 +1322,13 @@ public class Navigation extends Thread {
 
 				if(gx0 >= (wx1/2.0)){
 					xDeposit = gx0;
-					xDeposit2 = xDeposit - 6.0;
-					xDeposit3 = xDeposit - 9.0;
+					xDeposit2 = xDeposit - 5.0;
+					xDeposit3 = xDeposit - 5.0;
 					depositAngle = 0.0;
 				}else{
 					xDeposit = gx1;
-					xDeposit2 = xDeposit + 6.0;
-					xDeposit3 = xDeposit + 9.0;
+					xDeposit2 = xDeposit + 5.0;
+					xDeposit3 = xDeposit + 5.0;
 					depositAngle = 180.0;
 				}
 			} 

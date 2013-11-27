@@ -103,7 +103,7 @@ public class BTSendController {
 		nav.travelTo(0.0, 0.0, true);
 		localization.doLightLocalization();
 		nav.turnTo(90, true, true);
-		odometryCorrection.start();
+		//odometryCorrection.start();
 		
 		if(corner == 2){
 			odo.setX(300);
@@ -157,7 +157,7 @@ public class BTSendController {
 		
 		//set the green zone coordinates
 		int greenZone[] = t.greenZone;
-		int redZone[] = t.greenZone;
+		int redZone[] = t.redZone;
 		int role = t.role.getId();
 		startingX = t.startingCorner.getX();
 		startingY = t.startingCorner.getY();
