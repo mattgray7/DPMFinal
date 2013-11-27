@@ -7,20 +7,20 @@ public class PathGenerator {
 	private double BORDER_DIST = 15.0;                //border distance for checking if a point is in an area
 	private double GREEN_BORDER_DIST = 18.0;        //must be larger than BORDER_DIST, for traveling to border point
 
-	private double gx0=150;                        //green zone left x component
-	private double gx1=180;                        //green zone right x component
-	private double gy0=150;                        //green zone lower y component
-	private double gy1=180;                        //green zone upper y component
+	private double gx0=60;                        //green zone left x component
+	private double gx1=90;                        //green zone right x component
+	private double gy0=60;                        //green zone lower y component
+	private double gy1=90;                        //green zone upper y component
 
-	private double rx0=60;                        //red zone left x component
-	private double rx1=90;                        //red zone right x component
+	private double rx0=300;                        //red zone left x component
+	private double rx1=330;                        //red zone right x component
 	private double ry0=60;                        //red zone lower y component
-	private double ry1=90;                        //red zone upper y component
+	private double ry1=180;                        //red zone upper y component
 
 	private double wx0 = -30.0;                        //left wall
-	private double wx1 = 210.0;                        //right wall
+	private double wx1 = 330.0;                        //right wall
 	private double wy0 = -30.0;                        //lower wall
-	private double wy1 = 210.0;                        //upper wall
+	private double wy1 = 330.0;                        //upper wall
 
 
 

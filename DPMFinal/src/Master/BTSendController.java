@@ -22,6 +22,8 @@ public class BTSendController {
 	private static final SensorPort CS_ODO_LEFT_PORT = SensorPort.S4;
 	private static final SensorPort CS_ODO_RIGHT_PORT = SensorPort.S2;
 	
+	private int corner = 1;
+	
 	private double startingX = 0.0;
 	private double startingY = 0.0;
 	
@@ -87,23 +89,38 @@ public class BTSendController {
 		
 		// Set up bluetooth connections
 		//getTransmission();;
-		//bts.establishConnection();
+
 		
 		// Start sensor threads
 		lcdInfo.start();
 		odo.start();
-		odometryCorrection.start();
+
+
 		
 		// Do localization
 		localization.doLocalization();
 		nav.travelTo(0.0, 0.0, true);
 		localization.doLightLocalization();
 		nav.turnTo(90, true, true);
-
+		odometryCorrection.start();
 		
-		//nav.travelTo(0.0, 90.0);
-		//nav.travelTo(60.0, 0.0);
-		//nav.start();
+		if(corner == 2){
+			odo.setX(300);
+			odo.setY(0);
+			odo.setTheta(180.0);
+		}else if (corner == 3){
+			odo.setX(300);
+			odo.setY(300);
+			odo.setTheta(270.0);
+		}else if (corner == 4){
+			odo.setX(0);
+			odo.setY(300);
+			odo.setTheta(0.0);
+		}
+		
+		bts.establishConnection();
+		nav.start();
+
 		
 		Button.waitForAnyPress();
 		

@@ -16,7 +16,7 @@ public class SlaveController {
 	
 	private static final int MAX = 340;
 	private static final int ONE_BLOCK_BELOW = 230;
-	private static final int TWO_BLOCKS_BELOW = 170;
+	private static final int TWO_BLOCKS_BELOW = 140;
 	
 	
 	/**
