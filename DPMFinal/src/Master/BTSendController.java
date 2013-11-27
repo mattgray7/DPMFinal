@@ -48,9 +48,9 @@ public class BTSendController {
 		BTSendController controller = new BTSendController();
 		
 		// Un-comment to setup the RConsole connection
-		//controller.openRConsole();
+		controller.openRConsole();
 		controller.execute();
-		//controller.closeRConsole();
+		controller.closeRConsole();
 		
 		System.exit(0);
 	}
@@ -95,14 +95,16 @@ public class BTSendController {
 		odometryCorrection.start();
 		
 		// Do localization
-		localization.doLocalization();
-		nav.travelTo(0.0, 0.0, true);
-		localization.doLightLocalization();
-		nav.turnTo(90, true, true);
+		//localization.doLocalization();
+		//nav.travelTo(0.0, 0.0, true);
+		//localization.doLightLocalization();
+		//nav.turnTo(90, true, true);
 
 		
-		//nav.travelTo(0.0, 90.0);
-		//nav.travelTo(60.0, 0.0);
+		nav.travelTo(0.0, 90.0, true);
+		nav.travelTo(60.0, 0.0, true);
+		nav.travelTo(30, 120, true);
+		nav.travelTo(0.0, 0.0, true);
 		//nav.start();
 		
 		Button.waitForAnyPress();
