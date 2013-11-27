@@ -5,7 +5,7 @@ import lejos.nxt.comm.RConsole;
 
 public class Localization {
 	private static final int SPIN_SPEED = 250;
-	private static final int WALL_DISTANCE = 45;
+	private static final int WALL_DISTANCE = 55;
 	private static final Vector CS_POSITION = new Vector(-8.7, -10.5, 0.0);	// Back-left CS
 	private static final int BLACK_LINE_SLOPE_THRESHOLD = -8;	// By looking at graph of filtered values during light localization
 
@@ -33,7 +33,7 @@ public class Localization {
 		this.nav = nav;
 		this.us = us;
 		
-		this.usFilter = new MedianFilter(5);
+		this.usFilter = new MedianFilter(3);
 		this.csFilter = new SmoothDifferenceFilter(6);
 		
 		us.off();
