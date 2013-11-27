@@ -4,7 +4,7 @@ import lejos.nxt.*;
 import lejos.nxt.comm.RConsole;
 
 public class Localization {
-	private static final int SPIN_SPEED = 300;
+	private static final int SPIN_SPEED = 250;
 	private static final int WALL_DISTANCE = 55;
 	private static final Vector CS_POSITION = new Vector(-8.7, -10.5, 0.0);	// Back-left CS
 	private static final int BLACK_LINE_SLOPE_THRESHOLD = -8;	// By looking at graph of filtered values during light localization
@@ -34,7 +34,7 @@ public class Localization {
 		this.us = us;
 		
 		this.usFilter = new MedianFilter(5);
-		this.csFilter = new SmoothDifferenceFilter(4);
+		this.csFilter = new SmoothDifferenceFilter(6);
 		
 		us.off();
 	}
@@ -186,10 +186,10 @@ public class Localization {
 				
 				if (csFilter.getFilteredValue() < BLACK_LINE_SLOPE_THRESHOLD) {
 					double odoAngle = odo.getTheta();
-					double csAngle = CS_POSITION.xyAngleDeg();
+					double csAngle = CS_POSITION.xyAngleDeg() - 90.0;	// Because getTheta returns the angle from the front of the robot, so we take that part off of the CS's angle.
 					double lineAngle = Odometer.fixDegAngle(odoAngle + csAngle);
 					
-					angles[i] = lineAngle;	
+					angles[i] = lineAngle;
 					Sound.beep();
 					hasSeenLine = true;
 					
@@ -216,28 +216,59 @@ public class Localization {
 		// Find angle correction
 		double positiveXAxis = MyMath.averageAngle(angles[0], angles[2]);
 		double positiveYAxis = MyMath.averageAngle(angles[1], angles[3]);
+		
+		RConsole.println("positiveXAxis before: " + positiveXAxis + "\n");
+		RConsole.println("positiveYAxis before: " + positiveYAxis + "\n");
 
 		double correctionXAxis;
 		double correctionYAxis;
 		
-		if(positiveXAxis < 180.0 || positiveXAxis > 270.0){
+		if(positiveXAxis < 90.0 || positiveXAxis > 270.0){
+			RConsole.println("AAAA" + "\n");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 0.0);
 		}
 		else{
+			RConsole.println("BBBB" + "\n");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 180.0);
 		}
 
-		if(positiveXAxis > 0.0 || positiveXAxis < 180.0){
+		if(positiveYAxis > 0.0 && positiveYAxis < 180.0){
+			RConsole.println("CCCC" + "\n");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 90.0);
 		}
 		else{
+			RConsole.println("DDDD" + "\n");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 270.0);
 		}
 		
-		double averageCorrection = (correctionXAxis + correctionYAxis) / 2.0;
-		double odoTheta = odo.getTheta();
+		RConsole.println("correctionXAxis: " + correctionXAxis + "\n");
+		RConsole.println("correctionYAxis: " + correctionYAxis + "\n");
 		
-		odo.setTheta(odoTheta + averageCorrection);
+		double averageCorrection = (correctionXAxis + correctionYAxis) / 2.0;
+		
+		RConsole.println("averageCorrection: " + averageCorrection + "\n");
+
+		double odoTheta = odo.getTheta();
+		double correctedAngle = MyMath.fixAngleDeg(odoTheta + averageCorrection + (-0.0));	// Adding (-10), tweaked value.
+
+		odo.setTheta(correctedAngle);
+		
+		/* For debuggin
+		LCD.drawString("XAxis " + correctionXAxis, 0, 0);
+		LCD.drawString("YAxis " + correctionYAxis, 0, 1);
+		LCD.drawString("ave " + averageCorrection, 0, 2);
+		LCD.drawString("0: " + angles[0], 0, 3);
+		LCD.drawString("1: " + angles[1], 0, 4);
+		LCD.drawString("2: " + angles[2], 0, 5);
+		LCD.drawString("3: " + angles[3], 0, 6);
+		*/
+		RConsole.println("XAxis " + correctionXAxis + "\n");
+		RConsole.println("YAxis " + correctionYAxis + "\n");
+		RConsole.println("ave " + averageCorrection + "\n");
+		RConsole.println("0: " + angles[0] + "\n");
+		RConsole.println("1: " + angles[1] + "\n");
+		RConsole.println("2: " + angles[2] + "\n");
+		RConsole.println("3: " + angles[3] + "\n");
 		
 		
 		// NOTE: odometry correction should also take care of fixing the
