@@ -217,36 +217,36 @@ public class Localization {
 		double positiveXAxis = MyMath.averageAngle(angles[0], angles[2]);
 		double positiveYAxis = MyMath.averageAngle(angles[1], angles[3]);
 		
-		RConsole.println("positiveXAxis before: " + positiveXAxis);
-		RConsole.println("positiveYAxis before: " + positiveYAxis);
+		RConsole.println("positiveXAxis before: " + positiveXAxis + "\n");
+		RConsole.println("positiveYAxis before: " + positiveYAxis + "\n");
 
 		double correctionXAxis;
 		double correctionYAxis;
 		
-		if(positiveXAxis < 90.0 && positiveXAxis > 270.0){
-			RConsole.println("AAAA");
+		if(positiveXAxis < 90.0 || positiveXAxis > 270.0){
+			RConsole.println("AAAA" + "\n");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 0.0);
 		}
 		else{
-			RConsole.println("BBBB");
+			RConsole.println("BBBB" + "\n");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 180.0);
 		}
 
 		if(positiveYAxis > 0.0 && positiveYAxis < 180.0){
-			RConsole.println("CCCC");
+			RConsole.println("CCCC" + "\n");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 90.0);
 		}
 		else{
-			RConsole.println("DDDD");
+			RConsole.println("DDDD" + "\n");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 270.0);
 		}
 		
-		RConsole.println("positiveXAxis after: " + positiveXAxis);
-		RConsole.println("positiveYAxis after: " + positiveYAxis);
+		RConsole.println("correctionXAxis: " + correctionXAxis + "\n");
+		RConsole.println("correctionYAxis: " + correctionYAxis + "\n");
 		
 		double averageCorrection = (correctionXAxis + correctionYAxis) / 2.0;
 		
-		RConsole.println("averageCorrection: " + averageCorrection);
+		RConsole.println("averageCorrection: " + averageCorrection + "\n");
 
 		double odoTheta = odo.getTheta();
 		double correctedAngle = MyMath.fixAngleDeg(odoTheta + averageCorrection + (-0.0));	// Adding (-10), tweaked value.
@@ -262,13 +262,13 @@ public class Localization {
 		LCD.drawString("2: " + angles[2], 0, 5);
 		LCD.drawString("3: " + angles[3], 0, 6);
 		*/
-		RConsole.println("XAxis " + correctionXAxis);
-		RConsole.println("YAxis " + correctionYAxis);
-		RConsole.println("ave " + averageCorrection);
-		RConsole.println("0: " + angles[0]);
-		RConsole.println("1: " + angles[1]);
-		RConsole.println("2: " + angles[2]);
-		RConsole.println("3: " + angles[3]);
+		RConsole.println("XAxis " + correctionXAxis + "\n");
+		RConsole.println("YAxis " + correctionYAxis + "\n");
+		RConsole.println("ave " + averageCorrection + "\n");
+		RConsole.println("0: " + angles[0] + "\n");
+		RConsole.println("1: " + angles[1] + "\n");
+		RConsole.println("2: " + angles[2] + "\n");
+		RConsole.println("3: " + angles[3] + "\n");
 		
 		
 		// NOTE: odometry correction should also take care of fixing the
