@@ -84,11 +84,9 @@ public class Localization {
 		spinRight();
 		while(System.currentTimeMillis() - startTime < spinTime){
 			// Wait
+			getFilteredDistance();
 		}
 		Sound.beep();
-		// Empty the contents of the filter so that it is not influenced by the
-		// values it read before sleeping.
-		csFilter.empty();
 		
 		// Rotate right until you see a wall
 		LCD.drawString("See wall...", 0, 3);
@@ -131,11 +129,9 @@ public class Localization {
 		spinRight();
 		while(System.currentTimeMillis() - startTime < spinTime){
 			// Wait
+			getFilteredDistance();
 		}
 		Sound.beep();
-		// Empty the contents of the filter so that it is not influenced by the
-		// values it read before sleeping.
-		csFilter.empty();
 		
 		// Rotate right until you don't see a wall
 		LCD.drawString("Wall...", 0, 3);
