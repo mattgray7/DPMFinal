@@ -75,6 +75,25 @@ public class Vector {
 	}
 	
 	/**
+	 * Return the vector rotated on the xy-plane counterclockwise by the given
+	 * amount.
+	 * 
+	 * @param angle Angle to rotate counter-clockwise.
+	 * 
+	 * @return Rotated vector.
+	 */
+	public static Vector xyRotation(Vector v, double angle){
+		// Math formula found on the web.
+		double c = Math.cos(angle);
+		double s = Math.sin(angle);
+		
+		double newX = v.x * c - v.y * s;
+		double newY = v.x * s + v.y * c;
+		
+		return new Vector(newX, newY, v.z);
+	}
+	
+	/**
 	 * @return The length of the vector.
 	 */
 	public double length(){

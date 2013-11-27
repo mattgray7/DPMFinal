@@ -170,9 +170,10 @@ public class OdometryCorrection extends Thread{
 				
 				double odometerX = odometer.getX();
 				double odometerY = odometer.getY();
+				double odometerTheta = odometer.getTheta();
 				
 				Vector odometerPosition = new Vector(odometerX, odometerY, 0.0);
-				Vector gridPosition = Vector.add(odometerPosition,  leftCSPosition);
+				Vector gridPosition = Vector.add(odometerPosition, Vector.xyRotation(leftCSPosition, odometerTheta - 90.0));
 				
 				double distanceX = distanceToNearestXGridline(gridPosition.getX());
 				double distanceY = distanceToNearestYGridline(gridPosition.getY());
@@ -210,9 +211,10 @@ public class OdometryCorrection extends Thread{
 				
 				double odometerX = odometer.getX();
 				double odometerY = odometer.getY();
+				double odometerTheta = odometer.getTheta();
 				
 				Vector odometerPosition = new Vector(odometerX, odometerY, 0.0);
-				Vector gridPosition = Vector.add(odometerPosition,  rightCSPosition);
+				Vector gridPosition = Vector.add(odometerPosition, Vector.xyRotation(rightCSPosition, odometerTheta - 90.0));
 				
 				double distanceX = distanceToNearestXGridline(gridPosition.getX());
 				double distanceY = distanceToNearestYGridline(gridPosition.getY());
