@@ -33,7 +33,7 @@ public class Navigation extends Thread {
 	private PathGenerator pathGenerator;
 	private Odometer odometer;
 
-	private int role = 1;                //robots role
+	private int role = 2;                //robots role
 	private int avoidCount = 0;
 	private double safeX = 0.0;
 	private double safeY = 0.0;
@@ -51,11 +51,12 @@ public class Navigation extends Thread {
 	public Boolean leftAvoidFail = false;
 	public Boolean rightAvoidFail = false;
 	public Boolean obstacleInWay = false;
+	public Boolean drivingHome = false;
 
-	private double gx0=120;                        //green zone left x component
-	private double gx1=150;                        //green zone right x component
-	private double gy0=90;                        //green zone lower y component
-	private double gy1=150;                        //green zone upper y component
+	private double gx0=150;                        //green zone left x component
+	private double gx1=180;                        //green zone right x component
+	private double gy0=150;                        //green zone lower y component
+	private double gy1=180;                        //green zone upper y component
 
 	private double rx0;                        //red zone left x component
 	private double rx1;                        //red zone right x component
@@ -161,17 +162,19 @@ public class Navigation extends Thread {
 			LCD.drawString("d: " + odometer.getMasterDistance(), 0, 4, false);
 
 			//object detected immediately in front of robot
-			if(colorSens.getNormalizedLightValue() > COLOR_THRESH - 10){
+			if((colorSens.getNormalizedLightValue() > COLOR_THRESH - 10) && (!ignore)){
 				this.setSpeeds(0,0);
 				//begin inspection/avoidance, robot is busy
 				isBusy = true;
 
 				//check the color
-				if((!hasBlock) && (!ignore)){
+				if(!hasBlock){
 					if(checkBlockColor()){
 						//capture the block
-						capture();        
-						return;
+						if(!drivingHome){
+							capture();        
+							return;
+						}
 					}else{
 						obstacleInWay = true;
 						leftMotor.backward();
@@ -185,22 +188,9 @@ public class Navigation extends Thread {
 						return;
 					}
 				}else{
-					if(!checkBlockColor()){
-						recentlyAvoided = true;
-						avoid();
-						return;
-					}else{
-						rotateSensorsRight(80, false);
-						leftMotor.backward();
-						rightMotor.backward();
-						leftMotor.setSpeed(FAST);
-						rightMotor.setSpeed(FAST);
-						leftMotor.rotate(convertDistance(LW_RADIUS, 7.0), true);
-						rightMotor.rotate(convertDistance(RW_RADIUS, 7.0), false);
-						rotateSensorsLeft(80, false);
-					}
-					//both capture and avoid will move the robot past it's next destination, break this travelTo call
-					//return;
+					recentlyAvoided = true;
+					avoid();
+					return;
 				}
 			}
 
@@ -554,7 +544,7 @@ public class Navigation extends Thread {
 
 				try {bts.sendSignal(3);} catch (IOException e) {}        //clamp claw - claw must be clamped to be lifted
 				try {Thread.sleep(500);} catch (InterruptedException e1) {}
-				try {bts.sendSignal(2);} catch (IOException e) {}        //raise arms to max
+				try {bts.sendSignal(4);} catch (IOException e) {}        //raise arms to max
 				try {Thread.sleep(2000);} catch (InterruptedException e1) {}
 
 			}else if (towerHeight == 1){
@@ -586,6 +576,8 @@ public class Navigation extends Thread {
 				try {bts.sendSignal(12);} catch (IOException e) {}        
 				try {Thread.sleep(1500);} catch (InterruptedException e1) {}
 				
+				rotateSensorsLeft(80, false);
+				hasBlock = false;
 				travelToStartingPoint();
 				
 				//for tower pushing
@@ -624,9 +616,13 @@ public class Navigation extends Thread {
 			leftMotor.rotate(-convertDistance(LW_RADIUS, 25), true);
 			rightMotor.rotate(-convertDistance(RW_RADIUS, 25), false);
 
-			try {bts.sendSignal(4);} catch (IOException e) {}
-			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
-			
+			try {bts.sendSignal(3);} catch (IOException e) {}        //clamp claw - claw must be clamped to be lifted
+			try {Thread.sleep(500);} catch (InterruptedException e1) {}
+			try {bts.sendSignal(4);} catch (IOException e) {}        //raise arms to max
+			try {Thread.sleep(2000);} catch (InterruptedException e1) {}
+
+			rotateSensorsLeft(80, false);
+			hasBlock = false;
 			travelToStartingPoint();
 			
 		}
@@ -660,7 +656,25 @@ public class Navigation extends Thread {
 	public void travelToStartingPoint(){
 		double [][] corners = new double [4][2];
 		corners = pathGenerator.findClosestCorner();
+		drivingHome = true;
 		boolean clearGreen;
+		
+		if(role == 2){
+			double heading = (Math.atan2(startingY - odometer.getY(), startingX - odometer.getX())) * (180.0/ Math.PI);
+			if(heading < 0){
+				heading += 360;
+			}
+			if(heading >=0 && heading <= 90.0){
+				travelTo(gx1 + 20.0, gy1 + 20.0, true);
+			}else if (heading >= 90.0 && heading <= 180.0){
+				travelTo(gx0 - 20.0, gy1 + 20.0, true);
+			}else if (heading >= 180.0 && heading <= 270.0){
+				travelTo(gx0 - 20.0, gy0 - 20.0, true);
+			}else{
+				travelTo(gx1 + 20.0, gy0 - 20.0, true);
+			}
+			
+		}
 
 		clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), startingX, startingY);
 		if (!clearGreen) {
@@ -678,6 +692,15 @@ public class Navigation extends Thread {
 				clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), startingX, startingY);
 				if (clearGreen) {
 					travelTo(startingX, startingY, false);
+					while(recentlyAvoided){
+						if(avoidCount == 3){
+							avoidCount = 0;
+							break;
+						}
+						recentlyAvoided = false;
+						avoidCount++;
+						travelTo(startingX, startingY, false);
+					}
 					break;
 				}	
 			}
@@ -696,11 +719,16 @@ public class Navigation extends Thread {
 			
 		}
 		
+		
+		
 		while(true){
 			LCD.drawString("DEMO COMPLETE", 0, 4, false);
+			LCD.drawString("x:" + xDeposit, 0, 5, false);
+			LCD.drawString("y:" + yDeposit, 0, 6, false);
 		}
 	}
 
+	//nick I'm sorry for this method it is disgusting
 	public void travelToDepositPoint(){
 		double x = odometer.getX();
 		double y = odometer.getY();
@@ -714,6 +742,7 @@ public class Navigation extends Thread {
 			borderPoint = pathGenerator.calculateBorderPoint();
 			clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
 			if (!clearGreen) {
+				//builder, path is not clear
 				for (int i = 0; i < corners.length; i++) {
 					travelTo(corners[i][0], corners[i][1], false);
 					while(recentlyAvoided){
@@ -728,27 +757,45 @@ public class Navigation extends Thread {
 					clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
 					if (clearGreen) {
 						travelTo(borderPoint[0], borderPoint[1], false);
+						while(recentlyAvoided){
+							if(avoidCount == 3){
+								avoidCount = 0;
+								break;
+							}
+							recentlyAvoided = false;
+							avoidCount++;
+							travelTo(borderPoint[0], borderPoint[1], false);
+						}
 						break;
 					}	
 				}
-			}
-			else {
+			}else {
+				//builder, path is clear
 				travelTo(borderPoint[0], borderPoint[1], false);
+				while(recentlyAvoided){
+					if(avoidCount == 3){
+						avoidCount = 0;
+						break;
+					}
+					recentlyAvoided = false;
+					avoidCount++;
+					travelTo(borderPoint[0], borderPoint[1], false);
+				}
 			}
 
 			circleGreenZone(xDeposit, yDeposit);
 			safeX = odometer.getX();
 			safeY = odometer.getY();
 
-		}
-		else{
+		}else{
+			//garbage collector, path is not clear
 			borderPoint = pathGenerator.calculateBorderPoint();
 			clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
 			if (!clearGreen) {
 				for (int i = 0; i < corners.length; i++) {	
 					travelTo(corners[i][0], corners[i][1], false);
 					while(recentlyAvoided){
-						if(avoidCount == 3){
+						if(avoidCount == 2){
 							avoidCount = 0;
 							break;
 						}
@@ -759,12 +806,42 @@ public class Navigation extends Thread {
 					clearGreen = pathGenerator.checkPointsInPath(odometer.getX(), odometer.getY(), borderPoint[0], borderPoint[1]);
 					if (clearGreen) {                                                       
 						travelTo(borderPoint[0], borderPoint[1], false);
+						while(recentlyAvoided){
+							if(avoidCount == 2){
+								avoidCount = 0;
+								break;
+							}
+							recentlyAvoided = false;
+							avoidCount++;
+							travelTo(borderPoint[0], borderPoint[1], false);
+						}
 						break;
 					}
 				}
-			}
-			else{
+				
 				travelTo(xDeposit, yDeposit, false);
+				while(recentlyAvoided){
+					if(avoidCount == 2){
+						avoidCount = 0;
+						break;
+					}
+					recentlyAvoided = false;
+					avoidCount++;
+					travelTo(xDeposit, yDeposit, false);
+				}
+				
+			}else{
+				//garbage collector is clear
+				travelTo(xDeposit, yDeposit, false);
+				while(recentlyAvoided){
+					if(avoidCount == 2){
+						avoidCount = 0;
+						break;
+					}
+					recentlyAvoided = false;
+					avoidCount++;
+					travelTo(xDeposit, yDeposit, false);
+				}
 			}
 		}
 		turnTo(depositAngle, true, true);
@@ -859,16 +936,6 @@ public class Navigation extends Thread {
 					rightAvoidFail = true;
 				}
 
-				/*if(rightAvoidFail){
-                                        turnTo(odometer.getTheta() - 180.0, true, true);
-
-                                        rotateSensorsRight(40, false);
-                                        wallFollowLeft(initAngle);
-                                        if(!leftAvoidFail){
-                                                rightAvoidFail = false;
-                                        }
-                                        rotateSensorsLeft(40, false);
-                                }*/
 
 			}else{
 				//turn to initial angle and reverse 30cm backward
@@ -890,6 +957,7 @@ public class Navigation extends Thread {
 		if(leftAvoidFail && rightAvoidFail){
 			leftMotor.stop();
 			rightMotor.stop();
+			
 
 		}else if (leftAvoidFail){
 			turnTo(odometer.getTheta() - 180.0, true, true);
@@ -899,10 +967,7 @@ public class Navigation extends Thread {
 			wallFollowLeft(initAngle);
 		}
 
-		//if not carrying a block, regenerate path to green zone
-		/*if(hasBlock){
-                        finishLine();
-                }*/
+
 
 	}
 
@@ -927,7 +992,7 @@ public class Navigation extends Thread {
 			dist = getFilteredDistance();
 			error = BAND_CENTER - dist;
 
-			if (!pathGenerator.checkPointAhead(odometer.getTheta(), 10)){
+			if (!pathGenerator.checkPointAhead(odometer.getTheta(), 17)){
 				leftAvoidFail = true;
 				rotateSensorsLeft(40, false);
 				return false;
@@ -990,7 +1055,7 @@ public class Navigation extends Thread {
 			dist = getFilteredDistance();
 			error = BAND_CENTER - dist;
 
-			if (!pathGenerator.checkPointAhead(odometer.getTheta(), 10)){
+			if (!pathGenerator.checkPointAhead(odometer.getTheta(), 17)){
 				rotateSensorsRight(40, false);
 				rightAvoidFail = true;
 				return false;
@@ -1197,13 +1262,13 @@ public class Navigation extends Thread {
 				xDeposit3 = xDeposit;
 				if(gy0 >= (wy1/2.0)){
 					yDeposit = gy0;
-					yDeposit2 = yDeposit - 7.6;
-					yDeposit3 = yDeposit - 9.0;
+					yDeposit2 = yDeposit - 9.0;
+					yDeposit3 = yDeposit - 12.0;
 					depositAngle = 90.0;
 				}else{
 					yDeposit = gy1;
-					yDeposit2 = yDeposit + 7.6;
-					yDeposit3 = yDeposit + 9.0;
+					yDeposit2 = yDeposit + 9.0;
+					yDeposit3 = yDeposit + 12.0;
 					depositAngle = 270.0;
 				}
 			}else{
@@ -1213,13 +1278,13 @@ public class Navigation extends Thread {
 
 				if(gx0 >= (wx1/2.0)){
 					xDeposit = gx0;
-					xDeposit2 = xDeposit - 7.6;
-					xDeposit3 = xDeposit - 9.0;
+					xDeposit2 = xDeposit - 9.0;
+					xDeposit3 = xDeposit - 12.0;
 					depositAngle = 0.0;
 				}else{
 					xDeposit = gx1;
-					xDeposit2 = xDeposit + 7.6;
-					xDeposit3 = xDeposit + 9.0;
+					xDeposit2 = xDeposit + 9.0;
+					xDeposit3 = xDeposit + 12.0;
 					depositAngle = 180.0;
 				}
 			} 

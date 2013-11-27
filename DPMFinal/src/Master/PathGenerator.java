@@ -7,10 +7,10 @@ public class PathGenerator {
 	private double BORDER_DIST = 15.0;                //border distance for checking if a point is in an area
 	private double GREEN_BORDER_DIST = 18.0;        //must be larger than BORDER_DIST, for traveling to border point
 
-	private double gx0=120;                        //green zone left x component
-	private double gx1=150;                        //green zone right x component
-	private double gy0=90;                        //green zone lower y component
-	private double gy1=150;                        //green zone upper y component
+	private double gx0=150;                        //green zone left x component
+	private double gx1=180;                        //green zone right x component
+	private double gy0=150;                        //green zone lower y component
+	private double gy1=180;                        //green zone upper y component
 
 	private double rx0=60;                        //red zone left x component
 	private double rx1=90;                        //red zone right x component
@@ -178,7 +178,7 @@ public class PathGenerator {
 
 	public boolean checkPoint(double x, double y, double border) {
 		//check if next point is within a wall
-		if((x <= wx0 + 25) || (x >= wx1 - 25) || (y <= wy0 + 25) || (y >= wy1 - 25)){
+		if((x <= wx0 + 28) || (x >= wx1 - 28) || (y <= wy0 + 28) || (y >= wy1 - 28)){
 			return false;
 		}
 
