@@ -60,6 +60,7 @@ public class Localization {
 		// This should already be established, and is not really necessary.
 		LCD.drawString("Init", 0, 3);
 		while(wallInSight()){
+			RConsole.println("wall in sight, " + );
 			spinLeft();
 		}
 		
@@ -398,9 +399,9 @@ public class Localization {
 		// Wait for the ping to complete
 		try { Thread.sleep(50); } catch (InterruptedException e) {}
 		
-		csFilter.add(us.getDistance());
+		usFilter.add(us.getDistance());
 				
-		return csFilter.getFilteredValue();
+		return usFilter.getFilteredValue();
 	}
 	
 	/**
