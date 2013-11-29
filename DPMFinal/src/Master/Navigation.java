@@ -32,8 +32,10 @@ public class Navigation extends Thread {
 	private ObjectRecognition recog;
 	private PathGenerator pathGenerator;
 	private Odometer odometer;
+	private BTSend bts;                        	//Bluetooth sender class
 
-	private int role = 1;                //robots role
+
+	private int role = 1;                		//robots role
 	private int avoidCount = 0;
 	private double safeX = 0.0;
 	private double safeY = 0.0;
@@ -43,11 +45,9 @@ public class Navigation extends Thread {
 	private int numDrops = 0;
 	private double LW_RADIUS;
 	private double RW_RADIUS;
-	private double WHEEL_BASE;
 
-	public Boolean isBusy = true;                        //either inspecting or turning
+	public Boolean isBusy = true;                   //either inspecting or turning
 	public Boolean hasBlock = false;                //true once a block is read and grabbed
-	public Boolean resetPath = false;                //true once a new path needs to be implemented
 	public Boolean recentlyAvoided = false;
 	public Boolean leftAvoidFail = false;
 	public Boolean rightAvoidFail = false;
@@ -84,8 +84,7 @@ public class Navigation extends Thread {
 	private int randX;
 	private int randY;
 
-	private BTSend bts;                        //Bluetooth sender class
-
+	
 
 	/**
 	 * Constructor
@@ -105,7 +104,6 @@ public class Navigation extends Thread {
 		pathGenerator = pg;
 		LW_RADIUS = odometer.getLeftRadius();        //update wheel values
 		RW_RADIUS = odometer.getRightRadius();
-		WHEEL_BASE = odometer.getWheelBase();
 		sensMotor.resetTachoCount();				// straight is 0.0, left is -80, right is +80
 	}
 
@@ -1309,17 +1307,6 @@ public class Navigation extends Thread {
 	 */
 	private static int convertDistance(double radius, double distance) {
 		return (int) ((180.0 * distance) / (Math.PI * radius));
-	}
-
-	/**
-	 * Converts the angle that the robot should turn to into specific rotation angle for a single motor
-	 * @param radius The radius of the wheel
-	 * @param width The distance between the two wheels
-	 * @param angle The angle to be converted
-	 * @return The degrees that the wheel should rotate so that the entire robot rotates the input angle
-	 */
-	private static int convertAngle(double radius, double width, double angle) {
-		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
 
 

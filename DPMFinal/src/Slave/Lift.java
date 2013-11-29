@@ -75,23 +75,6 @@ public class Lift {
 		clampMotor.rotate(95, false);
 		clampMotor.stop();
 	}
-	
-	
-	/**
-	 * Tentative - if using an ultrasonic sensor, method will read the height of the tower in front of it
-	 * @return int - The height of the tower
-	 */
-	public int getTowerHeight(){
-		return 0;
-	}
-	
-	
-	/**
-	 * Only used by garbage collector. Will knock down tower if outside of opponent's green zone
-	 * @return void
-	 */
-	public void destroyTower(){
-		
-	}
+
 
 }
