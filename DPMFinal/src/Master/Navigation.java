@@ -1322,37 +1322,7 @@ public class Navigation extends Thread {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
 
-	/**
-	 * Set's the coordinates of the green and red zone. For garbage collector, the zones are passed
-	 * in opposite order so it treats the red zone as it's green zone.
-	 * @param green Holds the bottom left and top right coordinates of green zone
-	 * @param red	Holds the bottom left and top right coordinates of red zone
-	 * @param role	The role of tower builder(1) or garbage collector(2)
-	 * @param x		Starting x coordinate
-	 * @param y		Starting y coordinate
-	 */
-	public void setTransmission(int[] green, int[] red, int role, double x, double y){
-		pathGenerator.setZones(green, red);
-		startingX = x;
-		startingY = y;
 
-		this.gx0 = (double)green[0] * 30.0;
-		this.gy0 = (double)green[1] * 30.0;
-		this.gx1 = (double)green[2] * 30.0;
-		this.gy1 = (double)green[3] * 30.0;
-
-		this.rx0 = (double)red[0] * 30.0;
-		this.ry0 = (double)red[1] * 30.0;
-		this.rx1 = (double)red[2] * 30.0;
-		this.ry1 = (double)red[3] * 30.0;
-
-		this.role = role;
-
-	}
-
-	/**
-	 * Calculates the optimal positions to travel to when depositing a block
-	 */
 	public void calculateDepositPoint(){
 		if(role == 1){
 			//tower builder
@@ -1375,7 +1345,7 @@ public class Navigation extends Thread {
 				}else{
 					//y deposit is "most-central" of the two y boundaries
 					yDeposit = gy1;
-					
+	
 					//need to reverse further for tower building 
 					yDeposit2 = yDeposit + 5.0;
 					yDeposit3 = yDeposit + 6.0;
@@ -1423,7 +1393,33 @@ public class Navigation extends Thread {
 		}
 	}
 
+	/**
+	 * Set's the coordinates of the green and red zone. For garbage collector, the zones are passed
+	 * in opposite order so it treats the red zone as it's green zone.
+	 * @param green Holds the bottom left and top right coordinates of green zone
+	 * @param red	Holds the bottom left and top right coordinates of red zone
+	 * @param role	The role of tower builder(1) or garbage collector(2)
+	 * @param x		Starting x coordinate
+	 * @param y		Starting y coordinate
+	 */
+	public void setTransmission(int[] green, int[] red, int role, double x, double y){
+		pathGenerator.setZones(green, red);
+		startingX = x;
+		startingY = y;
 
+		this.gx0 = (double)green[0] * 30.0;
+		this.gy0 = (double)green[1] * 30.0;
+		this.gx1 = (double)green[2] * 30.0;
+		this.gy1 = (double)green[3] * 30.0;
+
+		this.rx0 = (double)red[0] * 30.0;
+		this.ry0 = (double)red[1] * 30.0;
+		this.rx1 = (double)red[2] * 30.0;
+		this.ry1 = (double)red[3] * 30.0;
+
+		this.role = role;
+
+	}	
 	
 	public boolean isBusy() {
 		return isBusy;

@@ -4,7 +4,7 @@ import lejos.nxt.*;
 import lejos.nxt.comm.RConsole;
 
 public class Localization {
-	private static final int SPIN_SPEED = 250;
+	private static final int SPIN_SPEED = 200;
 	private static final int WALL_DISTANCE = 55;
 	private static final Vector CS_POSITION = new Vector(-8.7, -10.5, 0.0);	// Back-left CS
 	private static final int BLACK_LINE_SLOPE_THRESHOLD = -8;	// By looking at graph of filtered values during light localization
@@ -33,7 +33,7 @@ public class Localization {
 		this.nav = nav;
 		this.us = us;
 		
-		this.usFilter = new MedianFilter(5);
+		this.usFilter = new MedianFilter(3);
 		this.csFilter = new SmoothDifferenceFilter(6);
 		
 		us.off();
@@ -45,6 +45,7 @@ public class Localization {
 	 * if the sensor initially reads a wall.
 	 */
 	public void doLocalization(){
+		/*
 		if (!wallInSight()){
 			LCD.drawString("FALLING", 0, 0);
 			doUSLocalizationFallingEdge();
@@ -53,10 +54,12 @@ public class Localization {
 			LCD.drawString("RISING", 0, 0);
 			doUSLocalizationRisingEdge();
 		}
-		//while(!wallInSight()){
-			
-		//}
+		*/
+		
 		//doUSLocalizationRisingEdge();
+		us.continuous();
+		doUSLocalizationRisingEdge();
+		us.off();
 	}
 	
 	private void doUSLocalizationFallingEdge(){
@@ -79,16 +82,15 @@ public class Localization {
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
-		long spinTime = 1500;
+		long spinTime = 1000;
 		Sound.beep();
 		spinRight();
 		while(System.currentTimeMillis() - startTime < spinTime){
 			// Wait
+			getFilteredDistance();
+			//RConsole.println("WHILE dist " + usFilter.getFilteredValue() + "\n");
 		}
 		Sound.beep();
-		// Empty the contents of the filter so that it is not influenced by the
-		// values it read before sleeping.
-		csFilter.empty();
 		
 		// Rotate right until you see a wall
 		LCD.drawString("See wall...", 0, 3);
@@ -126,16 +128,15 @@ public class Localization {
 		// Using wallInSight() does not work in all cases, so I spin for a
 		// hard-coded 0.5 sec.
 		long startTime = System.currentTimeMillis();
-		long spinTime = 1500;
+		long spinTime = 1000;
 		Sound.beep();
 		spinRight();
 		while(System.currentTimeMillis() - startTime < spinTime){
 			// Wait
+			getFilteredDistance();
+			//RConsole.println("WHILE dist " + usFilter.getFilteredValue() + "\n");
 		}
 		Sound.beep();
-		// Empty the contents of the filter so that it is not influenced by the
-		// values it read before sleeping.
-		csFilter.empty();
 		
 		// Rotate right until you don't see a wall
 		LCD.drawString("Wall...", 0, 3);
@@ -286,7 +287,7 @@ public class Localization {
 		//odo.setX(x);
 		//odo.setY(y);
 		
-		cs.setFloodlight(false);
+		//cs.setFloodlight(false);
 	}
 	
 	/**
@@ -297,7 +298,8 @@ public class Localization {
 	 */
 	private void usLocalizationCorrection(double angleA, double angleB){
 		double angleDelta = getAngleCorrection(angleA, angleB);
-		double distance = getDistanceToWall(angleA, angleB);
+		//double distance = getDistanceToWall(angleA, angleB);
+		double distance = 22;
 		
 		odo.setTheta(odo.getTheta() + angleDelta);
 		odo.setX(distance - 30.0);
@@ -395,16 +397,19 @@ public class Localization {
 	 * @return The distance (in cm).
 	 */
 	private int getFilteredDistance() {
+		/*
 		// This is done in another thread. You need to wait for the ping to
 		// complete. This takes > 20 ms.
 		us.ping();
 		
 		// Wait for the ping to complete
 		try { Thread.sleep(50); } catch (InterruptedException e) {}
+		*/
 		
-		csFilter.add(us.getDistance());
+		usFilter.add(us.getDistance());
+		RConsole.println("raw-fil " + us.getDistance() + " " + usFilter.getFilteredValue());
 				
-		return csFilter.getFilteredValue();
+		return usFilter.getFilteredValue();
 	}
 	
 	/**

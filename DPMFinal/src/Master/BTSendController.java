@@ -68,6 +68,7 @@ public class BTSendController {
 		
 		odo = new Odometer(LEFT_WHEEL_RADIUS, RIGHT_WHEEL_RADIUS, WHEELBASE_WIDTH);
 		bts = new BTSend();
+		
 		objectRecognition = new ObjectRecognition(csFront);
 		//pathGenerator = new PathGenerator(odo);
 		pathGenerator = new PathGenerator(odo);
@@ -88,7 +89,7 @@ public class BTSendController {
 		csFront.setFloodlight(false);
 		
 		// Set up bluetooth connections
-		//getTransmission();;
+		getTransmission();;
 
 		
 		// Start sensor threads
@@ -102,7 +103,7 @@ public class BTSendController {
 		nav.travelTo(0.0, 0.0, true);
 		localization.doLightLocalization();
 		nav.turnTo(90, true, true);
-		odometryCorrection.start();
+		//odometryCorrection.start();
 		
 		if(corner == 2){
 			odo.setX(300);
@@ -119,8 +120,10 @@ public class BTSendController {
 		}
 		
 		bts.establishConnection();
+		
+		//nav.travelTo(0, 0, true);
+		
 		nav.start();
-
 		
 		Button.waitForAnyPress();
 		
@@ -154,10 +157,11 @@ public class BTSendController {
 		
 		//set the green zone coordinates
 		int greenZone[] = t.greenZone;
-		int redZone[] = t.greenZone;
+		int redZone[] = t.redZone;
 		int role = t.role.getId();
 		startingX = t.startingCorner.getX();
 		startingY = t.startingCorner.getY();
+		corner = t.startingCorner.getId();
 		
 		if(role == 1){
 			//builder

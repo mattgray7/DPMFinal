@@ -21,7 +21,7 @@ public class OdometryCorrection extends Thread{
 	private final Vector leftCSPosition = new Vector(-8.7, -10.5, 0.0);
 	private final Vector rightCSPosition = new Vector(9.3, -10.5, 0.0);
 	private final long CORRECTION_INTERVAL = 20;
-	private final int BLACK_LINE_FILTER_SLOPE = -50;
+	private final int BLACK_LINE_FILTER_SLOPE = -15;
 	private final long TIME_THRESHOLD = 500;
 	private final double MIN_DISTANCE_FROM_INTERSECTION = 3;
 	private final double ERROR = 0.001;	// General double precision error
@@ -141,7 +141,7 @@ public class OdometryCorrection extends Thread{
 		
 		//LCD.drawString("L-filt " + filterLeft.getFilteredValue(), 0, 0);
 		//LCD.drawString("R-filt " + filterRight.getFilteredValue(), 0, 1);
-		//RConsole.println("L " + filterLeft.getRawValue() + " " + filterLeft.getFilteredValue() + " R " + filterRight.getRawValue() + " " + filterRight.getFilteredValue());
+		RConsole.println("L " + filterLeft.getRawValue() + " " + filterLeft.getFilteredValue() + " R " + filterRight.getRawValue() + " " + filterRight.getFilteredValue());
 		
 		checkForNewGridlines();
 		//checkForCorrection();
@@ -163,6 +163,8 @@ public class OdometryCorrection extends Thread{
 		//LCD.drawString("same L :" + sameLine(lastTimeGridlineLeft), 0, 4);
 		if(seesLine(filterLeft)){
 			if(!sameLine(lastTimeGridlineLeft)){
+				RConsole.println("L line\n");
+				
 				numLeftLines++;
 				Sound.beep();
 				
@@ -177,6 +179,10 @@ public class OdometryCorrection extends Thread{
 				
 				double distanceX = distanceToNearestXGridline(gridPosition.getX());
 				double distanceY = distanceToNearestYGridline(gridPosition.getY());
+				
+				//RConsole.println("(x, y): " + gridPosition.getX() + ", " + gridPosition.getY() + "\n");
+				//RConsole.println("Dist x: " + distanceX + "\n");
+				//RConsole.println("Dist y: " + distanceY + "\n");
 				
 				if(Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > MIN_DISTANCE_FROM_INTERSECTION){
 					gridPosition.setY(nearestYGridline(odometerY));
@@ -194,6 +200,8 @@ public class OdometryCorrection extends Thread{
 					newXGridlineLeft = true;
 					lastXGridlineLeft = gridPosition;
 				}
+
+				//RConsole.println("(x, y): " + gridPosition.getX() + ", " + gridPosition.getY() + "\n");
 			}
 		}
 	}
@@ -204,6 +212,8 @@ public class OdometryCorrection extends Thread{
 	private void checkForNewGridlineRight(){
 		if(seesLine(filterRight)){
 			if(!sameLine(lastTimeGridlineRight)){
+				RConsole.println("R line\n");
+				
 				numRightLines++;
 				Sound.beep();
 				
@@ -218,6 +228,10 @@ public class OdometryCorrection extends Thread{
 				
 				double distanceX = distanceToNearestXGridline(gridPosition.getX());
 				double distanceY = distanceToNearestYGridline(gridPosition.getY());
+				
+				//RConsole.println("(x, y): " + gridPosition.getX() + ", " + gridPosition.getY() + "\n");
+				//RConsole.println("Dist x: " + distanceX + "\n");
+				//RConsole.println("Dist y: " + distanceY + "\n");
 				
 				if(Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > MIN_DISTANCE_FROM_INTERSECTION){
 					gridPosition.setY(nearestYGridline(odometerY));
@@ -235,6 +249,8 @@ public class OdometryCorrection extends Thread{
 					newXGridlineRight = true;
 					lastXGridlineRight = gridPosition;
 				}
+				
+				//RConsole.println("(x, y): " + gridPosition.getX() + ", " + gridPosition.getY() + "\n");
 			}
 		}
 	}
