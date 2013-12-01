@@ -1,7 +1,7 @@
 package Master;
 
 /**
- * Type of filter that returns the median value of the last few raw values.
+ * Type of filter that returns the average value of the last few raw values.
  * 
  * @author Nicholas Aird
  */
