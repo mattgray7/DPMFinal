@@ -3,6 +3,15 @@ package Master;
 import lejos.nxt.*;
 import lejos.nxt.comm.RConsole;
 
+
+/**
+ * Class to control the robot's movement.
+ * <p>
+ * Allows the robot to turn and travel to a destination, while avoiding obstacles.
+ * 
+ * @author Julien Liberta
+ * @author Matt Gray
+ */
 public class Localization {
 	private static final int SPIN_SPEED = 200;
 	private static final int WALL_DISTANCE = 55;
@@ -41,8 +50,11 @@ public class Localization {
 
 	
 	/**
-	 * Performs rising or falling edge ultrasonic localization depending on
-	 * if the sensor initially reads a wall.
+	 * The intended behavior was to choose between rising and falling edge localization,
+	 * depending on whether the robot initially faced a wall or not, but it turns out
+	 * falling edge does not work.
+	 * <p>
+	 * So it always does rising edge.
 	 */
 	public void doLocalization(){
 		/*
@@ -62,6 +74,10 @@ public class Localization {
 		us.off();
 	}
 	
+	/**
+	 * Perform US localization using falling edge.
+	 *
+	 */
 	private void doUSLocalizationFallingEdge(){
 		// Rotate left until you don't see a wall
 		// This should already be established, and is not really necessary.
@@ -109,6 +125,11 @@ public class Localization {
 		usLocalizationCorrection(angleA, angleB);
 	}
 
+	
+	/**
+	 * Perform US localization using rising edge.
+	 * 
+	 */
 	private void doUSLocalizationRisingEdge(){
 		// Rotate left until you see a wall
 		// This should already be established, and is not really necessary.
@@ -155,10 +176,11 @@ public class Localization {
 		usLocalizationCorrection(angleA, angleB);
 	}
 	
+	
 	/**
-	 * Performs light localization around a grid intersection. Method assumes robot is close to an intersection
+	 * Performs light localization around a grid intersection. This assumes the robot is
+	 * close to an intersection.
 	 */
-	//Need to adjust angle offset for right light sensor
 	public void doLightLocalization() {
 		boolean hasSeenLine;
 		
@@ -187,11 +209,12 @@ public class Localization {
 				LCD.clear();
 				LCD.drawString("FCS " + csFilter.getFilteredValue(), 0, 1);
 				LCD.drawString("FCS " + csFilter.getRawValue(), 0, 2);
-				//RConsole.println("FCS " + csFilter.getRawValue() + " " + csFilter.getFilteredValue());
 				
 				if (csFilter.getFilteredValue() < BLACK_LINE_SLOPE_THRESHOLD) {
 					double odoAngle = odo.getTheta();
-					double csAngle = CS_POSITION.xyAngleDeg() - 90.0;	// Because getTheta returns the angle from the front of the robot, so we take that part off of the CS's angle.
+					// Because getTheta returns the angle from the front of the robot,
+					// we substract that part from the CS's angle.
+					double csAngle = CS_POSITION.xyAngleDeg() - 90.0;
 					double lineAngle = Odometer.fixDegAngle(odoAngle + csAngle);
 					
 					angles[i] = lineAngle;
@@ -205,12 +228,6 @@ public class Localization {
 						csFilter.add(cs.getNormalizedLightValue());
 						LCD.drawString("WAIT", 0, 0);
 					}
-					
-					/* Nick doesn't think this is necessary (filtered value will become positive?
-					// Empty the filter of it's contents, so that it does not
-					// read a line right after coming out of its sleep.
-					//csFilter.empty();
-					*/
 				}
 			}
 		}
@@ -221,73 +238,30 @@ public class Localization {
 		// Find angle correction
 		double positiveXAxis = MyMath.averageAngle(angles[0], angles[2]);
 		double positiveYAxis = MyMath.averageAngle(angles[1], angles[3]);
-		
-		//RConsole.println("positiveXAxis before: " + positiveXAxis + "\n");
-		//RConsole.println("positiveYAxis before: " + positiveYAxis + "\n");
 
 		double correctionXAxis;
 		double correctionYAxis;
 		
 		if(positiveXAxis < 90.0 || positiveXAxis > 270.0){
-			//RConsole.println("AAAA" + "\n");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 0.0);
 		}
 		else{
-			//RConsole.println("BBBB" + "\n");
 			correctionXAxis = MyMath.correctionDeg(positiveXAxis, 180.0);
 		}
 
 		if(positiveYAxis > 0.0 && positiveYAxis < 180.0){
-			//RConsole.println("CCCC" + "\n");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 90.0);
 		}
 		else{
-			//RConsole.println("DDDD" + "\n");
 			correctionYAxis = MyMath.correctionDeg(positiveYAxis, 270.0);
 		}
 		
-		//RConsole.println("correctionXAxis: " + correctionXAxis + "\n");
-		//RConsole.println("correctionYAxis: " + correctionYAxis + "\n");
-		
 		double averageCorrection = (correctionXAxis + correctionYAxis) / 2.0;
-		
-		//RConsole.println("averageCorrection: " + averageCorrection + "\n");
 
 		double odoTheta = odo.getTheta();
 		double correctedAngle = MyMath.fixAngleDeg(odoTheta + averageCorrection + (-0.0));	// Adding (-10), tweaked value.
 
 		odo.setTheta(correctedAngle);
-		
-		/* For debuggin
-		LCD.drawString("XAxis " + correctionXAxis, 0, 0);
-		LCD.drawString("YAxis " + correctionYAxis, 0, 1);
-		LCD.drawString("ave " + averageCorrection, 0, 2);
-		LCD.drawString("0: " + angles[0], 0, 3);
-		LCD.drawString("1: " + angles[1], 0, 4);
-		LCD.drawString("2: " + angles[2], 0, 5);
-		LCD.drawString("3: " + angles[3], 0, 6);
-		
-		RConsole.println("XAxis " + correctionXAxis + "\n");
-		RConsole.println("YAxis " + correctionYAxis + "\n");
-		RConsole.println("ave " + averageCorrection + "\n");
-		RConsole.println("0: " + angles[0] + "\n");
-		RConsole.println("1: " + angles[1] + "\n");
-		RConsole.println("2: " + angles[2] + "\n");
-		RConsole.println("3: " + angles[3] + "\n");
-		*/
-		
-		// NOTE: odometry correction should also take care of fixing the
-		// position. So this part is not necessary
-		// I BROKE IT SINCE I TOOK thetaY AND thetaX OUT.
-		// It can be fixed, but not enough time.
-		
-		// Reset odometer's position
-		//x = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaY / 2.0));
-		//y = -CS_POSITION.length() * Math.cos(Math.toRadians(thetaX / 2.0));
-		//odo.setX(x);
-		//odo.setY(y);
-		
-		//cs.setFloodlight(false);
 	}
 	
 	/**
@@ -298,6 +272,8 @@ public class Localization {
 	 */
 	private void usLocalizationCorrection(double angleA, double angleB){
 		double angleDelta = getAngleCorrection(angleA, angleB);
+		// The following is not used, because a hard-coded distance
+		// was more reliable.
 		//double distance = getDistanceToWall(angleA, angleB);
 		double distance = 22;
 		
@@ -308,7 +284,7 @@ public class Localization {
 	
 	/**
 	 * Calculate the angle needed to correct the odometer's heading.
-	 * 
+	 * <p>
 	 * This angle just needs to be added to the odometer' angle.
 	 * 
 	 * @param angleA The angle at which the first wall was detected (in degrees).
@@ -335,7 +311,7 @@ public class Localization {
 	
 	/**\
 	 * Get an approximation of the robot's initial position after US localization.
-	 * 
+	 * <p>
 	 * This uses the angles at which the two walls were detected. It assumes
 	 * the x and y distances are the same.
 	 * 
@@ -347,7 +323,7 @@ public class Localization {
 	private double getDistanceToWall(double angleA, double angleB){
 		double difference = Math.abs(angleA - angleB);
 		
-		// In case of weird angleA / angleB not in the range [0, 360]. Shouldn't happen.
+		// In case of weird angleA or angleB not in the range [0, 360]. Shouldn't happen.
 		difference = Odometer.fixDegAngle(difference);
 		
 		// We want the smallest angle between A and B
@@ -390,24 +366,14 @@ public class Localization {
 	
 	/**
 	 * Get the filtered value for the US's distance.
-	 * 
+	 * <p>
 	 * This performs a simple filter, where distances over 100 are snapped
 	 * to 200.
 	 * 
 	 * @return The distance (in cm).
 	 */
 	private int getFilteredDistance() {
-		/*
-		// This is done in another thread. You need to wait for the ping to
-		// complete. This takes > 20 ms.
-		us.ping();
-		
-		// Wait for the ping to complete
-		try { Thread.sleep(50); } catch (InterruptedException e) {}
-		*/
-		
 		usFilter.add(us.getDistance());
-		RConsole.println("raw-fil " + us.getDistance() + " " + usFilter.getFilteredValue());
 				
 		return usFilter.getFilteredValue();
 	}
