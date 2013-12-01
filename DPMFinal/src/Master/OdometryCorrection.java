@@ -9,8 +9,6 @@ import lejos.util.Timer;
 /**
  * Class to correct the robot's position and heading as it crosses black grid lines.
  * 
- * The position
- * 
  * @author Nick
  * @version 1.0
  */
@@ -124,6 +122,7 @@ public class OdometryCorrection extends Thread{
 	
 	/**
 	 * Do a loop, where you check for gridlines and correct if you can.
+	 * 
 	 */
 	private void execute(){
 		// Check the mode of operation
@@ -139,16 +138,16 @@ public class OdometryCorrection extends Thread{
 		filterLeft.add(csLeft.getNormalizedLightValue());
 		filterRight.add(csRight.getNormalizedLightValue());
 		
-		//LCD.drawString("L-filt " + filterLeft.getFilteredValue(), 0, 0);
-		//LCD.drawString("R-filt " + filterRight.getFilteredValue(), 0, 1);
 		RConsole.println("L " + filterLeft.getRawValue() + " " + filterLeft.getFilteredValue() + " R " + filterRight.getRawValue() + " " + filterRight.getFilteredValue());
 		
 		checkForNewGridlines();
+		// The heading correciton does not work, so it is commented out.
 		//checkForCorrection();
 	}
 	
 	/**
 	 * Check the CS to see if the robot is passing over a grid line.
+	 * 
 	 */
 	private void checkForNewGridlines(){
 		checkForNewGridlineLeft();
@@ -157,10 +156,9 @@ public class OdometryCorrection extends Thread{
 	
 	/**
 	 * Check if the left CS passed over a new grid line.
+	 * 
 	 */
 	private void checkForNewGridlineLeft(){
-		//LCD.drawString("see L :" + seesLine(csLeft), 0, 3);
-		//LCD.drawString("same L :" + sameLine(lastTimeGridlineLeft), 0, 4);
 		if(seesLine(filterLeft)){
 			if(!sameLine(lastTimeGridlineLeft)){
 				RConsole.println("L line\n");
@@ -180,10 +178,6 @@ public class OdometryCorrection extends Thread{
 				double distanceX = distanceToNearestXGridline(gridPosition.getX());
 				double distanceY = distanceToNearestYGridline(gridPosition.getY());
 				
-				//RConsole.println("(x, y): " + gridPosition.getX() + ", " + gridPosition.getY() + "\n");
-				//RConsole.println("Dist x: " + distanceX + "\n");
-				//RConsole.println("Dist y: " + distanceY + "\n");
-				
 				if(Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > MIN_DISTANCE_FROM_INTERSECTION){
 					gridPosition.setY(nearestYGridline(odometerY));
 					odometer.setY(odometerY + distanceY);
@@ -200,14 +194,13 @@ public class OdometryCorrection extends Thread{
 					newXGridlineLeft = true;
 					lastXGridlineLeft = gridPosition;
 				}
-
-				//RConsole.println("(x, y): " + gridPosition.getX() + ", " + gridPosition.getY() + "\n");
 			}
 		}
 	}
 	
 	/**
 	 * Check if the right CS passed over a new grid line.
+	 * 
 	 */
 	private void checkForNewGridlineRight(){
 		if(seesLine(filterRight)){
@@ -229,10 +222,6 @@ public class OdometryCorrection extends Thread{
 				double distanceX = distanceToNearestXGridline(gridPosition.getX());
 				double distanceY = distanceToNearestYGridline(gridPosition.getY());
 				
-				//RConsole.println("(x, y): " + gridPosition.getX() + ", " + gridPosition.getY() + "\n");
-				//RConsole.println("Dist x: " + distanceX + "\n");
-				//RConsole.println("Dist y: " + distanceY + "\n");
-				
 				if(Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > MIN_DISTANCE_FROM_INTERSECTION){
 					gridPosition.setY(nearestYGridline(odometerY));
 					odometer.setY(odometerY + distanceY);
@@ -249,14 +238,13 @@ public class OdometryCorrection extends Thread{
 					newXGridlineRight = true;
 					lastXGridlineRight = gridPosition;
 				}
-				
-				//RConsole.println("(x, y): " + gridPosition.getX() + ", " + gridPosition.getY() + "\n");
 			}
 		}
 	}
 	
 	/**
 	 * Try to correct position or heading, if it has read new grid lines.
+	 * 
 	 */
 	private void checkForCorrection(){
 		// Position correction is already done inside checkForNewGridline***()
@@ -268,6 +256,7 @@ public class OdometryCorrection extends Thread{
 	/**
 	 * Correct the heading if the robot recently completely passed over an
 	 * x grid line.
+	 * 
 	 */
 	private void checkForXCorrection(){
 		// Check that both sensor have seen at least one line.
@@ -341,6 +330,12 @@ public class OdometryCorrection extends Thread{
 		}
 	}
 	
+	
+	/**
+	 * Correct the heading if the robot recently completely passed over a
+	 * y grid line.
+	 * 
+	 */
 	private void checkForYCorrection(){
 		// Check that both sensor have seen at least one line.
 		if(sawYGridlineLeft && sawYGridlineRight){
