@@ -121,6 +121,8 @@ public class ObjectRecognition {
 	 * <p>
 	 * For high light intensities, the margin is very small.
 	 * For low intensities, the margin is bigger.
+	 * 
+	 * @return The cosThetaMargin that should be used for this light intensity.
 	 */
 	public double getAdjustedCosThetaMargin(double lightIntensity){
 		if(lightIntensity < 10.0){
@@ -140,6 +142,7 @@ public class ObjectRecognition {
 	 * Prompts the user to perform a calibration of the blue block's color.
 	 * This will obtain multiple samples of the blue color and retain the
 	 * average.
+	 * 
 	 */
 	public void calibrateBlueBlock(){
 		printCalibrationMessage();
@@ -172,7 +175,7 @@ public class ObjectRecognition {
 	
 	/**
 	 * Prints a message about the calibration.
-	 * 
+	 * <p>
 	 * Explains which buttons to press.
 	 */
 	private void printCalibrationMessage(){
