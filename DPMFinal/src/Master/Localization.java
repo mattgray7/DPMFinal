@@ -5,12 +5,12 @@ import lejos.nxt.comm.RConsole;
 
 
 /**
- * Class to control the robot's movement.
+ * Initial localization of the robot, using the ultrasonic and light sensors.
  * <p>
- * Allows the robot to turn and travel to a destination, while avoiding obstacles.
+ * This provides the robot with an initial position and heading.
  * 
  * @author Julien Liberta
- * @author Matt Gray
+ * @author Nicholas Aird
  */
 public class Localization {
 	private static final int SPIN_SPEED = 200;
