@@ -8,6 +8,14 @@ import Master.Odometer;
 import Master.OdometryCorrection.Mode;
 
 
+/**
+ * Main controller for the master brick's behavior.
+ * <p>
+ * This class owns most of the objects (sensors, odometer, navigation, etc.).
+ * It also sets up the bluetooth connections and receives the initial transmission.
+ * 
+ * author: Matt Grey
+ */
 public class BTSendController {
 	public static final double LEFT_WHEEL_RADIUS = 2.665;
 	public static final double RIGHT_WHEEL_RADIUS = 2.675;
@@ -79,6 +87,10 @@ public class BTSendController {
 
 	}
 	
+	/**
+	 * Start the robot's main operation (get transmissions, localize, etc.)
+	 * 
+	 */
 	public void execute(){
 		printWelcomeMessage();
 		int buttonChoice = Button.waitForAnyPress();
