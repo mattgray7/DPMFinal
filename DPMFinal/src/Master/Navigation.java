@@ -370,8 +370,8 @@ public class Navigation extends Thread {
 	/**
 	 * Will stop and scan 180 degrees clockwise in an attempt to detect objects
 	 * 
-	 * @return true If a blue block was found
-	 * @return false If no blue block was found
+	 * @return True if a blue block was found, otherwise false.
+	 * 
 	 */
 	public Boolean scan() {
 		//set end angle of scan
@@ -507,11 +507,12 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Will drive the given distance at the given angle and check the color of an object
-	 * @param angle The angle to drive at
-	 * @param distance The distance the object was sensed at
-	 * @return True if a blue block was detected and captured
-	 * @return False if no blue block was found
+	 * Will drive the given distance at the given angle and check the color of an object.
+	 * 
+	 * @param angle The angle to drive at.
+	 * @param distance The distance the object was sensed at.
+	 * 
+	 * @return True if a blue block was detected and captured, false otherwise.
 	 */
 	public Boolean inspect(double angle, int distance) {
 		double x = odometer.getX();
@@ -559,7 +560,8 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Assumes a blue block is in front of the robot, will reverse, lower claw, and grab and lift the block
+	 * Assumes a blue block is in front of the robot, will reverse, lower claw, and grab and lift the block.
+	 * 
 	 */
 	public void capture(){
 		double distance = 20.0;
@@ -618,9 +620,9 @@ public class Navigation extends Thread {
 	}
 	
 	/**
-	 * Pings the color sensor at three different angles to determine the color of the block
-	 * @return True if a blue block was sensed
-	 * @return False if no blue block was sensed
+	 * Pings the color sensor at three different angles to determine the color of the block.
+	 * 
+	 * @return True if a blue block was sensed, otherwise false.
 	 */
 	public boolean checkBlockColor(){
 		//Actual color check performed by ObjectRecognition class
@@ -651,8 +653,9 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Will take the robot from it's current position directly to the deposit point of the green zone, or red zone for
-	 * garbage collector
+	 * Takes the robot directly to the deposit point of the green zone, or red zone (for
+	 * garbage collector).
+	 * 
 	 */
 	public void finishLine(){
 		hasBlock = true;
@@ -804,6 +807,7 @@ public class Navigation extends Thread {
 
 	/**
 	 * Drives the robot to the calculated deposit point.
+	 * 
 	 */
 	public void travelToDepositPoint(){
 		//stores the corners of the red zone
@@ -970,9 +974,11 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Once at a border point, drives straight at 0, 90, 180, or 270 around the green zone to get to the deposit point
-	 * @param xDest X coordinate of deposit point
-	 * @param yDest Y coordinate of deposit point
+	 * Once at a border point, drives straight at 0, 90, 180, or 270 around
+	 * the green zone to get to the deposit point.
+	 * 
+	 * @param xDest X coordinate of deposit point.
+	 * @param yDest Y coordinate of deposit point.
 	 */
 	public void circleGreenZone(double xDest, double yDest){
 		double heading = Math.atan2(yDest - odometer.getY(), xDest - odometer.getX()) * (180.0/ Math.PI);
@@ -1000,7 +1006,8 @@ public class Navigation extends Thread {
 
 
 	/**
-	 * Avoids an obstacle by wall following left or right depending on surrounding obstacles and zones
+	 * Avoids an obstacle by wall following left or right depending on surrounding obstacles and zones.
+	 * 
 	 * @param xDest X coordinate of intended destination
 	 * @param yDest Y coordinate of intended destination
 	 */
@@ -1102,9 +1109,10 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Will perform p-type wall following around the left side of the obstacle
-	 * @param initAngle The initial angle of the robot before wall following
-	 * @return True if successful avoidance, false if danger zone is too close to safely avoid
+	 * Performs p-type wall following around the left side of the obstacle.
+	 * 
+	 * @param initAngle The initial angle of the robot before wall following.
+	 * @return True if successful avoidance, false if danger zone is too close to safely avoid.
 	 */
 	public Boolean wallFollowLeft(double initAngle){
 		//rotate sensors to face the obstacle
@@ -1181,9 +1189,10 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Will perform p-type wall following around the right side of the obstacle
-	 * @param initAngle The initial angle of the robot before wall following
-	 * @return True if successful avoidance, false if danger zone is too close to safely avoid
+	 * Will perform p-type wall following around the right side of the obstacle.
+	 * 
+	 * @param initAngle The initial angle of the robot before wall following.
+	 * @return True if successful avoidance, false if danger zone is too close to safely avoid.
 	 */
 	public Boolean wallFollowRight(double initAngle){
 
@@ -1255,8 +1264,9 @@ public class Navigation extends Thread {
 
 
 	/**
-	 * Filter for ultrasonic readings, for rotating sensor
-	 * @return The filtered distance reading
+	 * Filter for ultrasonic readings, for rotating sensor.
+	 * 
+	 * @return The filtered distance reading.
 	 */
 	public int getFilteredDistance() {
 		int distance = 0;
@@ -1270,7 +1280,8 @@ public class Navigation extends Thread {
 
 
 	/**
-	 * Rotates sensor motor clockwise 80 degrees
+	 * Rotates sensor motor clockwise 80 degrees.
+	 * 
 	 */
 	public void rotateSensorsRight(int angle, boolean ret){
 		sensMotor.setSpeed(150);
@@ -1280,7 +1291,8 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Rotates sensor motor counter-clockwise 80 degrees
+	 * Rotates sensor motor counter-clockwise 80 degrees.
+	 * 
 	 */
 	public void rotateSensorsLeft(int angle, boolean ret){
 		sensMotor.setSpeed(150);
@@ -1291,12 +1303,10 @@ public class Navigation extends Thread {
 
 
 	/**
-	 * Sets the speeds of the robot
+	 * Sets the speeds of the robot.
 	 * 
-	 * @param lSpd
-	 *            Speed of left wheel
-	 * @param rSpd
-	 *            Speed of right wheel
+	 * @param lSpd Speed of left wheel.
+	 * @param rSpd Speed of right wheel.
 	 */
 	public void setSpeeds(int lSpd, int rSpd) {
 		this.leftMotor.setSpeed(lSpd);
@@ -1312,10 +1322,12 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Converts a distance to radians
-	 * @param radius Radius of wheel
-	 * @param distance Distance to be converted
-	 * @return The radian value of the input distance
+	 * Converts a distance to radians.
+	 * 
+	 * @param radius Radius of wheel.
+	 * @param distance Distance to be converted.
+	 * 
+	 * @return The radian value of the input distance.
 	 */
 	private static int convertDistance(double radius, double distance) {
 		return (int) ((180.0 * distance) / (Math.PI * radius));
@@ -1399,13 +1411,16 @@ public class Navigation extends Thread {
 	}
 
 	/**
-	 * Set's the coordinates of the green and red zone. For garbage collector, the zones are passed
-	 * in opposite order so it treats the red zone as it's green zone.
-	 * @param green Holds the bottom left and top right coordinates of green zone
-	 * @param red	Holds the bottom left and top right coordinates of red zone
-	 * @param role	The role of tower builder(1) or garbage collector(2)
-	 * @param x		Starting x coordinate
-	 * @param y		Starting y coordinate
+	 * Set's the coordinates of the green and red zone.
+	 * <p>
+	 * For garbage collector, the zones are switches such that it will deposit
+	 * blocks in the red zone instead, and avoid the green zone.
+	 * 
+	 * @param green Holds the bottom left and top right coordinates of green zone.
+	 * @param red Holds the bottom left and top right coordinates of red zone.
+	 * @param role The role of tower builder(1) or garbage collector(2).
+	 * @param x Starting x coordinate.
+	 * @param y Starting y coordinate.
 	 */
 	public void setTransmission(int[] green, int[] red, int role, double x, double y){
 		pathGenerator.setZones(green, red);
