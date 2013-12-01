@@ -9,13 +9,10 @@ import lejos.nxt.NXTRegulatedMotor;
 
 
 /*
- * NOTE: Nicholas changed a lot of variable names and cleaned this up.
- */
-
-/*
- * Odometer.java
+ * Keeps track of the robot's position, using the displacement of its wheels.
  * 
- * @author Group-21
+ * @author Julian Liberta
+ * @author Nicholas Aird
  */
 public class Odometer extends Thread {
 	// Constants
