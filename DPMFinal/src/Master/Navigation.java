@@ -1440,14 +1440,7 @@ public class Navigation extends Thread {
 		this.role = role;
 
 	}	
-	
-	public boolean isBusy() {
-		return isBusy;
-	}
 
-	public void setBusy(boolean busy) {
-		isBusy = busy;
-	}
 
 
 
