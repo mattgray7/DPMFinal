@@ -13,6 +13,12 @@ import lejos.nxt.Sound;
 import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 
+
+/**
+ * Class to manage connections to the slave brick.
+ * 
+ * author: Matt Gray
+ */
 public class BTSend {
 
 	private static BTConnection connection;
