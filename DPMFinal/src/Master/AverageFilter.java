@@ -1,5 +1,10 @@
 package Master;
 
+/**
+ * Type of filter that returns the median value of the last few raw values.
+ * 
+ * @author Nicholas Aird
+ */
 public class AverageFilter extends Filter {
 	/**
 	 * Constructor.
