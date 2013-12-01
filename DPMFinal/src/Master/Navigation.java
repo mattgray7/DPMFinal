@@ -11,6 +11,18 @@ import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.Sound;
 import lejos.nxt.UltrasonicSensor;
 
+
+/**
+ * Class to control the robot's movement.
+ * <p>
+ * Allows the robot to turn and travel to a destination.
+ * <p>
+ * Also does most of the robot's tasks, including checking an object's color,
+ * picking up blocks, bringing them to the green zone, avoiding obstacles, etc.
+ * 
+ * @author Julien Liberta
+ * @author Matt Gray
+ */
 public class Navigation extends Thread {
 	private NXTRegulatedMotor sensMotor = Motor.A;
 	private NXTRegulatedMotor leftMotor = Motor.B;
@@ -1309,7 +1321,13 @@ public class Navigation extends Thread {
 		return (int) ((180.0 * distance) / (Math.PI * radius));
 	}
 
-
+	
+	/**
+	 * Choose the place to drop the block.
+	 * <p>
+	 * This depends on the rshape of the zone and the robot's role.
+	 * 
+	 */
 	public void calculateDepositPoint(){
 		if(role == 1){
 			//tower builder
