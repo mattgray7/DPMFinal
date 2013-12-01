@@ -116,6 +116,12 @@ public class ObjectRecognition {
 		return isBlueBlock;
 	}
 	
+	/**
+	 * Get the adjusted margin of error for cosTheta.
+	 * <p>
+	 * For high light intensities, the margin is very small.
+	 * For low intensities, the margin is bigger.
+	 */
 	public double getAdjustedCosThetaMargin(double lightIntensity){
 		if(lightIntensity < 10.0){
 			return COS_THETA_MARGIN_BIG;
