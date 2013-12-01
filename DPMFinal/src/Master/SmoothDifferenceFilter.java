@@ -1,5 +1,11 @@
 package Master;
 
+
+/**
+ * Filter that smooths out the last few raw values and approximates the slope (derivative).
+ * 
+ * @author Nicholas Aird
+ */
 public class SmoothDifferenceFilter extends Filter {
 	/**
 	 * Constructor.
