@@ -65,7 +65,7 @@ public class PathGenerator {
 	}
 
 	/**
-	 * Find the corners of the green zone closest to the robot.
+	 * Find the corners of the red zone closest to the robot
 	 * 
 	 * @return An array of the border points, in the order the robot should visit them.
 	 * 
@@ -73,6 +73,9 @@ public class PathGenerator {
 	public double[][] findClosestCorner() {
 		double[] corner = new double [2];
 		double [][] corners = new double [4][2];
+		
+		//increment border distance to reduce chance of being within border and getting
+		//stuck in an infinite loop
 		BORDER_DIST += 3;
 		if(Math.abs(rx1 + BORDER_DIST - odometer.getX()) < Math.abs(rx0 - BORDER_DIST - odometer.getX())) {
 			corner[0] = rx1 + BORDER_DIST;
@@ -128,6 +131,8 @@ public class PathGenerator {
 			corners[3][0] = rx1 + BORDER_DIST;
 			corners[3][1] = ry1 + BORDER_DIST;
 		}
+		
+		//normalize the border distance
 		BORDER_DIST -= 3;
 		return corners;
 	} 
@@ -154,7 +159,7 @@ public class PathGenerator {
 	 * Check if the path between (x0, y0) and (x1, y1) crosses the red zone.
 	 * 
 	 * @param x0 Starting x coordinate.
-	 * @param y0 Starting y cooridnate.
+	 * @param y0 Starting y coordinate.
 	 * @param x1 Ending x coordinate.
 	 * @param y1 Ending y coordinate.
 	 * 

@@ -8,7 +8,7 @@ import lejos.nxt.Motor;
 import lejos.nxt.NXTRegulatedMotor;
 
 
-/*
+/**
  * Keeps track of the robot's position, using the displacement of its wheels.
  * 
  * @author Julian Liberta

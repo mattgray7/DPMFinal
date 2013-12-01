@@ -148,14 +148,15 @@ public class SlaveController {
 			waitForSignal();
 		}
 		
+		//lower claw to floor and close to push the tower further into the green zone
 		if(command == -11){
-			//lift.clamp();
 			lift.lowerArms(TWO_BLOCKS_BELOW);
 			lift.clamp();
 			try {input.close();} catch (IOException e) {Sound.buzz();}
 			waitForSignal();
 		}
 		
+		//if only building one tower, does not need to lower claw and push, just lift back to top
 		if(command == 12){
 			lift.clamp();
 			lift.raiseArms(TWO_BLOCKS_BELOW);

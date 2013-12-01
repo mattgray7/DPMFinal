@@ -52,7 +52,6 @@ public class BTSendController {
 	/**
 	 * Setup a BTSendController (the main bulk of the program) and start it.
 	 * 
-	 * @return void
 	 */
 	public static void main(String[] args){
 		BTSendController controller = new BTSendController();
@@ -78,7 +77,6 @@ public class BTSendController {
 		bts = new BTSend();
 		
 		objectRecognition = new ObjectRecognition(csFront);
-		//pathGenerator = new PathGenerator(odo);
 		pathGenerator = new PathGenerator(odo);
 		nav = new Navigation(odo, bts, bottomUs, csFront, objectRecognition, pathGenerator);
 		odometryCorrection = new OdometryCorrection(nav, odo, csOdoLeft, csOdoRight);
@@ -110,7 +108,7 @@ public class BTSendController {
 
 
 		
-		// Do localization
+		// Do ultrasonic and light localization
 		localization.doLocalization();
 		nav.travelTo(0.0, 0.0, true);
 		localization.doLightLocalization();
@@ -132,8 +130,6 @@ public class BTSendController {
 		}
 		
 		bts.establishConnection();
-		
-		//nav.travelTo(0, 0, true);
 		
 		nav.start();
 		
