@@ -1,5 +1,11 @@
 package Master;
 
+
+/**
+ * Filter that returns the median of the last few raw values.
+ * 
+ * @author Nicholas Aird
+ */
 public class MedianFilter extends Filter {
 	/**
 	 * Constructor.
