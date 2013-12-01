@@ -46,21 +46,21 @@ public class Vector {
 	}
 	
 	/**
-	 * @return The x component of the vector.
+	 * Set the vector's x component.
 	 */
 	public void setX(double x){
 		this.x = x;
 	}
 	
 	/**
-	 * @return The y component of the vector.
+	 * Set the vector's y component.
 	 */
 	public void setY(double y){
 		this.y = y;
 	}
 	
 	/**
-	 * @return The z component of the vector.
+	 * Set the vector's z component.
 	 */
 	public void setZ(double z){
 		this.z = z;
@@ -68,7 +68,8 @@ public class Vector {
 	
 	/**
 	 * Get the angle of the vector, when it is projected onto the xy-plane.
-	 * @return
+	 * 
+	 * @return The vector's angle on the xy-plane.
 	 */
 	public double xyAngleDeg(){
 		return Math.atan2(y, x) * 180.0 / Math.PI;
@@ -80,7 +81,7 @@ public class Vector {
 	 * 
 	 * @param angle Angle to rotate counter-clockwise.
 	 * 
-	 * @return Rotated vector.
+	 * @return The rotated vector.
 	 */
 	public static Vector xyRotation(Vector v, double angle){
 		// Math formula found on the web.
@@ -174,7 +175,7 @@ public class Vector {
 	 * 
 	 * @param group Group of vectors.
 	 * 
-	 * @return Vector whose components are the average of all the vectors.
+	 * @return The vector whose components are the average of all the vectors.
 	 */
 	public static Vector average(Vector group[]) {
 		Vector ave = new Vector(0.0, 0.0, 0.0);
