@@ -42,6 +42,7 @@ public class PathGenerator {
 	 * <p>
 	 * There is a border distance that must be kept around the green zone.
 	 * 
+	 * @return Closest point to green zone.
 	 */
 	public double[] calculateBorderPoint(){
 		double x = odometer.getX();
@@ -64,7 +65,9 @@ public class PathGenerator {
 	}
 
 	/**
-	 * Find the corner of the green zone closest to the robot.
+	 * Find the corners of the green zone closest to the robot.
+	 * 
+	 * @return An array of the border points, in the order the robot should visit them.
 	 * 
 	 */
 	public double[][] findClosestCorner() {
@@ -135,6 +138,8 @@ public class PathGenerator {
 	 * @param angle Heading of robot.
 	 * @param distance Distance ahead that we want to check.
 	 * 
+	 * @return True if the point is safe, false otherwise.
+	 * 
 	 */
 	public Boolean checkPointAhead(double angle, int distance){
 		double nx = 0;
@@ -151,7 +156,9 @@ public class PathGenerator {
 	 * @param x0 Starting x coordinate.
 	 * @param y0 Starting y cooridnate.
 	 * @param x1 Ending x coordinate.
-	 * @param y1 Ending y cooridnate.
+	 * @param y1 Ending y coordinate.
+	 * 
+	 * @return True if the path is safe, false otherwise.
 	 * 
 	 */
 	public boolean checkPointsInPath(double x0, double y0, double x1, double y1) {
@@ -211,6 +218,8 @@ public class PathGenerator {
 	 * @param x X coordinate of point.
 	 * @param y Y coordinate of point.
 	 * @param border Additional border around the red and green zones.
+	 * 
+	 * @return True if the point is safe, false otherwise.
 	 */
 	public boolean checkPoint(double x, double y, double border) {
 		//check if next point is within a wall
