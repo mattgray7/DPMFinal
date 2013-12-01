@@ -1,7 +1,13 @@
 package Master;
 
-public class PathGenerator {
 
+/**
+ * Generates a random path that does not come close to walls or intersect the red and green zones.
+ * 
+ * @author Julien Liberta
+ * @author Matt Gray
+ */
+public class PathGenerator {
 	private Odometer odometer;
 
 	private double BORDER_DIST = 15.0;                //border distance for checking if a point is in an area
@@ -23,11 +29,20 @@ public class PathGenerator {
 	private double wy1 = 330.0;                        //upper wall
 
 
-
+	/**
+	 * Constructor
+	 * 
+	 */
 	public PathGenerator(Odometer odo) {
 		this.odometer = odo;
 	}
 
+	/**
+	 * Calculate closest point to green zone.
+	 * <p>
+	 * There is a border distance that must be kept around the green zone.
+	 * 
+	 */
 	public double[] calculateBorderPoint(){
 		double x = odometer.getX();
 		double y = odometer.getY();
@@ -48,7 +63,10 @@ public class PathGenerator {
 		return point;
 	}
 
-
+	/**
+	 * Find the corner of the green zone closest to the robot.
+	 * 
+	 */
 	public double[][] findClosestCorner() {
 		double[] corner = new double [2];
 		double [][] corners = new double [4][2];
@@ -111,7 +129,13 @@ public class PathGenerator {
 		return corners;
 	} 
 
-
+	/**
+	 * Check if a point ahead is in a danger zone (red zone, green zone, near wall).
+	 * 
+	 * @param angle Heading of robot.
+	 * @param distance Distance ahead that we want to check.
+	 * 
+	 */
 	public Boolean checkPointAhead(double angle, int distance){
 		double nx = 0;
 		double ny = 0;
@@ -121,9 +145,16 @@ public class PathGenerator {
 	}
 
 
-
+	/**
+	 * Check if the path between (x0, y0) and (x1, y1) crosses the red zone.
+	 * 
+	 * @param x0 Starting x coordinate.
+	 * @param y0 Starting y cooridnate.
+	 * @param x1 Ending x coordinate.
+	 * @param y1 Ending y cooridnate.
+	 * 
+	 */
 	public boolean checkPointsInPath(double x0, double y0, double x1, double y1) {
-
 		double currentX = x0;
 		double startX = currentX;
 		double currentY = y0;
@@ -174,8 +205,13 @@ public class PathGenerator {
 	}
 
 
-
-
+	/**
+	 * Check if a single point is inside a danger zone (red zone, green zone, near wall).
+	 * 
+	 * @param x X coordinate of point.
+	 * @param y Y coordinate of point.
+	 * @param border Additional border around the red and green zones.
+	 */
 	public boolean checkPoint(double x, double y, double border) {
 		//check if next point is within a wall
 		if((x <= wx0 + 28) || (x >= wx1 - 28) || (y <= wy0 + 28) || (y >= wy1 - 28)){
@@ -196,7 +232,11 @@ public class PathGenerator {
 
 		return true;
 	}
-
+	
+	/**
+	 * Setup the location of the green and red zones.
+	 * 
+	 */
 	public void setZones(int[] green, int[] red){
 		this.gx0 = (double)green[0] * 30.0;
 		this.gy0 = (double)green[1] * 30.0;
@@ -208,10 +248,4 @@ public class PathGenerator {
 		this.rx1 = (double)red[2] * 30.0;
 		this.ry1 = (double)red[3] * 30.0;
 	}
-
-
-
-
-
-
 }
