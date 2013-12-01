@@ -8,6 +8,16 @@ import lejos.nxt.*;
 import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 
+
+/**
+ * Class to operate the slave brick.
+ * <p>
+ * Establishes a bluetooth connection with the master and then performs
+ * the incoming tasks.
+ * 
+ * @author Matt Gray
+ * @author Julien Liberta
+ */
 public class SlaveController {
 	private static final NXTRegulatedMotor armMotor = Motor.A;
 	private static final NXTRegulatedMotor clampMotor = Motor.B;
@@ -27,6 +37,12 @@ public class SlaveController {
 		lift = new Lift(armMotor, clampMotor);
 	}
 	
+	/**
+	 * Main execution of the slave brick.
+	 * <p>
+	 * Basically waits for signals from the master brick and executes the tasks.
+	 * 
+	 */
 	public void execute(){
 		LCD.clear();
 		LCD.drawString("Receiver wait...", 0, 0);
@@ -53,8 +69,8 @@ public class SlaveController {
 	}
 	
 	/**
-	 * Waits for connection to be sent from master brick
-	 * @return void
+	 * Waits for connection to be sent from master brick.
+	 * 
 	 */
 	public static void main(String[] args){
 		SlaveController slaveController = new SlaveController();
@@ -62,8 +78,8 @@ public class SlaveController {
 	}
 	
 	/**
-	 * After connection is made, slave brick will wait for signal from master brick
-	 * @return void
+	 * After connection is made, slave brick will wait for signal from master brick.
+	 * 
 	 */
 	public void waitForSignal(){
 		LCD.drawString("WAITING", 0, 4, false);
