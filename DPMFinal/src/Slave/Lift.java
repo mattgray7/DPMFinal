@@ -4,7 +4,7 @@ import lejos.nxt.*;
 /**
  * Class for operating the lifting arms.
  * 
- * @author Matt ?
+ * @author Matt Gray
  *
  */
 public class Lift {
@@ -16,9 +16,10 @@ public class Lift {
 	private static NXTRegulatedMotor clampMotor = Motor.B;
 	
 	/**
-	 * Constructor
-	 * @param arm The arm motor of the lifting mechanism
-	 * @param clamp The clamp motor that controls the claws
+	 * Constructor.
+	 * 
+	 * @param arm The arm motor of the lifting mechanism.
+	 * @param clamp The clamp motor that controls the claws.
 	 */
 	public Lift(NXTRegulatedMotor arm, NXTRegulatedMotor clamp){
 		//armMotor = Motor.A;//arm;
@@ -27,9 +28,9 @@ public class Lift {
 
 	
 	/**
-	 * Lowers the mechanical arms by an input angle
-	 * @param angle The angle in which to rotate the arm
-	 * @return void
+	 * Lowers the mechanical arms by an input angle.
+	 * 
+	 * @param angle The angle in which to rotate the arm.
 	 */
 	public static void lowerArms(int angle){
 		armMotor.setSpeed(LOWERING_SPEED);
@@ -39,23 +40,21 @@ public class Lift {
 	}
 	
 	/**
-	 * Raises the mechanical arms by an input angle
-	 * @param angle The angle in which to rotate the arm
-	 * @return void
+	 * Raises the mechanical arms by an input angle.
+	 * 
+	 * @param angle The angle in which to rotate the arm.
 	 */
 	public static void raiseArms(int angle){
 		armMotor.setSpeed(RAISING_SPEED);
 		armMotor.forward();
 		armMotor.rotate(angle, false);//maybe true?
 		armMotor.stop();
-		
-		
 	}
 	
 	
 	/**
-	 * Clamps the claws together
-	 * @return void
+	 * Clamps the claws together.
+	 * 
 	 */
 	public static void clamp(){
 		clampMotor.setSpeed(CLAMPING_SPEED);
@@ -66,8 +65,8 @@ public class Lift {
 	
 	
 	/**
-	 * Opens the claws
-	 * @return void
+	 * Opens the claws.
+	 * 
 	 */
 	public static void release(){
 		clampMotor.setSpeed(200);
@@ -75,6 +74,4 @@ public class Lift {
 		clampMotor.rotate(95, false);
 		clampMotor.stop();
 	}
-
-
 }
