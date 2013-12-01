@@ -3,6 +3,11 @@ package Master;
 import java.lang.Math;
 
 
+/**
+ * Math concerning mostly angles.
+ * 
+ * @author Nicholas Aird
+ */
 public class MyMath {
 	/**
 	 * The smallest angle between two given angles. 
